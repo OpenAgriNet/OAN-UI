@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Moon, Sun, X } from "lucide-react";
+import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { useThemeStore } from "@/hooks/store/theme";
 import { THEMES, FAQ_DATA } from "@/components/screens-component/chat-screen/config";
@@ -20,6 +21,7 @@ interface SettingsDrawerProps {
 
 export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const { theme, setTheme } = useThemeStore();
+	const { t } = useLanguage();
 	const [faqOpen, setFaqOpen] = useState(true);
 	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
 
@@ -35,15 +37,16 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 			<SheetContent
 				side="right" 
 				className="w-full sm:max-w-[50%] p-0 flex flex-col h-full bg-background border-l border-gray-200 dark:border-gray-800"
+				style={{ background: "linear-gradient(180deg, #FFF2F2 0%, #FFFFFF 100%)" }}
 			>
 				{/* Custom Header to match the design */}
 				<div className="flex items-center justify-between px-6 h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-					<h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Settings</h2>
+					<h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("settingsPage.title")}</h2>
 					<Button
 						variant="ghost"
 						size="icon"
 						onClick={() => onOpenChange(false)}
-						className="h-10 w-10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
+						className="h-10 w-10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-[#FFE2E2]"
 					>
 						<X className="h-6 w-6" />
 					</Button>
@@ -52,7 +55,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 				<div className="p-6 flex-1 overflow-y-auto space-y-8">
 					{/* Theme Toggle */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Appearance</h3>
+						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t("settingsPage.appearance")}</h3>
 						<div className="flex gap-4">
 							<button
 								onClick={() => setTheme(THEMES.light)}
@@ -63,7 +66,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								}`}
 							>
 								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#F65151]" : "text-gray-400"}`} />
-								<span className="font-bold text-sm">Light</span>
+								<span className="font-bold text-sm">{t("settingsPage.lightMode")}</span>
 							</button>
 
 							<button
@@ -75,14 +78,14 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								}`}
 							>
 								<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[#F65151]" : "text-gray-400"}`} />
-								<span className="font-bold text-sm">Dark</span>
+								<span className="font-bold text-sm">{t("settingsPage.darkMode")}</span>
 							</button>
 						</div>
 					</div>
 
 					{/* FAQ Section */}
 					<div className="space-y-4">
-						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Help & Support</h3>
+						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t("settingsPage.helpAndSupport")}</h3>
 						<Collapsible
 							open={faqOpen}
 							onOpenChange={setFaqOpen}
@@ -91,7 +94,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 							<CollapsibleTrigger asChild>
 								<button className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
 									<span className="font-bold text-base text-gray-900 dark:text-gray-100">
-										Frequently Asked Questions
+										{t("settingsPage.faq")}
 									</span>
 									{faqOpen ? (
 										<ChevronUp className="h-5 w-5 text-gray-500" />

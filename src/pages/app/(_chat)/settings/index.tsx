@@ -3,6 +3,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeStore } from "@/hooks/store/theme";
 import { THEMES, FAQ_DATA } from "@/components/screens-component/chat-screen/config";
+import { useLanguage } from "@/components/LanguageProvider";
 import { useState } from "react";
 import {
 	Collapsible,
@@ -13,6 +14,7 @@ import {
 export default function SettingsPage() {
 	const navigate = useNavigate();
 	const { theme, setTheme } = useThemeStore();
+	const { t } = useLanguage();
 	const [faqOpen, setFaqOpen] = useState(true);
 	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
 
@@ -24,23 +26,27 @@ export default function SettingsPage() {
 	};
 
 	return (
-		<div className="flex flex-col h-full bg-background transition-colors duration-300">
+		<div className="flex flex-col h-full bg-background transition-colors duration-300" style={{ background: "linear-gradient(180deg, #FFF2F2 0%, #FFFFFF 100%)" }}>
 			{/* Settings Header */}
 			<div className="flex items-center gap-4 px-4 h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
 				<Button
 					variant="ghost"
 					size="icon"
 					onClick={() => navigate({ to: "/chat" })}
-					className="h-10 w-10 text-gray-900 dark:text-gray-100"
+					className="h-10 w-10 text-gray-900 dark:text-gray-100 hover:text-[#F65151] hover:bg-[#FFE2E2]"
 				>
 					<ArrowLeft className="h-6 w-6" />
 				</Button>
-				<h1 className="text-lg font-medium text-gray-900 dark:text-gray-100">Settings</h1>
+				<h1 className="text-lg font-medium text-gray-900 dark:text-gray-100">{t("settingsPage.title")}</h1>
 			</div>
 
 			<div className="p-5 flex-1 overflow-y-auto space-y-6">
-				{/* Theme Toggle */}
-				<div className="flex gap-4">
+				{/* Appearance Section */}
+				<div>
+					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+						{t("settingsPage.appearance")}
+					</h2>
+					<div className="flex gap-4">
 					<button
 						onClick={() => setTheme(THEMES.light)}
 						className={`flex-1 flex items-center justify-center gap-2 h-14 rounded-xl border-2 transition-all ${
@@ -50,7 +56,7 @@ export default function SettingsPage() {
 						}`}
 					>
 						<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#00a651]" : "text-gray-400 dark:text-gray-500"}`} />
-						<span className="font-semibold text-sm">Light mode</span>
+						<span className="font-semibold text-sm">{t("settingsPage.lightMode")}</span>
 					</button>
 
 					<button
@@ -62,11 +68,16 @@ export default function SettingsPage() {
 						}`}
 					>
 						<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[#00a651]" : "text-gray-400 dark:text-gray-500"}`} />
-						<span className="font-semibold text-sm">Dark mode</span>
+						<span className="font-semibold text-sm">{t("settingsPage.darkMode")}</span>
 					</button>
+					</div>
 				</div>
 
-				{/* FAQ Section */}
+				{/* Help & Support Section */}
+				<div>
+					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+						{t("settingsPage.helpAndSupport")}
+					</h2>
 				<Collapsible
 					open={faqOpen}
 					onOpenChange={setFaqOpen}
@@ -75,7 +86,7 @@ export default function SettingsPage() {
 					<CollapsibleTrigger asChild>
 						<button className="w-full flex items-center justify-between px-5 py-4 text-left">
 							<span className="font-medium text-base text-gray-900 dark:text-gray-100">
-								Frequently Asked Questions (FAQs)
+								{t("settingsPage.faq")}
 							</span>
 							{faqOpen ? (
 								<ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -132,6 +143,7 @@ export default function SettingsPage() {
 						</div>
 					</CollapsibleContent>
 				</Collapsible>
+				</div>
 			</div>
 		</div>
 	);
