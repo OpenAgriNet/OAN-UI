@@ -153,6 +153,7 @@
       "cauliflower",
       "broccoli"
     ],
+    "limitMessage": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Amul AI app.",
     "fruit crop": [
       "mango",
       "banana",

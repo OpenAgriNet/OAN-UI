@@ -9,6 +9,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 
+import enData from "../../../../translations/en.json";
+import guData from "../../../../translations/gu.json";
+
+const translations: Record<string, any> = {
+	en: enData,
+	gu: guData,
+	hi: enData,
+	mr: enData
+};
+
 // Static set of QA templates and the variable placeholders they need
 const QA_TEMPLATES: Array<{ key: string; vars?: string[] }> = [
   { key: "qa.market.price.today", vars: ["crop", "market"] },
@@ -97,14 +107,15 @@ function makeUserMessage(text: string): TextMessage {
 	};
 }
 
-function makeAssistantMessage(text: string): ChatMessage {
+function makeAssistantMessage(text: string, isError = false): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: "assistant",
 		type: "card",
 		body: text,
 		createdAt: new Date().toISOString(),
-		showListenRow: true
+		showListenRow: true,
+		isError
 	};
 }
 
@@ -243,9 +254,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const isRateLimitError = error?.status === 429 || error?.response?.status === 429 || (error instanceof Error && error.message.includes('Rate limit'));
 			
 			if (isRateLimitError) {
-				const limitMessage = "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Amul AI app.";
+				const currentLang = language || "en";
+				const tData = translations[currentLang] || translations["en"];
+				const limitMessage = tData.limitMessage || "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Amul AI app.";
+				
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true)]
 				}));
 				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
 			} else {
@@ -304,6 +318,32 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	},
 
 	generateQuickActions: (t) => {
+		const staticQuestions = t("questions");
+		
+		if (Array.isArray(staticQuestions) && staticQuestions.length > 5) {
+			// If we have a static list of questions (like for Gujarati), use them
+			const newActions: QuickAction[] = shuffle(staticQuestions)
+				.slice(0, 3)
+				.map((question, index) => {
+					// Map based on keywords or random
+					let icon: QuickAction["icon"] = "tractor";
+					if (question.includes("ગાય") || question.includes("ભેંસ") || question.includes("પશુ") || question.includes("દૂધ")) icon = "cow";
+					else if (question.includes("પાક") || question.includes("સજીવ")) icon = "wheat";
+					else if (question.includes("હવામાન")) icon = "cloud";
+					else icon = randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+
+					return {
+						id: String(index + 1),
+						title: question,
+						description: "",
+						icon,
+						prompt: question
+					};
+				});
+			set({ quickActions: newActions });
+			return;
+		}
+
 		const VARS = {
 			crop: t("variables.crop") as string[],
 			"fruit crop": t("variables.fruit crop") as string[],
@@ -322,8 +362,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					const params: Record<string, string> = {};
 					vars.forEach(v => {
 						const rawValues = (VARS as any)[v] as string[];
-						const scopedValues = filterVariableValues(key, v, rawValues);
-						params[v] = randomPick(scopedValues);
+						// Defensive check because translation might be missing for some languages
+						if (rawValues) {
+							const scopedValues = filterVariableValues(key, v, rawValues);
+							params[v] = randomPick(scopedValues);
+						} else {
+							params[v] = "";
+						}
 					});
 					prompt = t(key, params) as string;
 				} else {

@@ -39,7 +39,7 @@
   },
   "languages": [
     { "code": "en", "name": "English", "nativeName": "English", "icon": "अ" },
-    { "code": "gu", "name": "Gujarati", "nativeName": "ગુજરાતી", "icon": "अ" }
+    { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" }
   ],
   "defaultLanguage": "en",
   "languageTexts": {
