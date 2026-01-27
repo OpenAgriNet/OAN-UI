@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="MahaVISTAAR AI logo">
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#e9f7e7"/>
+      <stop offset="100%" stop-color="#c4e8c7"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="url(#bg)" stroke="#0f9d58" stroke-width="6"/>
+  <path d="M18 66c26 6 46 2 64-8 11-6 17-13 20-16-2 11-11 35-34 43-18 6-34 1-50-7z" fill="#0f9d58"/>
+  <path d="M28 73c16 4 35 6 55-6-11 13-28 20-47 17-5-1-6-4-8-11z" fill="#0b7a46"/>
+  <g fill="#e3b025">
+    <rect x="78" y="22" width="6" height="26" rx="3"/>
+    <rect x="88" y="30" width="6" height="22" rx="3"/>
+    <rect x="98" y="26" width="6" height="24" rx="3"/>
+    <path d="M81 20c3-8 9-12 13-12s7 4 8 10z"/>
+  </g>
+</svg>
