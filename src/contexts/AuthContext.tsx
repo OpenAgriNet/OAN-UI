@@ -56,23 +56,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [publicKey, setPublicKey] = useState<CryptoKey | null>(null);
 
-  // JWT validation public key
-  const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2TQ+QDYAZNTzorxu8nJe
-68QxoMAvBP5X8NXlR3MGvXb9V2SmW/vWZ4JGK3EJq45MldVQsGINq7kKi0hKvp6Z
-LmKi20NGaBz7HuGpTMw+IibEjN2FhX9ZkOWvuwA8wDkem+gFuX+b1gkGf/qqrQTU
-oHzv1fzgfDW2r5H8M8T19f9ALfxtuUVoBU9uQEkiyztoa8pRCxCSgzlWHGddXQ14
-IQZY0wMNjq33hn4nNGcgOVvIeZQ+MbWtnRMjZrOKT/NbQFldkVcjlvH3hsdEG+VH
-IWlHBvru9A2dFET+ScrOnKj3IplyQOm3t7elOJkAbu9wFhqPMxHdeOjFqtRUJF4t
-gQIDAQAB
------END PUBLIC KEY-----`;
-
   // Initialize auth state on component mount
   useEffect(() => {
     const initAuth = async () => {
       try {
         setIsLoading(true);
-        // Import the public key
+
+        // Fetch public key from external file
+        const publicKeyResponse = await fetch('/jwt_public_key.pem');
+        if (!publicKeyResponse.ok) {
+          console.error('Failed to fetch public key:', publicKeyResponse.status);
+          createUserFromPayload(null);
+          redirectToErrorPage();
+          return;
+        }
+        const publicKeyPEM = await publicKeyResponse.text();
+        
+        // Import the public key for JWT validation
         const importedPublicKey = await importSPKI(publicKeyPEM, 'RS256');
         setPublicKey(importedPublicKey);
 
@@ -148,7 +148,7 @@ gQIDAQAB
     };
 
     initAuth();
-  }, [publicKeyPEM]);
+  }, []); // Empty dependency array - run only once on mount
 
   // Create a user object from JWT payload
   const createUserFromPayload = (payload: JWTPayload | null) => {
