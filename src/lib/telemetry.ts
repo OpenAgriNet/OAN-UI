@@ -51,6 +51,32 @@ export const setTelemetryUserData = (userData: any) => {
 
 const getHostUrl = (): string => typeof window !== 'undefined' ? window.location.origin : 'unknown-host';
 
+const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
+  try {
+    const telemetryPayload = {
+      eid: eventType,
+      ver: "2.2",
+      mid: `OE_${Math.random().toString(36).substring(2, 15)}`,
+      ets: Date.now(),
+      channel: eventData.channel || "AmulAI-" + getHostUrl(),
+      ...eventData
+    };
+    
+    const endpoint = '/observability-service/v1/telemetry';
+    
+    fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(telemetryPayload),
+      keepalive: true
+    }).catch(() => {
+    });
+  } catch (error) {
+  }
+};
+
 export const startTelemetry = (sessionId: string, userDetailsObj: { preferred_username: string; email: string }) => {
     if (typeof Telemetry === 'undefined') return;
     const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
@@ -65,6 +91,15 @@ export const startTelemetry = (sessionId: string, userDetailsObj: { preferred_us
       host: "/observability-service",
     }
     Telemetry.start(config, "content_id", "contetn_ver", {}, {});
+    
+    sendTelemetryToNetwork('OE_START', {
+      pdata: config.pdata,
+      channel: config.channel,
+      sid: config.sid,
+      uid: config.uid,
+      did: config.did,
+      authtoken: config.authtoken
+    });
 };
 
 export const logQuestionEvent = (questionId: string, sessionId: string, questionText: string) => {
@@ -89,6 +124,14 @@ export const logQuestionEvent = (questionId: string, sessionId: string, question
     "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
   };
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
+  
+  sendTelemetryToNetwork('OE_ITEM_CHOOSE', {
+    qid: questionId,
+    type: "CHOOSE",
+    target,
+    sid: sessionId,
+    channel: "AmulAI-" + getHostUrl()
+  });
 };
 
 export const logResponseEvent = (questionId: string, sessionId: string, questionText: string, responseText: string) => {
@@ -113,6 +156,14 @@ export const logResponseEvent = (questionId: string, sessionId: string, question
     "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
   };
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
+  
+  sendTelemetryToNetwork('OE_ITEM_RESPONSE', {
+    qid: questionId,
+    type: "CHOOSE",
+    target,
+    sid: sessionId,
+    channel: "AmulAI-" + getHostUrl()
+  });
 };
 
 export const logErrorEvent = (questionId: string, sessionId: string, error: string) => {
