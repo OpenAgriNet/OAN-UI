@@ -46,6 +46,17 @@ class ApiService {
         'Authorization': this.authToken ? `Bearer ${this.authToken}` : 'NA'
       }
     });
+
+    // Add response interceptor for 401 errors
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          this.redirectToErrorPage();
+        }
+        return Promise.reject(error);
+      }
+    );
   }
 
   private getAuthToken(): string | null {
@@ -88,6 +99,14 @@ class ApiService {
       this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${this.authToken}`;
     } else {
       this.axiosInstance.defaults.headers.common['Authorization'] = 'NA';
+      // Don't redirect here - let the 401 interceptor handle it when actual API calls fail
+    }
+  }
+  
+  private redirectToErrorPage(): void {
+    // Check if we're in a browser environment and not already on error page
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
+      window.location.href = '/error?reason=auth';
     }
   }
   
@@ -143,6 +162,12 @@ class ApiService {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            this.redirectToErrorPage();
+            const error = new Error('Unauthorized');
+            (error as any).status = 401;
+            throw error;
+          }
           if (response.status === 429) {
             const error = new Error('Rate limit exceeded');
             (error as any).status = 429;

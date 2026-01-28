@@ -13,7 +13,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 					: "rounded-tl-md border bg-card text-card-foreground shadow-sm"
 			)}
 		>
-			<p className="leading-relaxed whitespace-pre-wrap">{message.text}</p>
+			<p className="leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.text}</p>
 		</div>
 	);
 }

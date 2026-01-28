@@ -33,6 +33,7 @@ export type ChatInputProps = {
 	footerNote?: string;
 	isListening?: boolean;
 	isTranscribing?: boolean;
+	isAssistantTyping?: boolean;
 	suggestions?: Suggestion[];
 	onSuggestionClick?: (text: string) => void;
 };
@@ -50,6 +51,7 @@ export function ChatInput({
 	footerNote,
 	isListening,
 	isTranscribing,
+	isAssistantTyping,
 	suggestions = [],
 	onSuggestionClick
 }: ChatInputProps) {
@@ -67,6 +69,7 @@ export function ChatInput({
 	const taRef = useRef<HTMLTextAreaElement | null>(null);
 
 	const canSend = useMemo(() => value.trim().length > 0 || files.length > 0 || !!voice, [value, files, voice]);
+	const isLoading = isTranscribing || isAssistantTyping;
 
 	// Clean up on unmount
 	useEffect(() => {
@@ -198,7 +201,7 @@ export function ChatInput({
 	}
 
 	function submit() {
-		if (!canSend || disabled || isTranscribing) return;
+		if (!canSend || disabled || isLoading) return;
 		onSend({ text: value.trim(), files, voice });
 		onValueChange("");
 		setFiles([]);
@@ -288,11 +291,12 @@ export function ChatInput({
 						<Button
 							type="button"
 							size="icon"
-							disabled={disabled}
+							disabled={disabled || isLoading}
 							onClick={startRecording}
 							className={cn(
-								"h-11 w-11 cursor-pointer shrink-0 rounded-full text-black bg-[#ABFFA9] hover:bg-[#ABFFA9]/90 shadow-md",
-								isListening ? "animate-pulse" : ""
+								"h-11 w-11 shrink-0 rounded-full text-black bg-[#ABFFA9] hover:bg-[#ABFFA9]/90 shadow-md",
+								isListening ? "animate-pulse" : "",
+								disabled || isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
 							)}
 							aria-label="Record voice"
 						>
@@ -304,16 +308,18 @@ export function ChatInput({
 						className={cn(
 							"flex flex-1 min-h-12 min-w-0 items-stretch gap-2 rounded-[16px] border bg-white shadow-sm transition-colors duration-200 relative",
 							canSend ? "border-black" : "border-gray-300",
-							isTranscribing ? "bg-gray-50 opacity-80" : ""
+							isLoading ? "bg-gray-50 opacity-80 cursor-not-allowed" : ""
 						)}
 					>
-						{isTranscribing && (
+						{isLoading && (
 							<div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white rounded-[16px]">
 								<div className="flex items-center gap-1">
 									<div className="h-8 w-8">
 										<Lottie animationData={loadingAnim} loop={true} />
 									</div>
-									<span className="text-base italic text-gray-500">Transcribing...</span>
+									<span className="text-base italic text-gray-500">
+										{isTranscribing ? "Transcribing..." : "Loading..."}
+									</span>
 								</div>
 							</div>
 						)}
@@ -322,13 +328,14 @@ export function ChatInput({
 							value={value}
 							onChange={(e) => onValueChange(e.target.value)}
 							onKeyDown={onKeyDown}
-							disabled={disabled || isTranscribing}
-							placeholder={isTranscribing ? "" : placeholder}
+							disabled={disabled || isLoading}
+							placeholder={isLoading ? "" : placeholder}
 							className={cn(
 								"flex-1 min-w-0 max-h-[140px] min-h-[24px] mx-4 resize-none border-0 bg-transparent px-0 py-3 text-base shadow-none",
 								"focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
 								"placeholder:text-gray-400",
-								"break-words whitespace-pre-wrap overflow-y-auto"
+								"break-words whitespace-pre-wrap overflow-y-auto",
+								disabled || isLoading ? "cursor-not-allowed" : ""
 							)}
 						/>
 
@@ -336,7 +343,7 @@ export function ChatInput({
 							className={cn(
 								"flex w-12 items-stretch justify-center transition-colors duration-200",
 								"rounded-r-[16px] rounded-l-none",
-								canSend && !isTranscribing ? "brand-gradient" : "bg-gray-200"
+								canSend && !isLoading ? "brand-gradient" : "bg-gray-200"
 							)}
 						>
 							<Button
@@ -344,20 +351,20 @@ export function ChatInput({
 								size="icon"
 								variant="ghost"
 								className={cn(
-									"h-full w-12 cursor-pointer rounded-r-[16px] rounded-l-none hover:bg-transparent shadow-none",
+									"h-full w-12 rounded-r-[16px] rounded-l-none hover:bg-transparent shadow-none",
 									"focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-									canSend && !isTranscribing ? "text-white" : "text-gray-500"
+									canSend && !isLoading ? "text-white cursor-pointer" : "text-gray-500 cursor-not-allowed"
 								)}
 								onClick={submit}
-								disabled={!canSend || disabled || isTranscribing}
+								disabled={!canSend || disabled || isLoading}
 								aria-label="Send"
 							>
 								<img
-									src={canSend && !isTranscribing ? sendAmul : sendIcon}
+									src={canSend && !isLoading ? sendAmul : sendIcon}
 									alt="Send"
 									className={cn(
 										"h-5 w-5",
-										canSend && !isTranscribing ? "animate-earthquake" : ""
+										canSend && !isLoading ? "animate-earthquake" : ""
 									)}
 								/>
 							</Button>

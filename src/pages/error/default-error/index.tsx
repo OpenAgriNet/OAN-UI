@@ -1,5 +1,3 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import React from "react";
 
@@ -8,72 +6,73 @@ interface DefaultErrorProps {
   reset?: () => void;
 }
 
-export default function DefaultError({ error, reset }: DefaultErrorProps) {
+export default function DefaultError({ error }: DefaultErrorProps) {
   const message =
     typeof error === "string"
       ? error
-      : (error && (error as any).message) || null;
-
-  const debugText =
-    (error && (error as any).stack) ||
-    (error && typeof error === "object" ? JSON.stringify(error, null, 2) : null);
+      : (error && (error as any).message) || "An unexpected error occurred.";
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted p-4">
-      <Card className="w-full max-w-3xl">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="rounded-full bg-red-50 p-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-            </div>
-            <div>
-              <CardTitle>Something went wrong</CardTitle>
-              <CardDescription>
-                {message ?? "An unexpected error occurred. Please try again."}
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <div className="mt-2 text-sm text-muted-foreground">
-            <p>
-              If the problem persists, try reloading the page or contact support.
-            </p>
-
-            {debugText ? (
-              <pre
-                className="mt-4 max-h-40 overflow-auto rounded-md bg-surface p-3 text-xs font-mono text-left"
-                aria-live="polite"
-              >
-                {debugText}
-              </pre>
-            ) : null}
-          </div>
-        </CardContent>
-
-        <CardFooter className="flex items-center justify-end gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              // best-effort reset call if provided
-              if (reset) reset();
-              else window.location.reload();
-            }}
-            title="Retry"
+    <div 
+      style={{ backgroundColor: '#212C28' }} 
+      className="flex min-h-screen w-full items-center justify-center p-4"
+    >
+      <div 
+        style={{
+          padding: '1px',
+          background: 'linear-gradient(239.31deg, #218FFF 1.34%, #FF1150 100%)',
+          borderRadius: '24px',
+          width: '100%',
+          maxWidth: '400px'
+        }}
+      >
+        <div 
+          style={{
+            background: '#212C28',
+            borderRadius: '23px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+          className="w-full"
+        >
+          <div 
+            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            className="w-full p-8 text-center flex flex-col items-center space-y-6"
           >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Retry
-          </Button>
+            <div className="rounded-full bg-red-500/20 p-4">
+              <AlertTriangle className="h-10 w-10 text-red-500" />
+            </div>
+            
+            <div className="space-y-2 w-full">
+              <h1 className="text-xl font-bold text-white tracking-tight">
+                Something went wrong
+              </h1>
+              <p className="text-gray-400 text-sm break-words px-4 leading-tight">
+                {message}
+              </p>
+            </div>
 
-          <a href="/" className="no-underline">
-            <Button variant="secondary">
-              <Home className="mr-2 h-4 w-4" />
-              Go to Home
-            </Button>
-          </a>
-        </CardFooter>
-      </Card>
+            <div className="flex flex-col w-full gap-3 pt-2">
+              <button 
+                onClick={() => window.location.reload()}
+                className="w-full bg-white hover:bg-gray-200 text-[#212C28] font-bold h-10 rounded-xl flex items-center justify-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </button>
+              
+              <a href="/" className="w-full no-underline">
+                <button 
+                  className="w-full border border-white/20 text-white hover:bg-white/10 h-10 rounded-xl flex items-center justify-center bg-transparent"
+                >
+                  <Home className="mr-2 h-4 w-4" />
+                  Go to Home
+                </button>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

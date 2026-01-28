@@ -32,7 +32,7 @@ const Login = () => {
 
 	useEffect(() => {
 		if (isAuthed()) {
-			navigate({ to: "/chat" });
+			navigate({ to: "/chat", search: (old) => old });
 		}
 	}, [isAuthed, navigate]);
 
@@ -41,7 +41,7 @@ const Login = () => {
 		try {
 			await mutateAsync(values);
 			toast.success("Logged in successfully!");
-			navigate({ to: "/chat" });
+			navigate({ to: "/chat", search: (old) => old });
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : "Unable to sign in. Please try again.";
 			toast.error(message);

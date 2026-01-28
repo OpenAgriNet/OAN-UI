@@ -76,7 +76,7 @@ export function AppSidebar() {
               {/* Dashboard */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive("/")}>
-                  <Link to="/">
+                  <Link to="/" search={(old) => old}>
                     <LayoutGrid className="h-5 w-5" />
                     <span>Dashboard</span>
                   </Link>
@@ -86,7 +86,7 @@ export function AppSidebar() {
               {/* Supports */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive("/chat")}>
-                  <Link to="/chat">
+                  <Link to="/chat" search={(old) => old}>
                     <BookOpen className="h-5 w-5" />
                     <span>Chat</span>
                   </Link>
@@ -96,7 +96,7 @@ export function AppSidebar() {
               {/* Profile */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive("/profile")}>
-                  <Link to="/profile">
+                  <Link to="/profile" search={(old) => old}>
                     <User2 className="h-5 w-5" />
                     <span>Profile</span>
                   </Link>
@@ -106,7 +106,7 @@ export function AppSidebar() {
               {/* Settings */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={isActive("/")}>
-                  <Link to="/">
+                  <Link to="/" search={(old) => old}>
                     <Settings className="h-5 w-5" />
                     <span>Settings</span>
                   </Link>
@@ -128,7 +128,7 @@ export function AppSidebar() {
                      <SidebarMenuSub className="group-data-[collapsible=icon]:hidden">
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild isActive={isActive("/")}>
-                          <Link to="/">
+                          <Link to="/" search={(old) => old}>
                             <span>Completion Ratio</span>
                           </Link>
                         </SidebarMenuSubButton>
@@ -136,7 +136,7 @@ export function AppSidebar() {
 
                       <SidebarMenuSubItem>
                         <SidebarMenuSubButton asChild isActive={isActive("/")}>
-                          <Link to="/">
+                          <Link to="/" search={(old) => old}>
                             <span>Time Spend Analytic</span>
                           </Link>
                         </SidebarMenuSubButton>

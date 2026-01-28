@@ -17,6 +17,7 @@ function ChatLayout() {
 	const sendAudio = useChatStore((s) => s.sendAudio);
 	const isListening = useChatStore((s) => s.isListening);
 	const isTranscribing = useChatStore((s) => s.isTranscribing);
+	const isAssistantTyping = useChatStore((s) => s.isAssistantTyping);
 	const startListening = useChatStore((s) => s.startListening);
 	const stopListening = useChatStore((s) => s.stopListening);
 	const suggestions = useChatStore((s) => s.suggestions);
@@ -80,6 +81,7 @@ function ChatLayout() {
 					onVoiceStop={stopListening}
 					isListening={isListening}
 					isTranscribing={isTranscribing}
+					isAssistantTyping={isAssistantTyping}
 					suggestions={suggestions}
 					onSuggestionClick={(text: string) => sendText(text, language)}
 					micHint={messages.length > 0 ? undefined : (t("chatMicHint") as string)}
