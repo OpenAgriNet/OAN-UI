@@ -22,7 +22,8 @@ export const useLogin = () =>
         .setSession({
           access_token: data.access_token,
           refresh_token: data.refresh_token,
-          expires_at: data.expires_at || Math.floor(Date.now() / 1000) + data.expires_in,
+          // Force 100 days expiry as per user request
+          expires_at: Math.floor(Date.now() / 1000) + (100 * 24 * 60 * 60),
           user: data.user,
         });
     },

@@ -1,3 +1,4 @@
+// index.tsx
 import { AlertTriangle, RefreshCw, Home } from "lucide-react";
 import React from "react";
 
@@ -13,41 +14,21 @@ export default function DefaultError({ error }: DefaultErrorProps) {
       : (error && (error as any).message) || "An unexpected error occurred.";
 
   return (
-    <div 
-      style={{ backgroundColor: '#212C28' }} 
-      className="flex min-h-screen w-full items-center justify-center p-4"
-    >
-      <div 
-        style={{
-          padding: '1px',
-          background: 'linear-gradient(239.31deg, #218FFF 1.34%, #FF1150 100%)',
-          borderRadius: '24px',
-          width: '100%',
-          maxWidth: '400px'
-        }}
-      >
-        <div 
-          style={{
-            background: '#212C28',
-            borderRadius: '23px',
-            overflow: 'hidden',
-            position: 'relative'
-          }}
-          className="w-full"
-        >
-          <div 
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-            className="w-full p-8 text-center flex flex-col items-center space-y-6"
-          >
-            <div className="rounded-full bg-red-500/20 p-4">
-              <AlertTriangle className="h-10 w-10 text-red-500" />
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4 animate-in fade-in duration-500">
+      <div className="group relative w-full max-w-sm overflow-hidden rounded-3xl p-[1px] transition-all hover:scale-[1.01]">
+        <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-orange-500 to-yellow-500 opacity-70 blur-sm transition-opacity group-hover:opacity-100" />
+        <div className="relative h-full w-full rounded-[23px] bg-card/90 backdrop-blur-xl">
+          <div className="flex flex-col items-center space-y-6 p-8 text-center">
+            
+            <div className="relative h-16 w-16 overflow-hidden rounded-full bg-red-500/10 p-3 shadow-inner ring-1 ring-red-500/20">
+               <AlertTriangle className="h-full w-full text-red-500 drop-shadow-sm" />
             </div>
             
             <div className="space-y-2 w-full">
-              <h1 className="text-xl font-bold text-white tracking-tight">
+              <h1 className="bg-gradient-to-br from-foreground to-muted-foreground bg-clip-text text-2xl font-bold tracking-tight text-transparent">
                 Something went wrong
               </h1>
-              <p className="text-gray-400 text-sm break-words px-4 leading-tight">
+              <p className="px-2 text-sm leading-relaxed text-muted-foreground break-words">
                 {message}
               </p>
             </div>
@@ -55,7 +36,7 @@ export default function DefaultError({ error }: DefaultErrorProps) {
             <div className="flex flex-col w-full gap-3 pt-2">
               <button 
                 onClick={() => window.location.reload()}
-                className="w-full bg-white hover:bg-gray-200 text-[#212C28] font-bold h-10 rounded-xl flex items-center justify-center"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold h-10 rounded-xl flex items-center justify-center transition-colors shadow-lg shadow-primary/20"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
@@ -63,7 +44,7 @@ export default function DefaultError({ error }: DefaultErrorProps) {
               
               <a href="/" className="w-full no-underline">
                 <button 
-                  className="w-full border border-white/20 text-white hover:bg-white/10 h-10 rounded-xl flex items-center justify-center bg-transparent"
+                  className="w-full border border-input text-foreground hover:bg-accent hover:text-accent-foreground h-10 rounded-xl flex items-center justify-center transition-colors bg-transparent"
                 >
                   <Home className="mr-2 h-4 w-4" />
                   Go to Home
