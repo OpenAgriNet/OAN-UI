@@ -52,7 +52,7 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          this.redirectToErrorPage();
+          // this.redirectToErrorPage();
         }
         return Promise.reject(error);
       }
@@ -103,12 +103,12 @@ class ApiService {
     }
   }
   
-  private redirectToErrorPage(): void {
+  // private redirectToErrorPage(): void {
     // Check if we're in a browser environment and not already on error page
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
-      window.location.href = '/error?reason=auth';
-    }
-  }
+    // if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
+    //   window.location.href = '/error?reason=auth';
+    // }
+  // }
   
   updateAuthToken(): void {
     this.refreshAuthToken();
@@ -163,7 +163,7 @@ class ApiService {
 
         if (!response.ok) {
           if (response.status === 401) {
-            this.redirectToErrorPage();
+            // this.redirectToErrorPage();
             const error = new Error('Unauthorized');
             (error as any).status = 401;
             throw error;
