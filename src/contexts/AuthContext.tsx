@@ -228,7 +228,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         expiry: expiryDate.getTime()
       };
       
+      // Save to auth_jwt (AuthContext format)
       localStorage.setItem(JWT_STORAGE_KEY, JSON.stringify(tokenData));
+      
+      // Also save to accessToken for api-service compatibility
+      localStorage.setItem('accessToken', token);
+      
       return true;
     } catch (error) {
       console.error("Error storing JWT:", error);
