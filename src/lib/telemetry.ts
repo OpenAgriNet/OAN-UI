@@ -1,219 +1,453 @@
 // --- V3 Telemetry Specification Alignment ---
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import { UAParser } from "ua-parser-js";
 
+// FingerprintJS initialization
+
+window.__FINGERPRINT_CONTEXT__ = {
+  ready: false,
+  data: null,
+};
+declare global {
+  interface Window {
+    __FINGERPRINT_CONTEXT__: any;
+    __RESPONSE_TIMERS__?: Record<
+      string,
+      {
+        startTime?: number; // Request start (for UI rendering)
+        networkStartTime?: number; // When API call starts
+        networkEndTime?: number; // When API response completes
+        renderStart?: number; // When rendering starts
+        paintTime?: number; // When rendering completes
+        responseStart?: number; // TTFB
+        responseEnd?: number; // Response complete
+      }
+    >;
+  }
+}
+
+window.__RESPONSE_TIMERS__ = window.__RESPONSE_TIMERS__ || {};
+
+// telemetry.ts
+export const initChatApiPerformanceObserver = () => {
+  if (!("PerformanceObserver" in window)) return;
+
+  const observer = new PerformanceObserver((list) => {
+    for (const entry of list.getEntries()) {
+      if (entry.entryType === "resource" && entry.name.includes("/api/chat/")) {
+        // Attach timing to the latest unanswered question
+        const timers = window.__RESPONSE_TIMERS__;
+        if (!timers) return;
+
+        const latestQid = Object.keys(timers)
+          .reverse()
+          .find((qid) => timers[qid]?.startTime && !timers[qid]?.responseEnd);
+
+        if (!latestQid) return;
+
+        // Cast to PerformanceResourceTiming to access responseStart/responseEnd
+        const resourceTiming = entry as PerformanceResourceTiming;
+
+        // Store responseStart (TTFB - Time To First Byte) and responseEnd
+        // Store responseStart (TTFB - Time To First Byte) and responseEnd
+        if (timers[latestQid]) {
+            timers[latestQid].responseStart = resourceTiming.responseStart;
+            timers[latestQid].responseEnd = resourceTiming.responseEnd;
+        }
+        // ← ADD THIS LINE:
+        notifyResponseDataReady(latestQid);
+      }
+    }
+  });
+
+  observer.observe({ type: "resource", buffered: true });
+};
+
+// Device code helpers
+const mapBrowserCode = (name = "") =>
+  ({ chrome: "CH", firefox: "FF", safari: "SF", edge: "ED" })[
+    name.toLowerCase()
+  ] || "OT";
+
+const mapOSCode = (name = "") =>
+  ({ windows: "WIN", macos: "MAC", android: "AND", ios: "IOS", linux: "LNX" })[
+    name.toLowerCase()
+  ] || "OT";
+
+const mapDeviceCode = (type = "") =>
+  ({ mobile: "MB", tablet: "TB", desktop: "DT" })[type?.toLowerCase()] || "DT";
+
+// Declare V3 Telemetry methods required for this implementation
+// Note: Implementations for all methods are assumed to exist in the global Telemetry object.
 declare let Telemetry: any;
 declare let AuthTokenGenerate: any;
 
-const telemetryData: {
-  mobile: string;
-  username: string;
-  email: string;
-  role: string;
-  farmer_id: string;
-  unique_id: string;
-  registered_location: { district: string; village: string; taluka: string; lgd_code: string; };
-  device_location: { district: string; village: string; taluka: string; lgd_code: string; };
-  agristack_location: { district: string; village: string; taluka: string; lgd_code: string; };
-} = {
-  mobile: '',
-  username: '',
-  email: '',
-  role: '',
-  farmer_id: '',
-  unique_id: '',
-  registered_location: { district: '', village: '', taluka: '', lgd_code: '' },
-  device_location: { district: '', village: '', taluka: '', lgd_code: '' },
-  agristack_location: { district: '', village: '', taluka: '', lgd_code: '' }
-};
-
-export const setTelemetryUserData = (userData: any) => {
-  telemetryData.mobile = userData.mobile || '';
-  telemetryData.username = userData.username || '';
-  telemetryData.email = userData.email || '';
-  telemetryData.role = userData.role || '';
-  telemetryData.farmer_id = userData.farmer_id || '';
-  telemetryData.unique_id = userData.unique_id !== undefined ? String(userData.unique_id) : '';
-  
-  if (Array.isArray(userData.locations)) {
-    userData.locations.forEach((location: any) => {
-      const locData = {
-        district: location.district || '',
-        village: location.village || '',
-        taluka: location.taluka || '',
-        lgd_code: location.lgd_code !== undefined ? String(location.lgd_code) : ''
-      };
-      
-      if (location.location_type === 'registered_location') telemetryData.registered_location = locData;
-      else if (location.location_type === 'device_location') telemetryData.device_location = locData;
-      else if (location.location_type === 'agristack_location') telemetryData.agristack_location = locData;
-    });
+// Function to get the current host URL
+const getHostUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
   }
+  return "unknown-host";
 };
 
-const getHostUrl = (): string => typeof window !== 'undefined' ? window.location.origin : 'unknown-host';
+// inititalize fingerprint and UAparser
+const initFingerprintContext = async (sessionStartAt: number) => {
+  const cached = localStorage.getItem("fingerprint_context");
 
-const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
-  try {
-    const telemetryPayload = {
-      eid: eventType,
-      ver: "2.2",
-      mid: `OE_${Math.random().toString(36).substring(2, 15)}`,
-      ets: Date.now(),
-      channel: eventData.channel || "AmulAI-" + getHostUrl(),
-      ...eventData
-    };
-    
-    const endpoint = '/observability-service/v1/telemetry';
-    
-    fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+  if (cached) {
+    window.__FINGERPRINT_CONTEXT__ = JSON.parse(cached);
+    window.__FINGERPRINT_CONTEXT__.ready = true;
+    return;
+  }
+
+  const fp = await FingerprintJS.load();
+  const result = await fp.get();
+  const ua = new UAParser().getResult();
+
+  const context = {
+    ready: true,
+    data: {
+      device_id: result.visitorId,
+
+      browser: {
+        code: mapBrowserCode(ua.browser.name),
+        name: ua.browser.name,
+        version: ua.browser.version,
       },
-      body: JSON.stringify(telemetryPayload),
-      keepalive: true
-    }).catch(() => {
-    });
-  } catch (error) {
-  }
-};
 
-export const startTelemetry = (sessionId: string, userDetailsObj: { preferred_username: string; email: string }) => {
-    if (typeof Telemetry === 'undefined') return;
-    const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
-    const secret = "gnjhgjugkk";
-    const config = {
-      pdata: { id: "AmulAI", ver: "v0.1", pid: "AmulAI" },
-      channel: "AmulAI-" + getHostUrl(),
-      sid: sessionId,
-      uid: userDetailsObj['preferred_username'] || "DEFAULT-USER",
-      did: userDetailsObj['email'] || "DEFAULT-USER",
-      authtoken: AuthTokenGenerate.generate(key, secret),
-      host: "/observability-service",
-    }
-    Telemetry.start(config, "content_id", "contetn_ver", {}, {});
-    
-    sendTelemetryToNetwork('OE_START', {
-      pdata: config.pdata,
-      channel: config.channel,
-      sid: config.sid,
-      uid: config.uid,
-      did: config.did,
-      authtoken: config.authtoken
-    });
-};
+      device: {
+        code: mapDeviceCode(ua.device.type),
+        name: ua.device.type || "Desktop",
+        model: ua.device.model || "Unknown",
+      },
 
-export const logQuestionEvent = (questionId: string, sessionId: string, questionText: string) => {
-  if (typeof Telemetry === 'undefined') return;
-  const target = {
-    "id": "default", "ver": "v0.1", "type": "Question",
-    "parent": { "id": "p1", "type": "default" },
-    "questionsDetails": { "questionText": questionText, "sessionId": sessionId },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+      os: {
+        code: mapOSCode(ua.os.name),
+        name: ua.os.name,
+        version: ua.os.version,
+      },
+
+      session: {
+        session_start_at: sessionStartAt,
+        session_end_at: null,
+      },
+
+      device_lifecycle: {
+        first_seen_at: sessionStartAt,
+        last_seen_at: sessionStartAt,
+      },
+    },
   };
-  Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
-  
-  sendTelemetryToNetwork('OE_ITEM_CHOOSE', {
-    qid: questionId,
-    type: "CHOOSE",
-    target,
+
+  localStorage.setItem("fingerprint_context", JSON.stringify(context));
+  window.__FINGERPRINT_CONTEXT__ = context;
+};
+
+export const startTelemetry = async (
+  sessionId: string,
+  userDetailsObj: { preferred_username: string; email: string },
+) => {
+  const sessionStartAt = Date.now();
+
+  await initFingerprintContext(sessionStartAt);
+
+  initChatApiPerformanceObserver();
+
+  const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
+  const secret = "gnjhgjugkk";
+  const config = {
+    pdata: {
+      id: "BharatVistaar",
+      ver: "v0.1",
+      pid: "BharatVistaar",
+    },
+    channel: "BharatVistaar-" + getHostUrl(),
     sid: sessionId,
-    channel: "AmulAI-" + getHostUrl()
+    uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
+    did: userDetailsObj["email"] || "DEFAULT-USER",
+    authtoken: "",
+    host: "/observability-service",
+  };
+
+  const startEdata = {};
+  const options = {};
+  const token = AuthTokenGenerate.generate(key, secret);
+  config.authtoken = token;
+  Telemetry.start(config, "content_id", "contetn_ver", startEdata, options);
+};
+
+export const markServerRequestStart = (qid: string) => {
+  window.__RESPONSE_TIMERS__![qid] = {
+    startTime: performance.now(),
+  };
+};
+
+export const markAnswerRendered = (qid: string, callback?: () => void) => {
+  requestAnimationFrame(() => {
+    const timer = window.__RESPONSE_TIMERS__?.[qid];
+    if (!timer) return;
+
+    timer.paintTime = performance.now();
+    console.log("PAINT RECORDED", qid, timer);
+
+    notifyResponseDataReady(qid); // ← ADD THIS
+
+    // Call callback after paint is recorded
+    if (callback) callback();
   });
 };
 
-export const logResponseEvent = (questionId: string, sessionId: string, questionText: string, responseText: string) => {
-  if (typeof Telemetry === 'undefined') return;
+export const logQuestionEvent = (
+  questionId: string,
+  sessionId: string,
+  questionText: string,
+) => {
   const target = {
-    "id": "default", "ver": "v0.1", "type": "QuestionResponse",
-    "parent": { "id": "p1", "type": "default" },
-    "questionsDetails": { "questionText": questionText, "answerText": responseText, "sessionId": sessionId },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    id: "default",
+    ver: "v0.1",
+    type: "Question",
+    parent: {
+      id: "p1",
+      type: "default",
+    },
+    questionsDetails: {
+      questionText: questionText,
+      sessionId: sessionId,
+    },
   };
-  Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
-  
-  sendTelemetryToNetwork('OE_ITEM_RESPONSE', {
+
+  const questionData = {
     qid: questionId,
     type: "CHOOSE",
-    target,
+    target: target,
     sid: sessionId,
-    channel: "AmulAI-" + getHostUrl()
-  });
-};
-
-export const logErrorEvent = (questionId: string, sessionId: string, error: string) => {
-  if (typeof Telemetry === 'undefined') return;
-  const target = {
-    "id": "default", "ver": "v0.1", "type": "Error",
-    "parent": { "id": "p1", "type": "default" },
-    "errorDetails": { "errorText": error, "sessionId": sessionId },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
-  };  
-  Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
-};
-
-export const logFeedbackEvent = (questionId: string, sessionId: string, feedbackText: string, feedbackType: string, questionText: string, responseText: string) => {
-  if (typeof Telemetry === 'undefined') return;
-  const target = {
-    "id": "default", "ver": "v0.1", "type": "Feedback",
-    "parent": { "id": "p1", "type": "default" },
-    "feedbackDetails": { feedbackText, sessionId, questionText, answerText: responseText, feedbackType },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    channel: "BharatVistaar-" + getHostUrl(),
   };
-  Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
+
+  Telemetry.response(questionData);
+};
+
+export const logResponseEvent = (
+  questionId: string,
+  sessionId: string,
+  questionText: string,
+  responseText: string,
+) => {
+  // Calculate performance metrics
+  const timer = window.__RESPONSE_TIMERS__?.[questionId];
+  const serverResponseTime =
+    timer?.responseEnd && timer?.responseStart
+      ? Math.round(timer.responseEnd - timer.responseStart)
+      : null;
+  const browserRenderTime =
+    timer?.paintTime && timer?.responseEnd
+      ? Math.round(timer.paintTime - timer.responseEnd)
+      : null;
+
+  const target = {
+    id: "default",
+    ver: "v0.1",
+    type: "QuestionResponse",
+    parent: {
+      id: "p1",
+      type: "default",
+    },
+    questionsDetails: {
+      questionText: questionText,
+      answerText: responseText,
+      sessionId: sessionId,
+    },
+    performance: {
+      server_response_time_ms: serverResponseTime,
+      browser_render_time_ms: browserRenderTime,
+    },
+  };
+
+  const responseData = {
+    qid: questionId,
+    type: "CHOOSE",
+    target: target,
+    sid: sessionId,
+    channel: "BharatVistaar-" + getHostUrl(),
+    values: [],
+  };
+
+  Telemetry.response(responseData);
+};
+
+export const logErrorEvent = (
+  questionId: string,
+  sessionId: string,
+  error: string,
+) => {
+  const target = {
+    id: "default",
+    ver: "v0.1",
+    type: "Error",
+    parent: {
+      id: "p1",
+      type: "default",
+    },
+    errorDetails: {
+      errorText: error,
+      sessionId: sessionId,
+    },
+  };
+
+  const errorData = {
+    qid: questionId,
+    type: "CHOOSE",
+    target: target,
+    sid: sessionId,
+    channel: "BharatVistaar-" + getHostUrl(),
+  };
+
+  Telemetry.response(errorData);
+};
+
+export const logFeedbackEvent = (
+  questionId: string,
+  sessionId: string,
+  feedbackText: string,
+  feedbackType: string,
+  questionText: string,
+  responseText: string,
+) => {
+  const target = {
+    id: "default",
+    ver: "v0.1",
+    type: "Feedback",
+    parent: {
+      id: "p1",
+      type: "default",
+    },
+    feedbackDetails: {
+      feedbackText: feedbackText,
+      sessionId: sessionId,
+      questionText: questionText,
+      answerText: responseText,
+      feedbackType: feedbackType,
+    },
+  };
+
+  const feedbackData = {
+    qid: questionId,
+    type: "CHOOSE",
+    target: target,
+    sid: sessionId,
+    channel: "BharatVistaar-" + getHostUrl(),
+  };
+
+  Telemetry.response(feedbackData);
 };
 
 export const endTelemetry = () => {
-  if (typeof Telemetry !== 'undefined') Telemetry.end({});
+  Telemetry.end({});
+};
+
+// Track when response data is ready for each question
+const responseDataReady: Map<string, Promise<void>> = new Map();
+
+// Call this from PerformanceObserver when response data arrives
+export const notifyResponseDataReady = (qid: string) => {
+  if (!responseDataReady.has(qid)) {
+    let resolve: () => void;
+    const promise = new Promise<void>((res) => {
+      resolve = res;
+    });
+    responseDataReady.set(qid, promise);
+    resolve!();
+  } else {
+    // If already set, resolve it immediately
+    responseDataReady.get(qid);
+  }
+};
+
+export const endTelemetryWithWait = async (qid: string, timeout = 3000) => {
+  const startWait = Date.now();
+
+  // Check if response data is already ready
+  const timer = window.__RESPONSE_TIMERS__?.[qid];
+  if (timer?.responseEnd && timer?.paintTime) {
+    console.log(`Response data already captured for ${qid}`);
+    Telemetry.end({});
+    return;
+  }
+
+  // Wait for response data notification
+  try {
+    const readyPromise =
+      responseDataReady.get(qid) ||
+      new Promise<void>((resolve) => {
+        // Create a waiting promise that resolves when data arrives
+        const checkInterval = setInterval(() => {
+          const t = window.__RESPONSE_TIMERS__?.[qid];
+          if (t?.responseEnd && t?.paintTime) {
+            clearInterval(checkInterval);
+            console.log(`Response data arrived for ${qid}`);
+            resolve();
+          }
+          if (Date.now() - startWait > timeout) {
+            clearInterval(checkInterval);
+            console.warn(`Timeout waiting for response data for ${qid}`);
+            resolve();
+          }
+        }, 100);
+      });
+
+    await Promise.race([
+      readyPromise,
+      new Promise<void>((resolve) => setTimeout(resolve, timeout)),
+    ]);
+  } catch (error) {
+    console.warn(`Error waiting for response data: ${error}`);
+  }
+
+  // Call telemetry endpoint
+  Telemetry.end({});
+
+  // Cleanup
+  responseDataReady.delete(qid);
+};
+
+export const getServerResponseTime = (qid: string): number | null => {
+  const timer = window.__RESPONSE_TIMERS__?.[qid];
+  if (!timer || !timer.responseStart || !timer.responseEnd) return null;
+
+  // Server response time = time from server starts sending to finishes sending
+  return timer.responseEnd - timer.responseStart;
+};
+
+export const getBrowserRenderTime = (qid: string): number | null => {
+  const timer = window.__RESPONSE_TIMERS__?.[qid];
+  if (!timer || !timer.responseEnd || !timer.paintTime) return null;
+
+  // Browser render time = time from response end to paint/render
+  return timer.paintTime - timer.responseEnd;
+};
+
+export const getTotalResponseTime = (qid: string): number | null => {
+  const timer = window.__RESPONSE_TIMERS__?.[qid];
+  if (!timer || !timer.startTime || !timer.paintTime) return null;
+
+  // Total time from request start to paint
+  return timer.paintTime - timer.startTime;
+};
+
+export const getNetworkWaitTime = (qid: string): number | null => {
+  const timer = window.__RESPONSE_TIMERS__?.[qid];
+  if (!timer || !timer.startTime || !timer.responseStart) return null;
+
+  // Network wait time (TTFB) = from request start to first byte received
+  return timer.responseStart - timer.startTime;
+};
+
+export const getTimingMetrics = (qid: string) => {
+  return {
+    serverResponseTime: getServerResponseTime(qid),
+    browserRenderTime: getBrowserRenderTime(qid),
+    totalResponseTime: getTotalResponseTime(qid),
+    networkWaitTime: getNetworkWaitTime(qid),
+    rawTimers: window.__RESPONSE_TIMERS__?.[qid],
+  };
 };

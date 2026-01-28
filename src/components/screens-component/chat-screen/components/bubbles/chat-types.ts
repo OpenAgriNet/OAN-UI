@@ -9,6 +9,8 @@ export type MessageBase = {
 	role: MessageRole;
 	createdAt: string;
 	status?: DeliveryStatus;
+	questionId?: string;
+	questionText?: string;
 };
 
 export type TextMessage = MessageBase & {

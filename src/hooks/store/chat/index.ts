@@ -69,6 +69,7 @@ type ChatStore = {
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
 	fetchLocation: (t: any) => void;
+    getUserForTelemetry: () => { preferred_username: string; email: string };
 };
 /* eslint-enable no-unused-vars */
 
@@ -149,6 +150,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
+    getUserForTelemetry: () => {
+        const user = useAuthStore.getState().user;
+        return {
+            preferred_username: user?.user_metadata?.name || user?.email || "guest",
+            email: user?.email || ""
+        };
+    },
+
 	setDraft: (value) => set(() => ({ draft: value })),
 
 	fetchLocation: (t) => {
@@ -191,7 +200,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const trimmed = text.trim();
 		if (!trimmed) return;
 
+		const questionId = uuidv4(); // Generate early to attach to message
 		const userMessage = makeUserMessage(trimmed);
+		userMessage.questionId = questionId; // Attach questionId
+		userMessage.questionText = trimmed;
 		set((state) => ({
 			messages: [...state.messages, userMessage],
 			draft: "",
@@ -206,8 +218,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = uuidv4();
+
+
+		// const questionId = uuidv4(); // Already generated above
+		telemetry.markServerRequestStart(questionId); // Start timing
+        
+        // Start telemetry session for Question Event
+        const userDetails = get().getUserForTelemetry();
+        await telemetry.startTelemetry(currentSession, userDetails);
 		telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+        telemetry.endTelemetry(); // End session for Question Event
+
 
 		try {
 			// In a real app we'd detect language, here we use what's passed
@@ -230,7 +251,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText)]
+								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed }]
 							};
 						}
 					});
@@ -238,7 +259,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			);
 
 			set({ isAssistantTyping: false });
-			telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
+			set({ isAssistantTyping: false });
+            
+            // Start telemetry session for Response Event (wait for render)
+             const userDetailsResponse = get().getUserForTelemetry();
+             await telemetry.startTelemetry(currentSession, userDetailsResponse);
+             await telemetry.endTelemetryWithWait(questionId);
+			// telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response); // Moved to message-list for render timing
 			
 			const suggestions = await apiService.getSuggestions(currentSession, language);
 			set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });

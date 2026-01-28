@@ -27,7 +27,38 @@ export function MessageList(props: MessageListProps) {
 				scrollArea.scrollTo({ top: 0, behavior: "smooth" });
 			}
 		}
-	}, [props.messages.length, props.isAssistantTyping]);
+
+		// Performance Tracking
+		const lastMessage = props.messages[props.messages.length - 1];
+		if (
+			lastMessage &&
+			lastMessage.role === "assistant" &&
+			lastMessage.type === "card" &&
+			lastMessage.questionId &&
+			!props.isAssistantTyping // Only log when fully done? Or maybe streams behave differently. 
+            // In original OAN-UI it seemed to log after paint. 
+            // We'll trust that isAssistantTyping false means done.
+		) {
+            // We need to import these functions or pass them down. 
+            // Ideally we'd import them directly since they are singletons/globals basically.
+            import("@/lib/telemetry").then(({ markAnswerRendered, logResponseEvent, endTelemetryWithWait }) => {
+                // We need the session ID, which isn't in props. 
+                // But the store has it. Or we can just rely on the global state in telemetry if it persists?
+                // Actually `logResponseEvent` needs sessionId. 
+                // Maybe we should pass sessionId to MessageList?
+                // Or we can import the store to get sessionId.
+                import("@/hooks/store/chat").then(({ useChatStore }) => {
+                   const sessionId = useChatStore.getState().sessionId; 
+                   if(sessionId && lastMessage.questionText && lastMessage.body) {                           
+                       markAnswerRendered(lastMessage.questionId!, () => {
+                           logResponseEvent(lastMessage.questionId!, sessionId, lastMessage.questionText!, lastMessage.body);
+                           // endTelemetryWithWait is called in store action
+                       });
+                   }
+                });
+            });
+		}
+	}, [props.messages.length, props.isAssistantTyping, props.messages]);
 
 	return (
 		<ScrollArea className="h-full">
