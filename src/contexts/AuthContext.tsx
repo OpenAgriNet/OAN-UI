@@ -279,9 +279,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Function to validate JWT and extract payload
+  // Uses high clockTolerance to allow expired tokens (for long sessions)
   async function validateJWT(token: string, key: CryptoKey): Promise<{ isValid: boolean; payload: JWTPayload | null }> {
     try {
-      const { payload } = await jwtVerify(token, key);
+      // Set clockTolerance to 100 days (in seconds) to effectively skip exp check
+      const { payload } = await jwtVerify(token, key, {
+        clockTolerance: 100 * 24 * 60 * 60 // 100 days in seconds
+      });
       return { isValid: true, payload };
     } catch (e) {
       console.error('JWT verification failed:', e);
