@@ -32,7 +32,7 @@ export default function SettingsPage() {
 				<Button
 					variant="ghost"
 					size="icon"
-					onClick={() => navigate({ to: "/chat" })}
+					onClick={() => navigate({ to: "/chat", search: (old) => old })}
 					className="h-10 w-10 text-gray-900 dark:text-gray-100 hover:text-[#F65151] hover:bg-[#FFE2E2]"
 				>
 					<ArrowLeft className="h-6 w-6" />

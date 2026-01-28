@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_restrict-login-signup")({
 		const { isAuthed } = useAuthStore.getState();
 
 		if (isAuthed()) {
-			throw redirect({ to: "/chat", replace: true });
+			throw redirect({ to: "/chat", search: (old) => old, replace: true });
 		}
 	},
 	component: Outlet
