@@ -67,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!publicKeyResponse.ok) {
           console.error('Failed to fetch public key:', publicKeyResponse.status);
           createUserFromPayload(null);
-          redirectToErrorPage();
+          // redirectToErrorPage();
           return;
         }
         const publicKeyPEM = await publicKeyResponse.text();
@@ -93,12 +93,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } else {
               console.error('JWT verification failed for URL token');
               createUserFromPayload(null);
-              redirectToErrorPage();
+              // redirectToErrorPage();
             }
           } else {
                console.error('Public key not loaded.');
                createUserFromPayload(null);
-               redirectToErrorPage();
+               // redirectToErrorPage();
           }
         }
         // Otherwise, check for JWT in localStorage
@@ -114,34 +114,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 console.error('JWT verification failed for stored token');
                 localStorage.removeItem(JWT_STORAGE_KEY);
                 createUserFromPayload(null);
-                redirectToErrorPage();
+                // redirectToErrorPage();
               }
              } else {
                console.error('Public key not loaded.');
                createUserFromPayload(null);
-               redirectToErrorPage();
+               // redirectToErrorPage();
              }
           } else {
-            // No token found - check if we're on a protected route
-            const isProtectedRoute = !window.location.pathname.includes('/error');
-            if (isProtectedRoute) {
-              console.log('No auth token found, redirecting to error page');
-              createUserFromPayload(null);
-              redirectToErrorPage();
-            } else {
-              createUserFromPayload(null);
-            }
+            // No token found - just set user to null, no redirect
+            createUserFromPayload(null);
+            // redirectToErrorPage();
           }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
         createUserFromPayload(null);
-        // Only redirect if there's no token in URL (to avoid redirect during token processing)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenFromUrl = urlParams.get('token');
-        if (!tokenFromUrl) {
-          redirectToErrorPage();
-        }
       } finally {
         setIsLoading(false);
       }
@@ -271,12 +259,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Function to redirect to error page
-  const redirectToErrorPage = () => {
-    if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
-      console.log('Redirecting to /error?reason=auth from AuthContext');
-      window.location.href = '/error?reason=auth';
-    }
-  };
+  // const redirectToErrorPage = () => {
+  //   if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
+  //     console.log('Redirecting to /error?reason=auth from AuthContext');
+  //     window.location.href = '/error?reason=auth';
+  //   }
+  // };
 
   // Function to validate JWT and extract payload
   // Uses high clockTolerance to allow expired tokens (for long sessions)
