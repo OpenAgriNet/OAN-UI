@@ -5,8 +5,6 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useChatStore } from "@/hooks/store/chat";
 import { setupAudioRecording, stopRecording } from "@/lib/audio-utils";
 import { useRef } from "react";
-import feedbackConfigData from "../../../../../feedback.json";
-const feedbackConfig = feedbackConfigData as any;
 
 export type FeedbackReason =
 	| "incorrect"
@@ -22,8 +20,16 @@ type FeedbackModalProps = {
 };
 
 export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
-	const FEEDBACK_OPTIONS = feedbackConfig.reasons;
-	const { language } = useLanguage();
+	const { language, t } = useLanguage();
+	
+	const FEEDBACK_OPTIONS = [
+		{ id: "incorrect", label: t("feedback.reasons.incorrect") },
+		{ id: "not_helpful", label: t("feedback.reasons.not_helpful") },
+		{ id: "irrelevant", label: t("feedback.reasons.irrelevant") },
+		{ id: "inappropriate", label: t("feedback.reasons.inappropriate") },
+		{ id: "other", label: t("feedback.reasons.other") }
+	];
+
 	const playTTS = useChatStore((s) => s.playTTS);
 	const sessionId = useChatStore((s) => s.sessionId);
 
@@ -92,7 +98,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 			<div className="relative w-full max-w-md sm:max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300 flex flex-col">
 				{/* Header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
-					<h2 className="text-lg font-bold text-gray-900">{feedbackConfig.title}</h2>
+					<h2 className="text-lg font-bold text-gray-900">{t("feedback.title")}</h2>
 					<button
 						onClick={handleCancel}
 						className="rounded-full p-1 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -106,7 +112,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 					{/* Subtitle */}
 					<div className="px-6 pb-4">
 						<p className="text-xs text-gray-600">
-							{feedbackConfig.description}
+							{t("feedback.description")}
 						</p>
 					</div>
 
@@ -130,13 +136,13 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 					{/* Message Section */}
 					<div className="px-6 pb-6">
 						<label className="block text-sm font-semibold text-gray-900 mb-2">
-							Message
+							{t("feedback.messageLabel")}
 						</label>
 						<div className="relative">
 							<textarea
 								value={message}
 								onChange={(e) => setMessage(e.target.value)}
-								placeholder={feedbackConfig.placeholder}
+								placeholder={t("feedback.placeholder") as string}
 								className="w-full px-4 py-3 pr-24 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
 								rows={4}
 								style={{ fontStyle: message ? "normal" : "italic" }}
@@ -171,13 +177,13 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 						variant="outline"
 						className="flex-1 h-11 cursor-pointer rounded-xl border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 text-sm"
 					>
-						{feedbackConfig.cancelLabel}
+						{t("feedback.cancel")}
 					</Button>
 					<Button
 						onClick={handleSubmit}
-						className="flex-1 h-11 cursor-pointerrounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold shadow-none text-sm"
+						className="flex-1 h-11 cursor-pointer rounded-xl bg-[#FFE2E2] hover:bg-[#ffcccc] text-[#F65151] font-semibold shadow-none text-sm"
 					>
-						{feedbackConfig.submitLabel}
+						{t("feedback.submit")}
 					</Button>
 				</div>
 			</div>

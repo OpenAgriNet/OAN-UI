@@ -5,6 +5,8 @@ import micAmul from "@/assets/micAmul.svg";
 import sendAmul from "@/assets/sendAmul.svg";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/components/LanguageProvider";
+import { CHAT_ASSISTANT } from "@/components/screens-component/chat-screen/config";
 
 type RecordingState = "recording" | "paused";
 
@@ -27,6 +29,7 @@ export function RecordingControls({
 	onDelete,
 	onSend,
 }: RecordingControlsProps) {
+	const { t } = useLanguage();
 	const [playbackTime, setPlaybackTime] = useState(0);
 	const [isPlayingPreview, setIsPlayingPreview] = useState(false);
 	const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -91,7 +94,7 @@ export function RecordingControls({
 			{/* Top Pill Status - Absolute Positioned on the border */}
 			<div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform">
 				<div className="whitespace-nowrap rounded-full bg-red-50 px-6 py-1.5 text-xs font-medium text-[#F65151] shadow-sm border border-red-100">
-					Amul AI is listening, start speaking
+					{t("recordingListening", { botName: CHAT_ASSISTANT.name })}
 				</div>
 			</div>
 

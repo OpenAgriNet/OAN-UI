@@ -43,8 +43,8 @@ export function LanguageSelectionDropdown({
 								className={cn(
 									"w-full flex items-center px-5 py-3.5 transition-colors text-left cursor-pointer",
 									isActive 
-										? "bg-[#FEF2B2] text-gray-900 font-bold" 
-										: "bg-white text-gray-800 font-medium hover:bg-gray-50"
+										? "bg-[#FFE2E2] text-gray-900 font-bold border-l-[3px] border-[#F65151]" 
+										: "bg-white text-gray-800 font-medium hover:bg-gray-50 border-l-[3px] border-transparent"
 								)}
 							>
 								<span className="text-sm font-medium">

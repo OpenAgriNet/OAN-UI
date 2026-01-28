@@ -1,17 +1,19 @@
 {
   "welcome": "Hello! I am your farm assistant. How can I help you today?",
   "inputPlaceholder": "Ask your question...",
+  "chatMicHint": "Tap the microphone button to ask your question",
   "startRecording": "Start recording",
   "stopRecording": "Stop recording",
   "send": "Send message",
   "Listen": "Listen",
   "selectLanguage": "Select language",
-  "disclaimerText": "AI-generated content. Please verify information independently.",
+  "disclaimerText": "AI-generated content. Please verify locally if required.",
   "questions": [
     "What are the best practices for growing wheat, from soil preparation to harvest?",
     "How do I manage common diseases like powdery mildew in crops like wheat?",
     "When and how should I fertilize sugarcane during the growing season?"
   ],
+  "recordingListening": "[botName] is listening, start speaking",
   "capabilities": [
     "Answers are based only on standard university documents and crop SOPs.",
     "You can ask about crop practices, pest/disease control, fertilizer schedules, and harvesting methods.",
@@ -151,6 +153,7 @@
       "cauliflower",
       "broccoli"
     ],
+    "limitMessage": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Amul AI app.",
     "fruit crop": [
       "mango",
       "banana",
@@ -361,5 +364,28 @@
     "Understanding your question...",
     "Finding Right information...",
     "Preparing the answer..."
-  ]
+  ],
+  "settingsPage": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "helpAndSupport": "Help & Support",
+    "faq": "Frequently Asked Questions (FAQs)"
+  },
+  "feedback": {
+    "title": "Provide Feedback",
+    "description": "We're sorry that response wasn't helpful. Please let us know what was wrong so we can improve.",
+    "placeholder": "Or tell us more about the issue...",
+    "messageLabel": "Message",
+    "cancel": "Cancel",
+    "submit": "Submit Feedback",
+    "reasons": {
+      "incorrect": "Information is incorrect",
+      "not_helpful": "Response is not helpful",
+      "irrelevant": "Response is irrelevant to my question",
+      "inappropriate": "Language or tone is inappropriate",
+      "other": "Other issue"
+    }
+  }
 }

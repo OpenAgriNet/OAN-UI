@@ -79,7 +79,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className="text-base leading-relaxed text-foreground">
+						<div className={cn("text-base leading-relaxed text-foreground", message.isError && "text-red-500")}>
 							{message.body.split("\n\n").map((para, idx) => {
 								const isSource = para.toLowerCase().includes("source:");
 								

@@ -274,7 +274,7 @@ export function ChatInput({
 						{micHint ? (
 							<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
 								<div className="relative whitespace-nowrap rounded-lg brand-gradient-soft px-3 py-2 text-sm font-medium text-black shadow-sm">
-									Tap the microphone button to ask your question
+									{micHint}
 									<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 brand-gradient-soft"></div>
 								</div>
 								<style>{`

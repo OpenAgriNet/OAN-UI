@@ -48,7 +48,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 						{/* Desktop Language Button */}
 						<Button
 							variant="outline"
-							className="hidden h-9 w-auto gap-2 rounded-full border-border bg-transparent px-3 font-normal text-foreground sm:flex cursor-pointer"
+							className="hidden h-9 w-auto gap-2 rounded-full bg-transparent border-transparent px-3 font-normal text-foreground sm:flex cursor-pointer border-[#CBCBCB] hover:bg-[#FFE2E2] hover:border-[#F65151]"
 						>
 							<img src={langIcon} alt="Language" className="h-5 w-5" />
 							<span className="font-medium text-xs">{currentLanguage.name}</span>
@@ -70,7 +70,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 					<Button 
 						variant="ghost" 
 						size="icon" 
-						className="h-10 w-10 text-muted-foreground cursor-pointer"
+						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[#FFE2E2]"
 						onClick={onOpenSettings}
 					>
 						<img src={settingsIcon} alt="Settings" className="h-7 w-7 text-[#F65151]" />
