@@ -9,9 +9,21 @@
   "selectLanguage": "Select language",
   "disclaimerText": "AI-generated content. Please verify locally if required.",
   "questions": [
-    "What are the best practices for growing wheat, from soil preparation to harvest?",
-    "How do I manage common diseases like powdery mildew in crops like wheat?",
-    "When and how should I fertilize sugarcane during the growing season?"
+    "When should a cow/buffalo in heat be bred?",
+    "When should a cow/buffalo be bred again after calving?",
+    "What are the reasons for the retention of the afterbirth (placenta)?",
+    "When should the placenta be removed after calving?",
+    "How can mastitis (udder swelling) be prevented?",
+    "What to do to prevent FMD?",
+    "What are the home remedies for bloat?",
+    "What to do to prevent worms?",
+    "What to do for tick control?",
+    "When should deworming medicine be given to calves?",
+    "How to take care of a pregnant animal?",
+    "What is Silage?",
+    "When should dehorning (disbudding) be done?",
+    "Which animal breeds should be kept?",
+    "What to do to increase milk yield?"
   ],
   "recordingListening": "[botName] is listening, start speaking",
   "capabilities": [
