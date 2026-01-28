@@ -233,7 +233,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
-			const response = await apiService.sendUserQuery(
+			const _response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
 				language, // source

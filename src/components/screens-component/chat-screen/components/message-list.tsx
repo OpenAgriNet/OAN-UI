@@ -41,7 +41,7 @@ export function MessageList(props: MessageListProps) {
 		) {
             // We need to import these functions or pass them down. 
             // Ideally we'd import them directly since they are singletons/globals basically.
-            import("@/lib/telemetry").then(({ markAnswerRendered, logResponseEvent, endTelemetryWithWait }) => {
+            import("@/lib/telemetry").then(({ markAnswerRendered, logResponseEvent }) => {
                 // We need the session ID, which isn't in props. 
                 // But the store has it. Or we can just rely on the global state in telemetry if it persists?
                 // Actually `logResponseEvent` needs sessionId. 

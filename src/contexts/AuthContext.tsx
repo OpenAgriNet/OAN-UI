@@ -179,9 +179,9 @@ mwIDAQAB
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
     // Extract additional user fields
-    const role = (payload as any)?.role as string || '';
-    const farmer_id = (payload as any)?.farmer_id as string || '';
-    const unique_id = (payload as any)?.unique_id as string | number | undefined;
+    const _role = (payload as any)?.role as string || '';
+    const _farmer_id = (payload as any)?.farmer_id as string || '';
+    const _unique_id = (payload as any)?.unique_id as string | number | undefined;
     
     setUser({
       authenticated: true,

@@ -73,7 +73,8 @@ const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
       keepalive: true
     }).catch(() => {
     });
-  } catch (error) {
+  } catch (_error) {
+    // legacy error handling
   }
 };
 
