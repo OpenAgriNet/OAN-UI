@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
+import apiService from '../lib/api-service';
 // import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -86,6 +87,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const result = await validateJWT(tokenFromUrl, importedPublicKey);
             if (result.isValid) {
               storeJWT(tokenFromUrl);
+              // Notify API service that token has been updated
+              apiService.updateAuthToken();
               createUserFromPayload(result.payload);
               // Clean up URL by removing the JWT parameter
               const newUrl = window.location.pathname + window.location.hash;
@@ -293,6 +296,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const result = await validateJWT(token, publicKey);
         if (result.isValid) {
           storeJWT(token);
+          // Notify API service that token has been updated
+          apiService.updateAuthToken();
           createUserFromPayload(result.payload);
           return true;
         }
