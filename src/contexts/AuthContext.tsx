@@ -68,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!publicKeyResponse.ok) {
           console.error('Failed to fetch public key:', publicKeyResponse.status);
           createUserFromPayload(null);
-          // redirectToErrorPage();
+          redirectToErrorPage();
           return;
         }
         const publicKeyPEM = await publicKeyResponse.text();
@@ -96,12 +96,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             } else {
               console.error('JWT verification failed for URL token');
               createUserFromPayload(null);
-              // redirectToErrorPage();
+              redirectToErrorPage();
             }
           } else {
                console.error('Public key not loaded.');
                createUserFromPayload(null);
-               // redirectToErrorPage();
+               redirectToErrorPage();
           }
         }
         // Otherwise, check for JWT in localStorage
@@ -117,12 +117,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
                 console.error('JWT verification failed for stored token');
                 localStorage.removeItem(JWT_STORAGE_KEY);
                 createUserFromPayload(null);
-                // redirectToErrorPage();
+                redirectToErrorPage();
               }
              } else {
                console.error('Public key not loaded.');
                createUserFromPayload(null);
-               // redirectToErrorPage();
+               redirectToErrorPage();
              }
           } else {
             // No token found - just set user to null, no redirect
@@ -267,12 +267,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Function to redirect to error page
-  // const redirectToErrorPage = () => {
-  //   if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
-  //     console.log('Redirecting to /error?reason=auth from AuthContext');
-  //     window.location.href = '/error?reason=auth';
-  //   }
-  // };
+  const redirectToErrorPage = () => {
+    if (typeof window !== 'undefined' && !window.location.pathname.includes('/error')) {
+      console.log('Redirecting to /error?reason=auth from AuthContext');
+      window.location.href = '/error?reason=auth';
+    }
+  };
 
   // Function to validate JWT and extract payload
   // Uses high clockTolerance to allow expired tokens (for long sessions)
