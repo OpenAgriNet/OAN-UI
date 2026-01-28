@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
-import { setTelemetryUserData } from '../lib/telemetry';
+// import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -156,7 +156,7 @@ mwIDAQAB
       setUser(null);
       setLocations([]);
       // Clear telemetry data when user is not available
-      setTelemetryUserData({});
+      // setTelemetryUserData({});
       return;
     }
     
@@ -179,9 +179,9 @@ mwIDAQAB
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
     // Extract additional user fields
-    const role = (payload as any)?.role as string || '';
-    const farmer_id = (payload as any)?.farmer_id as string || '';
-    const unique_id = (payload as any)?.unique_id as string | number | undefined;
+    const _role = (payload as any)?.role as string || '';
+    const _farmer_id = (payload as any)?.farmer_id as string || '';
+    const _unique_id = (payload as any)?.unique_id as string | number | undefined;
     
     setUser({
       authenticated: true,
@@ -217,15 +217,15 @@ mwIDAQAB
     setLocations(validatedLocations);
 
     // Set comprehensive telemetry data with all location types
-    setTelemetryUserData({
-      mobile: mobile,
-      username: name,
-      email: email,
-      role: role,
-      farmer_id: farmer_id,
-      unique_id: unique_id,
-      locations: validatedLocations
-    });
+    // setTelemetryUserData({
+    //   mobile: mobile,
+    //   username: name,
+    //   email: email,
+    //   role: role,
+    //   farmer_id: farmer_id,
+    //   unique_id: unique_id,
+    //   locations: validatedLocations
+    // });
   };
 
   // Store JWT in localStorage with expiration
@@ -331,7 +331,7 @@ mwIDAQAB
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
     // Clear all telemetry data on logout
-    setTelemetryUserData({});
+    // setTelemetryUserData({});
   };
 
   return (
