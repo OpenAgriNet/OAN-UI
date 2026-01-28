@@ -81,14 +81,6 @@ export function ChatInput({
 		};
 	}, []);
 
-	// autosize textarea
-	useEffect(() => {
-		const el = taRef.current;
-		if (!el) return;
-		el.style.height = "0px";
-		el.style.height = Math.min(el.scrollHeight, 140) + "px";
-	}, [value]);
-
 	useEffect(() => {
 		onTypingChange?.(value.trim().length > 0);
 	}, [value]);
@@ -272,7 +264,7 @@ export function ChatInput({
 					</div>
 				)}
 
-				<div className="flex items-end gap-2">
+				<div className="flex items-center gap-2">
 					<div className="relative">
 						{micHint ? (
 							<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
@@ -331,10 +323,10 @@ export function ChatInput({
 							disabled={disabled || isLoading}
 							placeholder={isLoading ? "" : placeholder}
 							className={cn(
-								"flex-1 min-w-0 max-h-[140px] min-h-[24px] mx-4 resize-none border-0 bg-transparent px-0 py-3 text-base shadow-none",
+								"flex-1 min-w-0 max-h-[140px] min-h-[48px] mx-4 resize-none border-0 bg-transparent px-0 py-3 text-base shadow-none",
 								"focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
 								"placeholder:text-gray-400",
-								"break-words whitespace-pre-wrap overflow-y-auto",
+								"break-words whitespace-pre-wrap overflow-y-auto block",
 								disabled || isLoading ? "cursor-not-allowed" : ""
 							)}
 						/>
