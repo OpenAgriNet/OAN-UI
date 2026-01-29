@@ -347,17 +347,29 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	generateQuickActions: (t) => {
 		const staticQuestions = t("questions");
 		
-		if (Array.isArray(staticQuestions) && staticQuestions.length > 5) {
-			// If we have a static list of questions (like for Gujarati), use them
+		if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
+			// If we have a static list of questions (like for Gujarati or English), use them
 			const newActions: QuickAction[] = shuffle(staticQuestions)
 				.slice(0, 3)
 				.map((question, index) => {
 					// Map based on keywords or random
-					let icon: QuickAction["icon"] = "tractor";
-					if (question.includes("ગાય") || question.includes("ભેંસ") || question.includes("પશુ") || question.includes("દૂધ")) icon = "cow";
-					else if (question.includes("પાક") || question.includes("સજીવ")) icon = "wheat";
-					else if (question.includes("હવામાન")) icon = "cloud";
-					else icon = randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+					const lowerQ = question.toLowerCase();
+					const KEYWORD_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
+						{
+							icon: "cow",
+							keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves"]
+						},
+						{
+							icon: "wheat",
+							keywords: ["પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
+						},
+						{
+							icon: "cloud",
+							keywords: ["હવામાન", "weather", "rain", "forecast"]
+						}
+					];
+
+					let icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
 
 					return {
 						id: String(index + 1),
