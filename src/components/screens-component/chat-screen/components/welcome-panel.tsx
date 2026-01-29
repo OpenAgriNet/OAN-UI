@@ -30,7 +30,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 				
 				<div className="space-y-4">
 					<img src={amulText} alt="Amul AI" className="h-10 mx-auto object-contain" />
-					<div className="text-xl font-medium text-black">
+					<div className="text-xl font-medium text-black whitespace-pre-line">
 						{t("welcome")}
 					</div>
 				</div>
@@ -43,7 +43,11 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 					const iconMap: Record<string, string> = {
 						cow: "🐮",
 						wheat: "💰",
-						cloud: "🪴"
+						cloud: "🪴",
+						health: "🐄",
+						nutrition: "🥛",
+						vaccination: "💉",
+						schemes: "🏛️"
 					};
 					const icon = iconMap[action.icon] || "📄";
 
