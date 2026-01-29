@@ -157,11 +157,11 @@ export const startTelemetry = async (
   const secret = "gnjhgjugkk";
   const config = {
     pdata: {
-      id: "BharatVistaar",
+      id: "AmulAI",
       ver: "v0.1",
-      pid: "BharatVistaar",
+      pid: "AmulAI",
     },
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: "AmulAI-" + getHostUrl(),
     sid: sessionId,
     uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
     did: userDetailsObj["email"] || "DEFAULT-USER",
@@ -221,7 +221,7 @@ export const logQuestionEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: "AmulAI-" + getHostUrl(),
   };
 
   Telemetry.response(questionData);
@@ -268,7 +268,7 @@ export const logResponseEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: "AmulAI-" + getHostUrl(),
     values: [],
   };
 
@@ -299,7 +299,7 @@ export const logErrorEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: "AmulAI-" + getHostUrl(),
   };
 
   Telemetry.response(errorData);
@@ -335,7 +335,7 @@ export const logFeedbackEvent = (
     type: "CHOOSE",
     target: target,
     sid: sessionId,
-    channel: "BharatVistaar-" + getHostUrl(),
+    channel: "AmulAI-" + getHostUrl(),
   };
 
   Telemetry.response(feedbackData);
