@@ -67,7 +67,7 @@ export function MessageList(props: MessageListProps) {
 				{props.messages.map((m) => (
 					<Bubble key={m.id} message={m} onQuickReply={props.onQuickReply} />
 				))}
-				{props.isAssistantTyping ? (
+				{props.isAssistantTyping && props.messages[props.messages.length - 1]?.role !== "assistant" ? (
 					<MessageChrome role="assistant" showLabel={true}>
 						<AILoader className="px-1" />
 					</MessageChrome>

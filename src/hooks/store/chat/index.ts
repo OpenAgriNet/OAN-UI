@@ -108,14 +108,14 @@ function makeUserMessage(text: string): TextMessage {
 	};
 }
 
-function makeAssistantMessage(text: string, isError = false): ChatMessage {
+function makeAssistantMessage(text: string, isError = false, showListenRow = false): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: "assistant",
 		type: "card",
 		body: text,
 		createdAt: new Date().toISOString(),
-		showListenRow: true,
+		showListenRow,
 		isError
 	};
 }
@@ -258,8 +258,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				}
 			);
 
-			set({ isAssistantTyping: false });
-			set({ isAssistantTyping: false });
+			set((state) => {
+				const lastMsg = state.messages[state.messages.length - 1];
+				if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
+					return {
+						messages: [
+							...state.messages.slice(0, -1),
+							{ ...lastMsg, showListenRow: true }
+						],
+						isAssistantTyping: false
+					};
+				}
+				return { isAssistantTyping: false };
+			});
             
             // Start telemetry session for Response Event (wait for render)
              const userDetailsResponse = get().getUserForTelemetry();
@@ -286,7 +297,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				const limitMessage = tData.limitMessage || "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Amul AI app.";
 				
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
 				}));
 				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
 			} else {
