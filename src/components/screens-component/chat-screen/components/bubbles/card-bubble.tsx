@@ -74,17 +74,21 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	return (
 		<>
 			<div className="w-full max-w-[95%] sm:max-w-[90%] mb-8">
-				<Card className="relative rounded-2xl border-none bg-white p-4 shadow-sm overflow-hidden">
+				<Card className="relative rounded-2xl border-none bg-white p-3 shadow-sm overflow-hidden">
 					{/* Content */}
 					<div>
 						{message.title ? (
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("text-base leading-relaxed text-foreground [&>p]:mb-3 [&>p:last-child]:mb-0 whitespace-pre-wrap break-words", message.isError && "text-red-500")}>
+						<div className={cn("text-base leading-relaxed text-foreground whitespace-pre-wrap break-words [&>*:last-child]:mb-0", message.isError && "text-red-500")}>
 							<ReactMarkdown
 								remarkPlugins={[remarkGfm]}
 								components={{
+									p: ({ node, ...props }) => <p className="mb-1.5 last:mb-0" {...props} />,
+									ol: ({ node, ...props }) => <ol className="my-1.5 list-decimal pl-5 space-y-0.5" {...props} />,
+									ul: ({ node, ...props }) => <ul className="my-1.5 list-disc pl-5 space-y-0.5" {...props} />,
+									li: ({ node, ...props }) => <li className="leading-snug" {...props} />,
 									strong: ({ node, ...props }) => <span className="font-bold" {...props} />,
 									a: ({ node, ...props }) => (
 										<a
