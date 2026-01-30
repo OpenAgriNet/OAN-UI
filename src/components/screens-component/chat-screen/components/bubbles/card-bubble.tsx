@@ -7,6 +7,8 @@ import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -78,37 +80,39 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	return (
 		<>
 			<div className="w-full max-w-[95%] sm:max-w-[90%] mb-8">
-				<Card className="relative rounded-2xl border-none bg-white p-4 shadow-sm overflow-hidden">
+				<Card className="relative rounded-2xl border-none bg-white p-3 shadow-sm overflow-hidden">
 					{/* Content */}
 					<div>
 						{message.title ? (
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("text-base leading-relaxed text-foreground", message.isError && "text-red-500")}>
-							{message.body.split("\n\n").map((para, idx) => {
-								const isSource = para.toLowerCase().includes("source:");
+						<div className={cn("text-base leading-snug text-foreground break-words", message.isError && "text-red-500")}>
+							<ReactMarkdown
+								remarkPlugins={[remarkGfm]}
+								components={{
+									p: ({ node, ...props }) => (
+										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />
+									),
+									
+									ol: ({ node, ...props }) => (
+										<ol className="my-1.5 list-decimal pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
+									),
+									ul: ({ node, ...props }) => (
+										<ul className="my-1.5 list-disc pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
+									),
+									
+									li: ({ node, ...props }) => (
+										<li className="pl-1" {...props} /> 
+									),
 								
-								// Helper to render inline bold text (handles **text**)
-								const renderFormattedText = (text: string) => {
-									const parts = text.split(/(\*\*.*?\*\*)/g);
-									return parts.map((part, i) => {
-										if (part.startsWith("**") && part.endsWith("**")) {
-											return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-										}
-										return part;
-									});
-								};
-
-								// Strip surrounding markdown from source paragraphs if present
-								const content = isSource ? para.replace(/^\*\*|\*\*$/g, "").trim() : para;
-
-								return (
-									<p key={idx} className={cn("whitespace-pre-wrap", isSource && "font-bold", idx !== 0 && "mt-3")}>
-										{renderFormattedText(content)}
-									</p>
-								);
-							})}
+									strong: ({ node, ...props }) => (
+										<span className="font-semibold text-foreground/90" {...props} />
+									),
+								}}
+							>
+								{message.body}
+							</ReactMarkdown>
 						</div>
 
 						{/* Action Chips */}
@@ -130,7 +134,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 					{/* Footer Row */}
 					{message.showListenRow && (
 						<div className="flex flex-col gap-3">
-							<div className="mx-[-1rem] h-px bg-gray-200 dark:bg-green-800/20" />
+							<div className="-mx-3 h-px bg-gray-200 dark:bg-green-800/20" />
 							<div className="flex items-center justify-start -ml-3">
 							<div className="flex items-center gap-0">
 								<Button
