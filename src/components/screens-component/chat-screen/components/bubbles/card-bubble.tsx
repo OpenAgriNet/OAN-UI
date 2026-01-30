@@ -85,17 +85,23 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 							<ReactMarkdown
 								remarkPlugins={[remarkGfm]}
 								components={{
-									p: ({ node, ...props }) => <p className="mb-1 last:mb-0" {...props} />,
-									ol: ({ node, ...props }) => <ol className="my-1 list-decimal pl-5 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />,
-									ul: ({ node, ...props }) => <ul className="my-1 list-disc pl-5 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />,
-									strong: ({ node, ...props }) => <span className="font-bold" {...props} />,
-									a: ({ node, ...props }) => (
-										<a
-											target="_blank"
-											rel="noopener noreferrer"
-											className="text-blue-600 underline hover:text-blue-800"
-											{...props}
-										/>
+									p: ({ node, ...props }) => (
+										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />
+									),
+									
+									ol: ({ node, ...props }) => (
+										<ol className="my-1.5 list-decimal pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
+									),
+									ul: ({ node, ...props }) => (
+										<ul className="my-1.5 list-disc pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
+									),
+									
+									li: ({ node, ...props }) => (
+										<li className="pl-1" {...props} /> 
+									),
+								
+									strong: ({ node, ...props }) => (
+										<span className="font-semibold text-foreground/90" {...props} />
 									),
 								}}
 							>
@@ -122,7 +128,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 					{/* Footer Row */}
 					{message.showListenRow && (
 						<div className="flex flex-col gap-3">
-							<div className="mx-[-1rem] h-px bg-gray-200 dark:bg-green-800/20" />
+							<div className="-mx-3 h-px bg-gray-200 dark:bg-green-800/20" />
 							<div className="flex items-center justify-start -ml-3">
 							<div className="flex items-center gap-0">
 								<Button
