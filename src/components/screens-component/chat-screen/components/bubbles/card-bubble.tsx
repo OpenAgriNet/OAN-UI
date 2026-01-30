@@ -7,6 +7,8 @@ import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -79,30 +81,23 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("text-base leading-relaxed text-foreground", message.isError && "text-red-500")}>
-							{message.body.split("\n\n").map((para, idx) => {
-								const isSource = para.toLowerCase().includes("source:");
-								
-								// Helper to render inline bold text (handles **text**)
-								const renderFormattedText = (text: string) => {
-									const parts = text.split(/(\*\*.*?\*\*)/g);
-									return parts.map((part, i) => {
-										if (part.startsWith("**") && part.endsWith("**")) {
-											return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-										}
-										return part;
-									});
-								};
-
-								// Strip surrounding markdown from source paragraphs if present
-								const content = isSource ? para.replace(/^\*\*|\*\*$/g, "").trim() : para;
-
-								return (
-									<p key={idx} className={cn("whitespace-pre-wrap", isSource && "font-bold", idx !== 0 && "mt-3")}>
-										{renderFormattedText(content)}
-									</p>
-								);
-							})}
+						<div className={cn("text-base leading-relaxed text-foreground [&>p]:mb-3 [&>p:last-child]:mb-0 whitespace-pre-wrap break-words", message.isError && "text-red-500")}>
+							<ReactMarkdown
+								remarkPlugins={[remarkGfm]}
+								components={{
+									strong: ({ node, ...props }) => <span className="font-bold" {...props} />,
+									a: ({ node, ...props }) => (
+										<a
+											target="_blank"
+											rel="noopener noreferrer"
+											className="text-blue-600 underline hover:text-blue-800"
+											{...props}
+										/>
+									),
+								}}
+							>
+								{message.body}
+							</ReactMarkdown>
 						</div>
 
 						{/* Action Chips */}
