@@ -283,7 +283,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 			// Show success for text completion if needed, though usually silent is better for chat.
 			// But user asked for success too
-			set({ toast: { message: "Response received", type: "success" } });
+			// set({ toast: { message: "Response received", type: "success" } });
 
 		} catch (error: any) {
 			console.error("Error sending text:", error);
@@ -486,12 +486,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			
 			telemetry.endTelemetry();
 
-			// Logic from user code: show success toast
-			if (isPositive) {
-				set({ toast: { message: "Thank you for your feedback! We're glad this response was helpful.", type: "success" } });
-			} else {
-				set({ toast: { message: "Thank you for your feedback. We'll use it to improve our responses.", type: "success" } });
-			}
+			// // Logic from user code: show success toast
+			// if (isPositive) {
+			// 	set({ toast: { message: "Thank you for your feedback! We're glad this response was helpful.", type: "success" } });
+			// } else {
+			// 	set({ toast: { message: "Thank you for your feedback. We'll use it to improve our responses.", type: "success" } });
+			// }
 
 		} catch (error) {
 			console.error("Feedback telemetry error:", error);

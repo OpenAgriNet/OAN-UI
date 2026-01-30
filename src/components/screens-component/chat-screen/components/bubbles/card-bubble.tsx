@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, ThumbsDown, ThumbsUp, Volume2 } from "lucide-react";
+import { Copy, ThumbsDown, ThumbsUp, Volume2, Check } from "lucide-react";
 import { CardMessage } from "./chat-types";
 import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
@@ -18,6 +18,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 	const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showCopySuccess, setShowCopySuccess] = useState(false);
+	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
 
 	const handleListen = async () => {
 		try {
@@ -33,6 +35,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 		try {
 			await submitFeedback(message.id, true);
+			setShowThumbsUpSuccess(true);
+			setTimeout(() => setShowThumbsUpSuccess(false), 1000);
 		} catch (error) {
 			console.error("Thumbs up failed:", error);
 		} finally {
@@ -47,7 +51,9 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(message.body);
-			setToast({ message: "The message has been copied to your clipboard", type: "success" });
+			setShowCopySuccess(true);
+			setTimeout(() => setShowCopySuccess(false), 1000);
+			// setToast({ message: "The message has been copied to your clipboard", type: "success" });
 		} catch (error) {
 			console.error(error);
 			setToast({ message: "Failed to copy to clipboard. Please try again", type: "error" });
@@ -149,7 +155,11 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									title="Copy"
 									onClick={handleCopy}
 								>
-									<Copy className="h-4 w-4 text-[#F65151]" />
+									{showCopySuccess ? (
+										<Check className="h-4 w-4 text-[#F65151]" />
+									) : (
+										<Copy className="h-4 w-4 text-[#F65151]" />
+									)}
 								</Button>
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
@@ -162,7 +172,11 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									onClick={handleThumbsUp}
 									disabled={isSubmitting}
 								>
-									<ThumbsUp className="h-4 w-4 text-[#F65151]" />
+									{showThumbsUpSuccess ? (
+										<Check className="h-4 w-4 text-[#F65151]" />
+									) : (
+										<ThumbsUp className="h-4 w-4 text-[#F65151]" />
+									)}
 								</Button>
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />

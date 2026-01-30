@@ -298,7 +298,7 @@ export function ChatInput({
 
 					<div
 						className={cn(
-							"flex flex-1 min-h-12 min-w-0 items-stretch gap-2 rounded-[16px] border bg-white shadow-sm transition-colors duration-200 relative",
+							"flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border bg-white shadow-sm transition-colors duration-200 relative",
 							canSend ? "border-black" : "border-gray-300",
 							isLoading ? "bg-gray-50 opacity-80 cursor-not-allowed" : ""
 						)}
@@ -309,7 +309,7 @@ export function ChatInput({
 									<div className="h-8 w-8">
 										<Lottie animationData={loadingAnim} loop={true} />
 									</div>
-									<span className="text-base italic text-gray-500">
+									<span className="text-base text-gray-500">
 										{isTranscribing ? "Transcribing..." : "Loading..."}
 									</span>
 								</div>
@@ -323,9 +323,9 @@ export function ChatInput({
 							disabled={disabled || isLoading}
 							placeholder={isLoading ? "" : placeholder}
 							className={cn(
-								"flex-1 min-w-0 max-h-[140px] min-h-[48px] mx-4 resize-none border-0 bg-transparent px-0 py-3 text-base shadow-none",
+								"flex-1 min-w-0 max-h-[140px] min-h-[50px] mx-4 resize-none border-0 bg-transparent px-0 py-[13px] text-base leading-6 shadow-none",
 								"focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-								"placeholder:text-gray-400",
+								"placeholder:text-gray-400 placeholder:leading-6",
 								"break-words whitespace-pre-wrap overflow-y-auto block",
 								disabled || isLoading ? "cursor-not-allowed" : ""
 							)}
