@@ -1,6 +1,12 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
 
+/** voice-oan-api accepts source_lang only as 'gu' | 'en'; map hi/mr to 'gu' */
+function mapSourceLangForVoiceOan(lang: string): 'gu' | 'en' {
+  if (lang === 'gu' || lang === 'en') return lang;
+  return 'gu'; // map hi, mr to gu
+}
+
 export interface LocationData {
   latitude: number;
   longitude: number;
@@ -32,6 +38,7 @@ const JWT_STORAGE_KEY = 'auth_jwt';
 
 class ApiService {
   private apiUrl: string = environment.apiUrl;
+  private voiceOanMode: boolean = environment.voiceOanMode;
   private locationData: LocationData | null = null;
   private currentSessionId: string | null = null;
   private axiosInstance: AxiosInstance;
@@ -47,11 +54,11 @@ class ApiService {
       }
     });
 
-    // Add response interceptor for 401 errors
+    // Add response interceptor for 401 errors (skip redirect in voice-oan mode)
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 && !this.voiceOanMode) {
           this.redirectToErrorPage();
         }
         return Promise.reject(error);
@@ -122,8 +129,7 @@ class ApiService {
   }
 
   private validateAuth(): boolean {
-    // If we have no token, alert but don't force redirect here
-    // Let the calling component or an interceptor handle navigation
+    if (this.voiceOanMode) return true; // voice-oan-api has no auth
     if (!this.authToken) {
       console.error("Authentication token missing in ApiService");
       return false;
@@ -143,31 +149,33 @@ class ApiService {
       if (!this.validateAuth()) {
         return { response: "Authentication error", status: "error" };
       }
-      
+
+      const mappedSourceLang = this.voiceOanMode ? mapSourceLangForVoiceOan(sourceLang) : sourceLang;
       const params = {
         session_id: session,
         query: msg,
-        source_lang: sourceLang,
+        source_lang: mappedSourceLang,
         target_lang: targetLang,
-        ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
+        ...(this.locationData && !this.voiceOanMode && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
+
+      const chatPath = this.voiceOanMode ? '/api/voice/' : '/api/chat/';
 
       if (onStreamData) {
         // Handle streaming response
-        // Do not use getAuthHeaders which might include Content-Type
         this.refreshAuthToken();
         const headers = {
             'Authorization': this.authToken ? `Bearer ${this.authToken}` : 'NA',
             'Accept': '*/*'
         };
         
-        const response = await fetch(`${this.apiUrl}/api/chat/?${new URLSearchParams(params)}`, {
+        const response = await fetch(`${this.apiUrl}${chatPath}?${new URLSearchParams(params)}`, {
           method: 'GET',
           headers: headers          
         });
 
         if (!response.ok) {
-          if (response.status === 401) {
+          if (response.status === 401 && !this.voiceOanMode) {
             this.redirectToErrorPage();
             const error = new Error('Unauthorized');
             (error as any).status = 401;
@@ -205,7 +213,7 @@ class ApiService {
           params,
           headers: this.getAuthHeaders()
         };
-        const response = await this.axiosInstance.get('/api/chat/', config);
+        const response = await this.axiosInstance.get(chatPath, config);
         return response.data;
       }
     } catch (error) {
@@ -215,6 +223,7 @@ class ApiService {
   }
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
+    if (this.voiceOanMode) return []; // voice-oan-api has no /api/suggest/
     try {
       this.refreshAuthToken();
       if (!this.validateAuth()) {
@@ -246,6 +255,9 @@ class ApiService {
     serviceType: string = 'whisper',
     sessionId: string
   ): Promise<TranscriptionResponse> {
+    if (this.voiceOanMode) {
+      throw new Error('Voice input is not available when using voice-oan-api. Please type your question.');
+    }
     try {
       this.refreshAuthToken();
       if (!this.validateAuth()) {
@@ -271,6 +283,9 @@ class ApiService {
   }
 
   getTranscript(sessionId: string, text: string, targetLang: string): Promise<AxiosResponse<TTSResponse>> {
+    if (this.voiceOanMode) {
+      return Promise.reject(new Error("Listen (TTS) is not available when using voice-oan-api."));
+    }
     this.refreshAuthToken();
     if (!this.validateAuth()) {
       return Promise.reject(new Error("Authentication required"));
@@ -288,6 +303,7 @@ class ApiService {
   }
 
   async submitPositiveFeedback(messageId: string): Promise<void> {
+    if (this.voiceOanMode) return; // voice-oan-api has no feedback endpoints
     try {
       this.refreshAuthToken();
       if (!this.validateAuth()) return;
@@ -307,6 +323,7 @@ class ApiService {
   }
 
   async submitNegativeFeedback(messageId: string, reason: string, feedback: string): Promise<void> {
+    if (this.voiceOanMode) return; // voice-oan-api has no feedback endpoints
     try {
       this.refreshAuthToken();
       if (!this.validateAuth()) return;

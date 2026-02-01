@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '../lib/api-service';
+import { environment } from '../lib/config/environment';
 // import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -62,6 +63,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initAuth = async () => {
       try {
         setIsLoading(true);
+
+        // voice-oan mode: skip JWT entirely, no redirect
+        if (environment.voiceOanMode) {
+          createUserFromPayload(null);
+          setIsLoading(false);
+          return;
+        }
 
         // Fetch public key from external file
         const publicKeyResponse = await fetch('/jwt_public_key.pem');
