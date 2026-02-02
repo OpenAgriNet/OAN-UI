@@ -1,6 +1,7 @@
 // --- V3 Telemetry Specification Alignment ---
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { UAParser } from "ua-parser-js";
+import { env } from "@/config/env";
 
 // FingerprintJS initialization
 
@@ -166,7 +167,7 @@ export const startTelemetry = async (
     uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
     did: userDetailsObj["email"] || "DEFAULT-USER",
     authtoken: "",
-    host: "/observability-service",
+    host: env.telemetryUrl,
   };
 
   const startEdata = {};
