@@ -222,13 +222,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
-        
-        // Start telemetry session for Question Event
-        const userDetails = get().getUserForTelemetry();
-        await telemetry.startTelemetry(currentSession, userDetails);
-		telemetry.logQuestionEvent(questionId, currentSession, trimmed);
-        telemetry.endTelemetry(); // End session for Question Event
 
+		try {
+			const userDetails = get().getUserForTelemetry();
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+			telemetry.endTelemetry();
+		} catch (e) {
+			console.warn("Telemetry failed (question event)", e);
+		}
 
 		try {
 			// In a real app we'd detect language, here we use what's passed
@@ -272,12 +274,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return { isAssistantTyping: false };
 			});
             
-            // Start telemetry session for Response Event (wait for render)
-             const userDetailsResponse = get().getUserForTelemetry();
-             await telemetry.startTelemetry(currentSession, userDetailsResponse);
-             await telemetry.endTelemetryWithWait(questionId);
-			// telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response); // Moved to message-list for render timing
-			
+			try {
+				const userDetailsResponse = get().getUserForTelemetry();
+				await telemetry.startTelemetry(currentSession, userDetailsResponse);
+				await telemetry.endTelemetryWithWait(questionId);
+			} catch (e) {
+				console.warn("Telemetry failed (response event)", e);
+			}
+
 			const suggestions = await apiService.getSuggestions(currentSession, language);
 			set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
 
@@ -299,10 +303,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				set((state) => ({
 					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
 				}));
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
+				try { telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)"); } catch (e) { console.warn("Telemetry failed (error event)", e); }
 			} else {
 				set({ toast: { message: "Sorry, there was an error processing your request. Please try again.", type: "error" } });
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
+				try { telemetry.logErrorEvent(questionId, currentSession, String(error)); } catch (e) { console.warn("Telemetry failed (error event)", e); }
 			}
 		}
 	},
@@ -468,34 +472,28 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const feedbackMsg = isPositive ? "Liked the response" : (feedback || reason || "Negative feedback");
 
 		try {
-			// Telemetry-only flow as per user request
 			const user = useAuthStore.getState().user;
-			telemetry.startTelemetry(sessionId, { 
-				preferred_username: user?.user_metadata?.name || user?.email || "guest", 
-				email: user?.email || "" 
+			await telemetry.startTelemetry(sessionId, {
+				preferred_username: user?.user_metadata?.name || user?.email || "guest",
+				email: user?.email || ""
 			});
-			
 			telemetry.logFeedbackEvent(
-				messageId, 
-				sessionId, 
-				feedbackMsg, 
-				feedbackType, 
-				questionText, 
+				messageId,
+				sessionId,
+				feedbackMsg,
+				feedbackType,
+				questionText,
 				responseText
 			);
-			
 			telemetry.endTelemetry();
+		} catch (e) {
+			console.warn("Telemetry failed (feedback)", e);
+		}
 
-			// Logic from user code: show success toast
-			if (isPositive) {
-				set({ toast: { message: "Thank you for your feedback! We're glad this response was helpful.", type: "success" } });
-			} else {
-				set({ toast: { message: "Thank you for your feedback. We'll use it to improve our responses.", type: "success" } });
-			}
-
-		} catch (error) {
-			console.error("Feedback telemetry error:", error);
-			set({ toast: { message: "Failed to submit feedback. Please try again.", type: "error" } });
+		if (isPositive) {
+			set({ toast: { message: "Thank you for your feedback! We're glad this response was helpful.", type: "success" } });
+		} else {
+			set({ toast: { message: "Thank you for your feedback. We'll use it to improve our responses.", type: "success" } });
 		}
 	}
 }));
