@@ -18,7 +18,8 @@ const virtualRouteFileChangeReloadPlugin: PluginOption = {
 	}
 };
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+	base: mode === "development" ? "/" : (process.env.VITE_BASE_PATH || "/new-ui"),
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),
@@ -42,4 +43,4 @@ export default defineConfig({
 	server: {
 		port: 3000
 	}
-});
+}));
