@@ -40,7 +40,7 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
-	initializeSession: (user: any) => void;
+	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
 	sendQuickAction: (id: string, language: string, t?: any) => void;
@@ -125,12 +125,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setToast: (toast) => set({ toast }),
 
-	initializeSession: (user) => {
+	initializeSession: async (user) => {
 		const sid = uuidv4();
 		set({ sessionId: sid });
 		apiService.setSessionId(sid);
 		try {
-			telemetry.startTelemetry(sid, { 
+			await telemetry.startTelemetry(sid, { 
 				preferred_username: user?.user_metadata?.name || user?.email || "guest", 
 				email: user?.email || "" 
 			});
@@ -202,6 +202,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
+			
+			// Mark request start for telemetry
+			telemetry.markServerRequestStart(questionId);
+
 			const response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
@@ -240,6 +244,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				}
 				return { isAssistantTyping: false };
 			});
+			
+			// Mark render end for telemetry
+			telemetry.markAnswerRendered(questionId);
 			telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
 			
 			const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -402,7 +409,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			// Telemetry-only flow as per user request
 			const user = useAuthStore.getState().user;
-			telemetry.startTelemetry(sessionId, { 
+			await telemetry.startTelemetry(sessionId, { 
 				preferred_username: user?.user_metadata?.name || user?.email || "guest", 
 				email: user?.email || "" 
 			});
