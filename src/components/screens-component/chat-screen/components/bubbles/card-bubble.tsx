@@ -78,14 +78,14 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	return (
 		<>
 			<div className="w-full max-w-[95%] sm:max-w-[90%] mb-8">
-				<Card className="relative rounded-2xl border-none bg-white p-4 shadow-sm overflow-hidden">
+				<Card className="relative rounded-2xl border-none bg-white p-4 shadow-sm overflow-hidden dark:bg-[var(--aiBubble-dark)] dark:border-[var(--border-dark)]">
 					{/* Content */}
 					<div>
 						{message.title ? (
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("text-base leading-relaxed text-foreground", message.isError && "text-red-500 font-medium")}>
+						<div className={cn("text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)]", message.isError && "text-red-500 font-medium")}>
 							{message.body.split("\n\n").map((para, idx) => {
 								const isSource = para.toLowerCase().includes("source:");
 								

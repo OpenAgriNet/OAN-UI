@@ -28,7 +28,7 @@ export function Suggestions({
 						key={suggestion.id}
 						variant="outline"
 						size="sm"
-						className="h-auto min-h-[44px] shrink-0 whitespace-normal rounded-xl border-gray-200 bg-white px-5 py-2.5 text-center text-sm font-medium text-black shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:scale-95 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800 cursor-pointer"
+						className="h-auto min-h-[44px] shrink-0 whitespace-normal rounded-xl border-gray-200 bg-white px-5 py-2.5 text-center text-sm font-medium text-black shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:scale-95 dark:border-[var(--border-dark)] dark:bg-[var(--suggestionBg-dark)] dark:text-[var(--suggestionText-dark)] dark:hover:bg-[var(--suggestionBg-dark)]/90 cursor-pointer"
 						onClick={() => onSuggestionClick(suggestion.text)}
 					>
 						{suggestion.text}

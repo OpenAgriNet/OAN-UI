@@ -6,6 +6,7 @@ import sendRecord from "@/assets/sendRecord.svg";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/components/LanguageProvider";
+import pauseRecordIcon from "@/assets/pauseRecordIcon.svg";
 
 type RecordingState = "recording" | "paused";
 
@@ -93,7 +94,7 @@ export function RecordingControls({
 			{/* Top Pill Status - Absolute Positioned on the border */}
 			<div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform">
 				<div className="whitespace-nowrap rounded-full bg-blue-50 px-6 py-1.5 text-xs font-medium text-blue-600 shadow-sm border border-blue-100">
-					{t("recordingListening", { botName: "Bharat Vistaar" })}
+					{t("recordingListening", { botName: "Bharat-VISTAAR" })}
 				</div>
 			</div>
 
@@ -104,7 +105,7 @@ export function RecordingControls({
 						variant="ghost"
 						size="icon"
 						onClick={togglePreview}
-						className="mr-2 cursor-pointer h-8 w-8 text-black hover:bg-transparent"
+						className="mr-2 cursor-pointer h-8 w-8 text-black dark:text-white hover:bg-transparent"
 					>
 						{isPlayingPreview ? (
 							<Pause className="h-5 w-5 fill-current" />
@@ -122,7 +123,7 @@ export function RecordingControls({
                                     <div
                                         key={i}
                                         className={cn(
-                                            "w-[4px] rounded-full bg-black transition-all duration-75",
+                                            "w-[4px] rounded-full bg-black dark:bg-[var(--wave-dark)] transition-all duration-75",
                                             state === "recording" ? "animate-pulse" : "" 
                                         )}
                                         style={{ height: `${height}%` }}
@@ -143,7 +144,7 @@ export function RecordingControls({
 					variant="ghost"
 					size="icon"
 					onClick={onDelete}
-					className="h-10 w-10 cursor-pointer text-red-500 hover:bg-red-50 hover:text-red-600"
+					className="h-12 w-12 cursor-pointer text-red-500 hover:bg-red-50 hover:text-red-600"
 				>
 					<img src={deleteIcon} alt="Delete" className="h-6 w-6" />
 				</Button>
@@ -154,9 +155,9 @@ export function RecordingControls({
 						variant="ghost"
 						size="icon"
 						onClick={onPause}
-						className="h-12 w-12 cursor-pointer rounded-full border-2 border-[#00a651] text-[#00a651] hover:bg-green-50"
+						className="h-12 w-12 cursor-pointer text-[#00a651] hover:bg-green-50"
 					>
-						<Pause className="h-5 w-5 fill-current" />
+						<img src={pauseRecordIcon} alt="Pause" className="h-8 w-8" />
 					</Button>
 				) : (
 					<Button

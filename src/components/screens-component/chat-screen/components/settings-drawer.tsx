@@ -36,11 +36,11 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right" 
-				className="w-full sm:max-w-[50%] p-0 flex flex-col h-full bg-background border-l border-gray-200 dark:border-gray-800"
+				className="w-full sm:max-w-[50%] p-0 flex flex-col h-full bg-background dark:bg-[var(--background-dark)] border-l border-gray-200 dark:border-[var(--border-dark)]"
 			>
 				{/* Custom Header to match the design */}
-				<div className="flex items-center justify-between px-6 h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-					<h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t("settingsPage.title")}</h2>
+				<div className="flex items-center justify-between px-6 h-16 border-b border-gray-200 dark:border-[var(--border-dark)] bg-white dark:bg-[var(--headerBg-dark)]">
+					<h2 className="text-xl font-bold text-gray-900 dark:text-[var(--headerText-dark)]">{t("settingsPage.title")}</h2>
 					<Button
 						variant="ghost"
 						size="icon"
@@ -61,11 +61,11 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								className={`flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border-2 transition-all ${
 									theme === THEMES.light
 										? "border-[#00a651] text-[#00a651] bg-[#00a651]/5"
-										: "border-gray-100 dark:border-gray-900 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50"
+										: "border-[#4F4F4F] dark:border-[#4F4F4F] text-gray-600 dark:text-gray-400 bg-[#FFFFFF0D] dark:bg-[#FFFFFF0D]"
 								}`}
 							>
-								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#00a651]" : "text-gray-400"}`} />
-								<span className="font-bold text-sm">{t("settingsPage.lightMode")}</span>
+								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#00a651]" : "text-[#B0B0B0]"}`} />
+								<span className="font-bold text-sm dark:text-[#B0B0B0]">{t("settingsPage.lightMode")}</span>
 							</button>
 
 							<button
@@ -88,7 +88,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 						<Collapsible
 							open={faqOpen}
 							onOpenChange={setFaqOpen}
-							className="w-full border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 shadow-sm"
+							className="w-full border border-gray-200 dark:border-[var(--border-dark)] rounded-2xl overflow-hidden bg-white dark:bg-[var(--background-dark)] shadow-sm"
 						>
 							<CollapsibleTrigger asChild>
 								<button className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
@@ -103,11 +103,11 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								</button>
 							</CollapsibleTrigger>
 							<CollapsibleContent className="px-5 pb-5 space-y-4">
-								<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-4">
+								<div className="border-t border-gray-100 dark:border-[var(--border-dark)] pt-5 space-y-4">
 									{FAQ_DATA.map((faq, index) => (
 										<div
 											key={faq.id}
-											className="border border-gray-100 dark:border-gray-900 rounded-xl overflow-hidden"
+											className="border border-gray-100 dark:border-[var(--border-dark)] rounded-xl overflow-hidden"
 										>
 											<button
 												onClick={() => toggleFaq(faq.id)}

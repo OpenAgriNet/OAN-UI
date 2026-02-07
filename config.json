@@ -10,7 +10,23 @@
       "accent": "#00bd52",
       "background": "#f6f6f6",
       "foreground": "#3d3d3d",
-      "userBubble": "#bbf7d0"
+      "userBubble": "#bbf7d0",
+      "dark": {
+        "background": "#131313",
+        "headerBg": "#1C1C1C",
+        "headerText": "#FFFFFF",
+        "userBubble": "#077439",
+        "userBubbleText": "#FFFFFF",
+        "aiBubble": "#FFFFFF0D",
+        "aiBubbleText": "#FFFFFF",
+        "suggestionBg": "#3D3D3D",
+        "suggestionText": "#FFFFFF",
+        "inputBg": "#131313",
+        "inputText": "#FFFFFF",
+        "wave": "#FFFFFF",
+        "icon": "#FFFFFF",
+        "border": "#3D3D3D"
+      }
     },
     "fontSizes": {
       "xs": "0.7rem",
@@ -43,18 +59,18 @@
     { "code": "mr", "name": "मराठी", "nativeName": "मराठी", "icon": "अ" },
     { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" }
   ],
-  "defaultLanguage": "en",
+  "defaultLanguage": "hi",
   "languageTexts": {
     "en": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -69,13 +85,13 @@
     "hi": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -90,13 +106,13 @@
     "mr": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -111,13 +127,13 @@
     "gu": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",

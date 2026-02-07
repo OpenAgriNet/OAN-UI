@@ -20,8 +20,10 @@ export function MessageList(props: MessageListProps) {
 
 	useEffect(() => {
 		if (props.messages.length > 0) {
-			// Scroll to start of the newest message
-			lastMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+			// Small timeout to allow DOM to update fully
+			setTimeout(() => {
+				lastMessageRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+			}, 100);
 		} else {
 			// Scroll to top when there are no messages (WelcomePanel visible)
 			const scrollArea = containerRef.current?.closest("[data-radix-scroll-area-viewport]");

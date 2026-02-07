@@ -118,7 +118,7 @@ export default function LazyFormModal<
               <div className="w-full">
                 <Button
                   type="submit"
-                  className="w-full text-white rounded-xl text-sm xl:text-base h-10 xl:h-12"
+                  className="w-full text-white rounded-xl text-sm xl:text-base h-10 xl:h-12 cursor-pointer"
                   disabled={formState.isSubmitting}
                 >
                   {formState.isSubmitting ? 'Saving...' : submitLabel}

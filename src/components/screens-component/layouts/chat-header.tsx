@@ -30,7 +30,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 	const currentLanguage = (LANGUAGES as any)[language] || LANGUAGES.en;
 
 	return (
-		<header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-950 border-b border-[#E3E3E3] dark:border-gray-800 transition-colors duration-300">
+		<header className="sticky top-0 z-50 w-full bg-white dark:bg-[var(--headerBg-dark)] border-b border-[#E3E3E3] dark:border-[var(--border-dark)] transition-colors duration-300">
 			<div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
 				{/* Left: Logo & Title */}
 				<div className="flex items-center gap-2 min-w-0">
@@ -38,7 +38,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 						<AvatarImage src={leftAvatarUrl} alt={title} />
 						<AvatarFallback>{title.slice(0, 2).toUpperCase()}</AvatarFallback>
 					</Avatar>
-					<span className="text-sm sm:text-lg font-medium text-foreground truncate">{title}</span>
+					<span className="text-sm sm:text-lg font-medium text-foreground truncate dark:text-[var(--headerText-dark)]">{title}</span>
 				</div>
 
 				{/* Right: Language + Settings */}
@@ -48,7 +48,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 						{/* Desktop Language Button */}
 						<Button
 							variant="outline"
-							className="hidden h-9 w-auto gap-2 rounded-full border hover:border-[#019444] px-3 font-normal text-foreground sm:flex cursor-pointer hover:bg-[#C1FDD6]/90"
+							className="hidden h-9 w-auto gap-2 rounded-full border hover:border-[#019444] px-3 font-normal text-foreground dark:text-[var(--headerText-dark)] sm:flex cursor-pointer hover:bg-[#C1FDD6]/90 dark:hover:text-black"
 						>
 							<img src={langIcon} alt="Language" className="h-5 w-5" />
 							<span className="font-medium text-xs">{currentLanguage.name}</span>

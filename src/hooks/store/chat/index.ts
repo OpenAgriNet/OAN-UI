@@ -256,7 +256,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const isRateLimitError = error?.status === 429 || error?.response?.status === 429 || (error instanceof Error && error.message.includes('Rate limit'));
 			
 			if (isRateLimitError) {
-				const limitMessage = t ? t("limitMessage") : "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat Vistaar app.";
+				const limitMessage = t ? t("limitMessage") : "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
 					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
 				}));

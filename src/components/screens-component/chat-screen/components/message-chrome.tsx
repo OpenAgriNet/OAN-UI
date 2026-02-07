@@ -36,7 +36,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 				{showLabel && (
 					<div className="flex items-center gap-2">
 						<span className="text-sm font-semibold text-foreground">{user?.username || user?.name || meta.name}</span>
-						<Avatar className="h-8 w-8 rounded-full border border-[#019444] bg-green-100">
+						<Avatar className="h-8 w-8 rounded-full border border-[#019444] bg-[green-100]">
 							<AvatarFallback className="text-[#019444] text-xs font-bold">{initials}</AvatarFallback>
 						</Avatar>
 					</div>
@@ -56,7 +56,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 						<AvatarImage src={meta.avatar} className="object-contain" />
 						<AvatarFallback className="bg-transparent text-[#00a651] font-bold text-xs">{initials}</AvatarFallback>
 					</Avatar>
-					<span className="text-sm font-semibold text-foreground">{meta.name}</span>
+					<span className="text-sm font-semibold text-foreground dark:text-white">{meta.name}</span>
 				</div>
 			)}
 			<div className="pl-10 w-full">
