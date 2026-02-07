@@ -36,7 +36,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 				{showLabel && (
 					<div className="flex items-center gap-2">
 						<span className="text-sm font-semibold text-foreground">{user?.username || user?.name || meta.name}</span>
-						<Avatar className="h-8 w-8 rounded-full border border-[#019444] bg-green-100">
+						<Avatar className="h-8 w-8 rounded-full border border-[#019444] bg-[green-100]">
 							<AvatarFallback className="text-[#019444] text-xs font-bold">{initials}</AvatarFallback>
 						</Avatar>
 					</div>

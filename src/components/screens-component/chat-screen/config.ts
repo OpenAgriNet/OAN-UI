@@ -19,7 +19,7 @@ export const LANGUAGES: Record<LanguageCode, Language> = rootConfig.languages.re
 	return acc;
 }, {} as Record<LanguageCode, Language>);
 
-export const DEFAULT_LANGUAGE: LanguageCode = rootConfig.defaultLanguage as LanguageCode || "en";
+export const DEFAULT_LANGUAGE: LanguageCode = rootConfig.defaultLanguage as LanguageCode || "hi";
 
 // ============================================================================
 // CHAT CONFIGURATION
@@ -28,7 +28,7 @@ export const DEFAULT_LANGUAGE: LanguageCode = rootConfig.defaultLanguage as Lang
 // ============================================================================
 
 export const CHAT_ASSISTANT = {
-	name: "Bharat Vistaar",
+	name: "Bharat-VISTAAR",
 	avatar: rootConfig.icons.assistant
 };
 

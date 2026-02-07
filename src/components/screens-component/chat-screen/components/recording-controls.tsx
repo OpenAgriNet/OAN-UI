@@ -93,7 +93,7 @@ export function RecordingControls({
 			{/* Top Pill Status - Absolute Positioned on the border */}
 			<div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform">
 				<div className="whitespace-nowrap rounded-full bg-blue-50 px-6 py-1.5 text-xs font-medium text-blue-600 shadow-sm border border-blue-100">
-					{t("recordingListening", { botName: "Bharat Vistaar" })}
+					{t("recordingListening", { botName: "Bharat-VISTAAR" })}
 				</div>
 			</div>
 
@@ -143,7 +143,7 @@ export function RecordingControls({
 					variant="ghost"
 					size="icon"
 					onClick={onDelete}
-					className="h-10 w-10 cursor-pointer text-red-500 hover:bg-red-50 hover:text-red-600"
+					className="h-12 w-12 cursor-pointer text-red-500 hover:bg-red-50 hover:text-red-600"
 				>
 					<img src={deleteIcon} alt="Delete" className="h-6 w-6" />
 				</Button>

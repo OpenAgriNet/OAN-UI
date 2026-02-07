@@ -36,7 +36,7 @@
   "feedbackSubmit": "Submit Feedback",
   "feedbackCancel": "Cancel",
   "feedbackPlaceholder": "Or tell us more about the issue...",
-  "appTitle": "Bharat Vistaar",
+  "appTitle": "Bharat-VISTAAR",
   "settings": "Settings",
   "copyMessage": "Copy message",
   "likeMessage": "Like message",
@@ -88,7 +88,7 @@
     },
     "rateLimitError": {
       "title": "Please Wait",
-      "description": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat Vistaar app."
+      "description": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app."
     }
   },
   "variables": {
@@ -352,7 +352,7 @@
   },
   "maintenance": {
     "title": "Under Maintenance",
-    "heading": "Bharat Vistaar",
+    "heading": "Bharat-VISTAAR",
     "subheading": "Under Maintenance",
     "message": "We're currently performing scheduled maintenance to improve your experience. We'll be back shortly.",
     "thankyou": "Thank you for your patience!",
@@ -371,7 +371,7 @@
     "darkMode": "Dark mode",
     "helpAndSupport": "Help & Support",
     "faq": "Frequently Asked Questions (FAQs)",
-    "poweredBy": "Powered by Bharat Vistaar"
+    "poweredBy": "Powered by Bharat-VISTAAR"
   },
   "feedback": {
     "title": "Provide Feedback",
@@ -388,7 +388,7 @@
       "other": "Other issue"
     }
   },
-  "limitMessage": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat Vistaar app.",
+  "limitMessage": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.",
   "auth": {
     "loginRequired": "Login required",
     "loginPrompt": "Please log in to continue and access this page."

@@ -43,18 +43,18 @@
     { "code": "mr", "name": "मराठी", "nativeName": "मराठी", "icon": "अ" },
     { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" }
   ],
-  "defaultLanguage": "en",
+  "defaultLanguage": "hi",
   "languageTexts": {
     "en": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -69,13 +69,13 @@
     "hi": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -90,13 +90,13 @@
     "mr": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
@@ -111,13 +111,13 @@
     "gu": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",
       "chatMicHint": "Tap the microphone button to ask your question",
-      "chatWelcomeName": "Bharat Vistaar",
+      "chatWelcomeName": "Bharat-VISTAAR",
       "languageDialog": {
         "title": "Change language",
         "applyButton": "Apply"
       },
       "header": {
-        "appName": "Bharat Vistaar",
+        "appName": "Bharat-VISTAAR",
         "settings": "Settings",
         "profile": "Profile",
         "clearChat": "Clear chat",
