@@ -8,6 +8,7 @@ import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
+import { environment } from "@/lib/config/environment";
 
 // Static set of QA templates and the variable placeholders they need
 const QA_TEMPLATES: Array<{ key: string; vars?: string[] }> = [
@@ -124,19 +125,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
-
-	initializeSession: async (user) => {
+	initializeSession: async (_user) => {
 		const sid = uuidv4();
 		set({ sessionId: sid });
 		apiService.setSessionId(sid);
-		try {
-			await telemetry.startTelemetry(sid, { 
-				preferred_username: user?.user_metadata?.name || user?.email || "guest", 
-				email: user?.email || "" 
-			});
-		} catch (e) {
-			console.warn("Telemetry failed to start", e);
-		}
 	},
 
 	setDraft: (value) => set(() => ({ draft: value })),
@@ -197,7 +189,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		const questionId = uuidv4();
-		telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+		
+		// Telemetry: Log Question
+		const user = useAuthStore.getState().user;
+		const userDetails = { 
+			preferred_username: user?.username || "guest", 
+			email: user?.email || "" 
+		};
+
+		try {
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+			telemetry.endTelemetry();
+		} catch (e) {
+			console.warn("Telemetry question log failed", e);
+		}
 
 		try {
 			// In a real app we'd detect language, here we use what's passed
@@ -245,16 +251,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return { isAssistantTyping: false };
 			});
 			
-			// Mark render end for telemetry
-			telemetry.markAnswerRendered(questionId);
-			telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
+			// Telemetry: Log Response
+			await telemetry.startTelemetry(currentSession, userDetails);
 			
-			const suggestions = await apiService.getSuggestions(currentSession, language);
-			set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
-
-			// Show success for text completion if needed, though usually silent is better for chat.
-			// But user asked for success too
-			//set({ toast: { message: "Response received", type: "success" } });
+			telemetry.markAnswerRendered(questionId, () => {
+				telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
+			});
+			
+			await telemetry.endTelemetryWithWait(questionId);
+			
+			if (!environment.suggestionsDisabled) {
+				const suggestions = await apiService.getSuggestions(currentSession, language);
+				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+			}
 
 		} catch (error: any) {
 			console.error("Error sending text:", error);
@@ -267,10 +276,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				set((state) => ({
 					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
 				}));
+				
+				// Telemetry: Log Error (Rate Limit)
+				await telemetry.startTelemetry(currentSession, userDetails);
 				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
+				telemetry.endTelemetry();
+
 			} else {
 				set({ toast: { message: "Sorry, there was an error processing your request. Please try again.", type: "error" } });
+				
+				// Telemetry: Log Error (Generic)
+				await telemetry.startTelemetry(currentSession, userDetails);
 				telemetry.logErrorEvent(questionId, currentSession, String(error));
+				telemetry.endTelemetry();
 			}
 		}
 	},

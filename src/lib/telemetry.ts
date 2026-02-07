@@ -76,12 +76,17 @@ export const setTelemetryUserData = (userData: any) => {
 };
 
 // Performance observer for chat API calls
+// Singleton to prevent multiple observers
+let performanceObserverInitialized = false;
+
 export const initChatApiPerformanceObserver = () => {
+  if (performanceObserverInitialized) return;
   if (!("PerformanceObserver" in window)) return;
 
   const observer = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
       if (entry.entryType === "resource" && entry.name.includes("/api/chat/")) {
+        // Attach timing to the latest unanswered question
         const timers = window.__RESPONSE_TIMERS__;
         if (!timers) return;
 
@@ -94,15 +99,20 @@ export const initChatApiPerformanceObserver = () => {
         const timer = timers[latestQid];
         if (!timer) return;
 
+        // Cast to PerformanceResourceTiming to access responseStart/responseEnd
         const resourceTiming = entry as PerformanceResourceTiming;
+
+        // Store responseStart (TTFB - Time To First Byte) and responseEnd
         timer.responseStart = resourceTiming.responseStart;
         timer.responseEnd = resourceTiming.responseEnd;
+        
         notifyResponseDataReady(latestQid);
       }
     }
   });
 
   observer.observe({ type: "resource", buffered: true });
+  performanceObserverInitialized = true;
 };
 
 // Device code helpers
@@ -221,21 +231,7 @@ export const logQuestionEvent = (questionId: string, sessionId: string, question
   const target = {
     "id": "default", "ver": "v0.1", "type": "Question",
     "parent": { "id": "p1", "type": "default" },
-    "questionsDetails": { "questionText": questionText, "sessionId": sessionId },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    "questionsDetails": { "questionText": questionText, "sessionId": sessionId }
   };
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "BharatVistaar-" + getHostUrl() });
 };
@@ -261,21 +257,7 @@ export const logResponseEvent = (questionId: string, sessionId: string, question
     "performance": {
       server_response_time_ms: serverResponseTime,
       browser_render_time_ms: browserRenderTime,
-    },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    }
   };
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "BharatVistaar-" + getHostUrl() });
 };
@@ -285,21 +267,7 @@ export const logErrorEvent = (questionId: string, sessionId: string, error: stri
   const target = {
     "id": "default", "ver": "v0.1", "type": "Error",
     "parent": { "id": "p1", "type": "default" },
-    "errorDetails": { "errorText": error, "sessionId": sessionId },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    "errorDetails": { "errorText": error, "sessionId": sessionId }
   };  
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "BharatVistaar-" + getHostUrl() });
 };
@@ -309,21 +277,7 @@ export const logFeedbackEvent = (questionId: string, sessionId: string, feedback
   const target = {
     "id": "default", "ver": "v0.1", "type": "Feedback",
     "parent": { "id": "p1", "type": "default" },
-    "feedbackDetails": { feedbackText, sessionId, questionText, answerText: responseText, feedbackType },
-    "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
-    "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
-    "registered_location_district": telemetryData.registered_location?.district,
-    "registered_location_village": telemetryData.registered_location?.village,
-    "registered_location_taluka": telemetryData.registered_location?.taluka,
-    "registered_location_lgd_code": telemetryData.registered_location?.lgd_code,
-    "device_location_district": telemetryData.device_location?.district,
-    "device_location_village": telemetryData.device_location?.village,
-    "device_location_taluka": telemetryData.device_location?.taluka,
-    "device_location_lgd_code": telemetryData.device_location?.lgd_code,
-    "agristack_location_district": telemetryData.agristack_location?.district,
-    "agristack_location_village": telemetryData.agristack_location?.village,
-    "agristack_location_taluka": telemetryData.agristack_location?.taluka,
-    "agristack_location_lgd_code": telemetryData.agristack_location?.lgd_code
+    "feedbackDetails": { feedbackText, sessionId, questionText, answerText: responseText, feedbackType }
   };
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "BharatVistaar-" + getHostUrl() });
 };

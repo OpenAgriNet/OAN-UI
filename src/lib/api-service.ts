@@ -27,6 +27,10 @@ interface TTSResponse {
   session_id: string;
 }
 
+interface AuthResponse {
+  token: string;
+}
+
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
 
@@ -137,7 +141,7 @@ class ApiService {
     session: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (data: string) => void
+    onStreamData?: (_data: string) => void
   ): Promise<ChatResponse> {
     try {
       this.refreshAuthToken();
@@ -357,6 +361,32 @@ class ApiService {
 
   getSessionId(): string | null {
     return this.currentSessionId;
+  }
+
+  async fetchAuthToken(metadata: string): Promise<string> {
+    try {
+      // Don't use authentication headers for this call as we're getting the token
+      const response = await axios.post<AuthResponse>(
+        `${this.apiUrl}/api/token`,
+        {
+          metadata,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data && response.data.token) {
+        return response.data.token;
+      }
+
+      throw new Error("No token received from auth endpoint");
+    } catch (error) {
+      console.error("Error fetching auth token:", error);
+      throw error;
+    }
   }
 }
 
