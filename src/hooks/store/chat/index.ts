@@ -301,7 +301,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		} catch (error) {
 			console.error("Error fetching suggestions:", error);
 			set({ isFetchingSuggestions: false });
-			set({ toast: { message: "Failed to load suggestions.", type: "error" } });
+			// set({ toast: { message: "Failed to load suggestions.", type: "error" } });
 		}
 	},
 
