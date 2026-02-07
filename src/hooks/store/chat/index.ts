@@ -242,8 +242,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			});
 			telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
 			
-			const suggestions = await apiService.getSuggestions(currentSession, language);
-			set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+
+			try {
+				const suggestions = await apiService.getSuggestions(currentSession, language);
+				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+			// eslint-disable-next-line no-unused-vars
+			} catch (error) {
+				console.error("Failed to fetch suggestions:", error);
+			}
 
 			// Show success for text completion if needed, though usually silent is better for chat.
 			// But user asked for success too
@@ -276,7 +282,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		} catch (error) {
 			console.error("Error fetching suggestions:", error);
 			set({ isFetchingSuggestions: false });
-			set({ toast: { message: "Failed to load suggestions.", type: "error" } });
+			// set({ toast: { message: "Failed to load suggestions.", type: "error" } });
 		}
 	},
 

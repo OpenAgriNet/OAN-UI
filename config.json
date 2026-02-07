@@ -55,9 +55,7 @@
   },
   "languages": [
     { "code": "en", "name": "English", "nativeName": "English", "icon": "अ" },
-    { "code": "hi", "name": "हिंदी", "nativeName": "हिंदी", "icon": "अ" },
-    { "code": "mr", "name": "मराठी", "nativeName": "मराठी", "icon": "अ" },
-    { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" }
+    { "code": "hi", "name": "हिंदी", "nativeName": "हिंदी", "icon": "अ" }
   ],
   "defaultLanguage": "hi",
   "languageTexts": {
