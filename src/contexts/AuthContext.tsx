@@ -1,5 +1,7 @@
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
+import apiService from '@/lib/api-service';
+import { getBrowserInfo } from '@/lib/utils';
 import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -29,9 +31,9 @@ interface AuthContextType {
   user: User | null;
   locations: Location[];
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  login: (_username: string, _password: string) => Promise<boolean>;
   logout: () => void;
-  setAuthToken: (token: string) => Promise<boolean>;
+  setAuthToken: (_token: string) => Promise<boolean>;
 }
 
 // Create the context with a default value
@@ -67,6 +69,45 @@ a37S+srKe59wFypSMOU+ZMvgFA2oK0zA1WEC93000n5HEQMJU8r7pCgKhq7oD8QJ
 hwIDAQAB
 -----END PUBLIC KEY-----`;
 
+  // Fetch new JWT token from /chat/auth and store it
+  const fetchAndStoreNewToken = useCallback(async (importedPublicKey: CryptoKey | null) => {
+    try {
+      // Get browser info to send as meta parameter
+      const browserInfo = getBrowserInfo();
+      
+      // Call /chat/auth to get JWT token
+      const newToken = await apiService.fetchAuthToken(browserInfo);
+      
+      // Validate and store the new token
+      if (importedPublicKey) {
+        const result = await validateJWT(newToken, importedPublicKey);
+        if (result.isValid) {
+          storeJWT(newToken);
+          createUserFromPayload(result.payload);
+        } else {
+          console.error('Received invalid token from /chat/auth');
+        }
+      } else {
+        // If public key is not available, store token anyway
+        storeJWT(newToken);
+        // Create a basic authenticated user
+        // We might want to decode the token even without verification to get user details
+        // but for now, we'll create a default guest user if verification fails/is impossible
+        // Ideally we should decode here even if we can't verify signature if we trust the source channel
+        setUser({
+          username: 'Guest User',
+          email: '',
+          mobile: '',
+          authenticated: true,
+          is_guest_user: true,
+        });
+        setTelemetryUserData({});
+      }
+    } catch (error) {
+      console.error('Failed to fetch auth token from /chat/auth:', error);
+    }
+  }, []);
+
   // Initialize auth state on component mount
   useEffect(() => {
     const initAuth = async () => {
@@ -92,11 +133,13 @@ hwIDAQAB
               window.history.replaceState({}, document.title, newUrl);
             } else {
               console.error('JWT verification failed for URL token');
-              createUserFromPayload(null);
+              // createUserFromPayload(null); // Instead of null, fetch guest token
+              await fetchAndStoreNewToken(importedPublicKey);
             }
           } else {
                console.error('Public key not loaded.');
-               createUserFromPayload(null);
+               // createUserFromPayload(null);
+               await fetchAndStoreNewToken(importedPublicKey);
           }
         }
         // Otherwise, check for JWT in localStorage
@@ -108,29 +151,29 @@ hwIDAQAB
               if (result.isValid) {
                 createUserFromPayload(result.payload);
               } else {
-                // Token is invalid or expired, remove it
+                // Token is invalid or expired, remove it and fetch new one
                 console.error('JWT verification failed for stored token');
                 localStorage.removeItem(JWT_STORAGE_KEY);
-                createUserFromPayload(null);
+                // createUserFromPayload(null);
+                await fetchAndStoreNewToken(importedPublicKey);
               }
              } else {
                console.error('Public key not loaded.');
-               createUserFromPayload(null);
+               // createUserFromPayload(null);
+               await fetchAndStoreNewToken(importedPublicKey);
              }
           } else {
             // No token found
-            createUserFromPayload(null);
+            // createUserFromPayload(null);
+            await fetchAndStoreNewToken(importedPublicKey);
           }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-        createUserFromPayload(null);
-        // Only redirect if there's no token in URL (to avoid redirect during token processing)
-        const urlParams = new URLSearchParams(window.location.search);
-        const tokenFromUrl = urlParams.get('token');
-        if (!tokenFromUrl) {
-          // redirectToErrorPage(); // Removed
-        }
+        // createUserFromPayload(null);
+        // Try one last time to get a guest token?
+        // Maybe better not to infinite loop if API is down
+        // invoke fetchAndStoreNewToken(null) if public key failed?
       } finally {
         setIsLoading(false);
       }
@@ -331,7 +374,6 @@ hwIDAQAB
 }
 
 // Custom hook to use the auth context
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
