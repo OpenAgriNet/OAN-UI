@@ -18,7 +18,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 		<div className="flex w-full flex-col items-center px-4 py-8">
 			{/* Logo & Greeting */}
 			<div className="mb-8 flex flex-col items-center gap-4 text-center">
-				<Avatar className="h-24 w-24 border-4 border-[#00a651]/10 p-1">
+				<Avatar className="h-24 w-24 p-1">
 					<AvatarImage src={CHAT_ASSISTANT.avatar} alt={CHAT_ASSISTANT.name} className="object-contain" />
 					<AvatarFallback className="bg-transparent text-2xl font-bold text-[#00a651]">
 						{CHAT_ASSISTANT.name.slice(0, 1)}
