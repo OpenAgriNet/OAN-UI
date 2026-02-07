@@ -1,20 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import Lottie from "lottie-react";
 import dotLoader from "@/assets/Dot loader.json";
+import { useLanguage } from "@/components/LanguageProvider";
 
 interface AILoaderProps {
 	className?: string;
 }
 
-const MESSAGES = [
-	"Understanding your question...",
-	"Finding Right information...",
-	"Preparing the Answer..."
-];
-
 export function AILoader({ className }: AILoaderProps) {
+	const { t } = useLanguage();
 	const [messageIndex, setMessageIndex] = useState(0);
+
+	const messages = useMemo(() => {
+		const msgs = t("aiLoaderMessages");
+		return Array.isArray(msgs) ? (msgs as string[]) : [
+			"Understanding your question...",
+			"Finding Right information...",
+			"Preparing the Answer..."
+		];
+	}, [t]);
 
 	useEffect(() => {
 		const timers = [
@@ -33,8 +38,8 @@ export function AILoader({ className }: AILoaderProps) {
 			</div>
 
 			{/* Message */}
-			<span className="text-base text-gray-500 font-medium">
-				{MESSAGES[messageIndex]}
+			<span className="text-base text-gray-500 font-medium dark:text-[#B0B0B0]">
+				{messages[messageIndex] || messages[0]}
 			</span>
 		</div>
 	);

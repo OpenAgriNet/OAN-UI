@@ -93,10 +93,10 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 			/>
 
 			{/* Modal */}
-			<div className="relative w-full max-w-md sm:max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300 flex flex-col">
+			<div className="relative w-full max-w-md sm:max-h-[90vh] bg-white dark:bg-[#1F1F1F] rounded-t-3xl sm:rounded-3xl shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300 flex flex-col">
 				{/* Header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
-					<h2 className="text-lg font-bold text-gray-900">{t("feedback.title")}</h2>
+					<h2 className="text-lg font-bold text-gray-900 dark:text-white">{t("feedback.title")}</h2>
 					<button
 						onClick={handleCancel}
 						className="rounded-full p-1 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -123,7 +123,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 								className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-colors cursor-pointer ${
 									selectedReason === option.id
 										? "bg-yellow-400 text-gray-900"
-										: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+										: "bg-white dark:bg-[#FFFFFF0D] border border-gray-200 dark:border-[#3D3D3D] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
 								}`}
 							>
 								{option.label}
@@ -133,7 +133,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 
 					{/* Message Section */}
 					<div className="px-6 pb-6">
-						<label className="block text-sm font-semibold text-gray-900 mb-2">
+						<label className="block text-sm font-semibold text-gray-900 dark:text-gray-200 mb-2">
 							{t("feedback.messageLabel")}
 						</label>
 						<div className="relative">
@@ -141,7 +141,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 								value={message}
 								onChange={(e) => setMessage(e.target.value)}
 								placeholder={typeof t("feedback.placeholder") === 'string' ? t("feedback.placeholder") as string : "Or tell us more about the issue..."}
-								className="w-full px-4 py-3 pr-24 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+								className="w-full px-4 py-3 pr-24 border border-gray-200 dark:border-[var(--border-dark)] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-white dark:bg-[var(--inputBg-dark)] text-gray-900 dark:text-white dark:placeholder:text-gray-400"
 								rows={4}
 								style={{ fontStyle: message ? "normal" : "italic" }}
 							/>
@@ -179,7 +179,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 					</Button>
 					<Button
 						onClick={handleSubmit}
-						className="flex-1 h-11 cursor-pointerrounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold shadow-none text-sm"
+						className="flex-1 h-11 cursor-pointer rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold shadow-none text-sm"
 					>
 						{t("feedback.submit")}
 					</Button>

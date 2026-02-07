@@ -218,7 +218,7 @@ export function ChatInput({
 
 	if (recordingState !== "idle") {
 		return (
-			<div className="relative bg-[#FFFFFF] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF]">
+			<div className="relative bg-[#FFFFFF] dark:bg-[var(--inputBg-dark)] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF] dark:supports-[backdrop-filter]:bg-[var(--inputBg-dark)]">
 				<div className="mx-auto w-full max-w-3xl px-2 py-2 sm:px-4">
 					<RecordingControls
 						state={recordingState}
@@ -235,7 +235,7 @@ export function ChatInput({
 	}
 
 	return (
-		<div className="bg-[#FFFFFF] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF]">
+		<div className="bg-[#FFFFFF] dark:bg-[var(--inputBg-dark)] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF] dark:supports-[backdrop-filter]:bg-[var(--inputBg-dark)]">
 
 
 			<div className="mx-auto w-full max-w-3xl px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-4">
@@ -308,7 +308,7 @@ export function ChatInput({
 							disabled={disabled || isLoading || isUnauthenticated}
 							onClick={startRecording}
 							className={cn(
-								"h-11 w-11 shrink-0 rounded-full text-black bg-[#ABFFA9] hover:bg-[#ABFFA9]/90 shadow-md",
+								"h-11 w-11 shrink-0 rounded-full text-black bg-[#ABFFA9] hover:bg-[#ABFFA9]/90 dark:bg-[#019444] dark:hover:bg-[#019444]/90 shadow-md",
 								isListening ? "animate-pulse" : "",
 								disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
 							)}
@@ -320,13 +320,13 @@ export function ChatInput({
 
 <div
   className={cn(
-    "flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border bg-white shadow-sm transition-colors duration-200 relative",
-    canSend ? "border-black" : "border-gray-300",
+    "flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border bg-white dark:bg-[var(--inputBg-dark)] shadow-sm transition-colors duration-200 relative",
+    canSend ? "border-black dark:border-[var(--border-dark)]" : "border-gray-300 dark:border-gray-700",
     isLoading || isUnauthenticated ? "bg-gray-50 opacity-80 cursor-not-allowed" : ""
   )}
 >
   {isLoading && (
-    <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white rounded-[16px]">
+    <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white dark:bg-[var(--inputBg-dark)] rounded-[16px]">
       <div className="flex items-center gap-1">
         <div className="h-8 w-8">
           <Lottie animationData={loadingAnim} loop={true} />
@@ -347,7 +347,7 @@ export function ChatInput({
     className={cn(
       "flex-1 min-w-0 max-h-[140px] min-h-[50px] mx-4 resize-none border-0 bg-transparent px-0 py-[13px] text-base leading-6 shadow-none",
       "focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
-      "placeholder:text-gray-400 placeholder:leading-6",
+      "placeholder:text-gray-400 placeholder:leading-6 dark:text-[var(--inputText-dark)]",
       "break-words whitespace-pre-wrap overflow-y-auto block",
 	  disabled || isLoading || isUnauthenticated ? "cursor-not-allowed" : ""
     )}
@@ -357,8 +357,8 @@ export function ChatInput({
   <div
     className={cn(
       "flex w-12 items-stretch justify-center transition-colors duration-200",
-      "rounded-r-[16px] rounded-l-none bg-[#F6F6F6]",
-	  canSend && !isLoading ? "brand-gradient" : "bg-gray-200"
+      "rounded-r-[16px] rounded-l-none bg-[#F6F6F6] dark:bg-[#FFFFFF1A]",
+	  canSend && !isLoading ? "brand-gradient" : "bg-gray-200 dark:bg-[#FFFFFF1A]"
     )}
   >
     <Button
@@ -397,7 +397,7 @@ export function ChatInput({
 				</div>
 
 				{footerNote ? (
-					<div className="mt-3 text-center text-[12px] text-muted-foreground">{footerNote}</div>
+					<div className="mt-3 text-center text-[12px] text-muted-foreground dark:text-[var(--inputText-dark)]">{footerNote}</div>
 				) : null}
 
 			</div>

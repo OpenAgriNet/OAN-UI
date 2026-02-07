@@ -38,7 +38,7 @@ function ChatLayout() {
 	}, [setToast]);
 
 	return (
-		<div className="flex h-svh w-full flex-col overflow-hidden bg-background text-foreground relative">
+		<div className="flex h-svh w-full flex-col overflow-hidden bg-background dark:bg-[var(--background-dark)] text-foreground relative">
 			{toastData && (
 				<Toast
 					message={toastData.message}
@@ -57,7 +57,7 @@ function ChatLayout() {
 				onBack={() => window.history.back()}
 			/>
 			{/* Only this area can scroll (via ChatShell/MessageList) */}
-			<main className="min-h-0 flex-1 bg-muted/30">
+			<main className="min-h-0 flex-1 bg-muted/30 dark:bg-transparent">
 				<Outlet />
 			</main>
 			<div className="relative z-20">

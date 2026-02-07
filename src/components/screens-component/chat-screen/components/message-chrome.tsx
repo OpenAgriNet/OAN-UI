@@ -56,7 +56,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 						<AvatarImage src={meta.avatar} className="object-contain" />
 						<AvatarFallback className="bg-transparent text-[#00a651] font-bold text-xs">{initials}</AvatarFallback>
 					</Avatar>
-					<span className="text-sm font-semibold text-foreground">{meta.name}</span>
+					<span className="text-sm font-semibold text-foreground dark:text-white">{meta.name}</span>
 				</div>
 			)}
 			<div className="pl-10 w-full">
