@@ -65,7 +65,7 @@ type ChatStore = {
 	fetchSuggestionsForMessage: (messageId: string) => Promise<void>;
 	generateQuickActions: (t: any) => void;
 	playTTS: (text: string, language: string) => Promise<void>;
-	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string) => Promise<void>;
+	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string, meta?: { serviceLabel?: string; rating?: number }) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
 	fetchLocation: (t: any) => void;
@@ -458,7 +458,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	submitMessageFeedback: async (messageId, isPositive, reason, feedback) => {
+	submitMessageFeedback: async (messageId, isPositive, reason, feedback, meta) => {
 		const { sessionId, messages } = get();
 		if (!sessionId) return;
 
@@ -483,7 +483,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				feedbackMsg,
 				feedbackType,
 				questionText,
-				responseText
+				responseText,
+				meta
 			);
 			telemetry.endTelemetry();
 		} catch (e) {

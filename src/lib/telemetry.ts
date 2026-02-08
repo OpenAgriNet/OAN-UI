@@ -306,6 +306,14 @@ export const logErrorEvent = (
   Telemetry.response(errorData);
 };
 
+/** Optional feedback metadata: service that generated the response, and 1–5 rating */
+export type FeedbackMeta = {
+  /** Label for the service/model generating the response (e.g. "chat-v1", "voice-agent") */
+  serviceLabel?: string;
+  /** Rating 1–5; must be in range [1, 5] if provided */
+  rating?: number;
+};
+
 export const logFeedbackEvent = (
   questionId: string,
   sessionId: string,
@@ -313,7 +321,21 @@ export const logFeedbackEvent = (
   feedbackType: string,
   questionText: string,
   responseText: string,
+  meta?: FeedbackMeta,
 ) => {
+  const feedbackDetails: Record<string, unknown> = {
+    feedbackText,
+    sessionId,
+    questionText,
+    answerText: responseText,
+    feedbackType,
+  };
+  if (meta?.serviceLabel != null) feedbackDetails.serviceLabel = meta.serviceLabel;
+  if (meta?.rating != null) {
+    const r = Math.min(5, Math.max(1, Math.round(meta.rating)));
+    feedbackDetails.rating = r;
+  }
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -322,13 +344,7 @@ export const logFeedbackEvent = (
       id: "p1",
       type: "default",
     },
-    feedbackDetails: {
-      feedbackText: feedbackText,
-      sessionId: sessionId,
-      questionText: questionText,
-      answerText: responseText,
-      feedbackType: feedbackType,
-    },
+    feedbackDetails,
   };
 
   const feedbackData = {
