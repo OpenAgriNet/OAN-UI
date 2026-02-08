@@ -3,8 +3,7 @@ import en from '../../translations/en.json';
 import hi from '../../translations/hi.json';
 import mr from '../../translations/mr.json';
 import gu from '../../translations/gu.json';
-
-type LanguageCode = 'en' | 'hi' | 'mr' | 'gu';
+import { DEFAULT_LANGUAGE, type LanguageCode } from '@/components/screens-component/chat-screen/config';
 
 interface LanguageContextType {
   language: LanguageCode;
@@ -23,7 +22,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     const saved = localStorage.getItem('app_language');
-    return (saved as LanguageCode) || 'en';
+    return (saved as LanguageCode) || DEFAULT_LANGUAGE;
   });
 
   const setLanguage = (lang: LanguageCode) => {
