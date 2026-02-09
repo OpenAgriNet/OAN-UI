@@ -61,6 +61,7 @@ export const setupAudioRecording = (
   mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>,
   handleAudioCallback: (text: string) => void,
   sessionId: string | null,
+  sourceLang: string = 'gu',
   toastFn?: (props: { title: string; description: string; variant: "default" | "destructive" | "yellow" }) => void
 ) => {
   // Create MediaRecorder
@@ -92,11 +93,11 @@ export const setupAudioRecording = (
       
       // Create optimal WAV file for transcription
       const optimizedBlob = await createOptimizedWav(audioBuffer);
-      handleAudioSubmission(optimizedBlob, handleAudioCallback, sessionId, toastFn);
+      handleAudioSubmission(optimizedBlob, handleAudioCallback, sessionId, sourceLang, toastFn);
     } catch (error) {
       console.error("Error processing audio, using original:", error);
       // Fall back to original audio if processing fails
-      handleAudioSubmission(audioBlob, handleAudioCallback, sessionId, toastFn);
+      handleAudioSubmission(audioBlob, handleAudioCallback, sessionId, sourceLang, toastFn);
     }
   });
   
@@ -111,6 +112,7 @@ const handleAudioSubmission = async (
   audioBlob: Blob, 
   handleAudioCallback: (text: string) => void,
   sessionId: string | null,
+  sourceLang: string = 'gu',
   toastFn?: (props: { title: string; description: string; variant: "default" | "destructive" | "yellow" }) => void
 ) => {
   try {
@@ -118,8 +120,8 @@ const handleAudioSubmission = async (
     // Transcribe the audio with Bhashini Pipeline Compute Call
     const transcription = await apiService.transcribeAudio(
       base64Audio,
-      'bhashini', // real Bhashini service ID string
-      sessionId || ''
+      sessionId || '',
+      sourceLang,
     ) as TranscriptionResponse;
     
     if (transcription && transcription.text) {

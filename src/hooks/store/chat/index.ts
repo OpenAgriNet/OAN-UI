@@ -323,14 +323,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	sendAudio: async (blob, sessionId) => {
+	sendAudio: async (blob, sessionId, language) => {
 		if (!blob) return;
 		
 		set({ isTranscribing: true });
 
 		try {
 			const base64Audio = await apiService.blobToBase64(blob);
-			const transcription = await apiService.transcribeAudio(base64Audio, 'bhashini', sessionId);
+			const transcription = await apiService.transcribeAudio(base64Audio, sessionId, language);
 			
 			if (transcription && transcription.text) {
 				set((state) => ({
