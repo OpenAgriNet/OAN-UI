@@ -21,7 +21,8 @@ interface SettingsDrawerProps {
 
 export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const { theme, setTheme } = useThemeStore();
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
+	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
 	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
 
@@ -105,7 +106,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 							</CollapsibleTrigger>
 							<CollapsibleContent className="px-5 pb-5 space-y-4">
 								<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-4">
-									{FAQ_DATA.map((faq, index) => (
+									{faqItems.map((faq, index) => (
 										<div
 											key={faq.id}
 											className="border border-gray-100 dark:border-gray-900 rounded-xl overflow-hidden"

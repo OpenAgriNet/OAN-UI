@@ -14,7 +14,8 @@ import {
 export default function SettingsPage() {
 	const navigate = useNavigate();
 	const { theme, setTheme } = useThemeStore();
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
+	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
 	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
 
@@ -97,7 +98,7 @@ export default function SettingsPage() {
 					</CollapsibleTrigger>
 					<CollapsibleContent className="px-5 pb-5 space-y-3">
 						<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-3">
-							{FAQ_DATA.map((faq, index) => (
+							{faqItems.map((faq, index) => (
 								<div
 									key={faq.id}
 									className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
