@@ -18,6 +18,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showCopySuccess, setShowCopySuccess] = useState(false);
 	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
+	const [showThumbsDownSuccess, setShowThumbsDownSuccess] = useState(false);
 
 	const handleListen = async () => {
 		try {
@@ -34,7 +35,6 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 		try {
 			await submitFeedback(message.id, true);
 			setShowThumbsUpSuccess(true);
-			setTimeout(() => setShowThumbsUpSuccess(false), 1000);
 		} catch (error) {
 			console.error("Thumbs up failed:", error);
 		} finally {
@@ -67,6 +67,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 		try {
 			await submitFeedback(message.id, false, reason, feedbackMessage);
+			setShowThumbsDownSuccess(true);
 		} catch (error) {
 			console.error("Feedback submission failed:", error);
 		} finally {
@@ -160,33 +161,45 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
 
-								<Button
-									variant="ghost"
-									size="icon"
-									className="flex-1 h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer"
-									title="Helpful"
-									onClick={handleThumbsUp}
-									disabled={isSubmitting}
-								>
-									{showThumbsUpSuccess ? (
-										<Check className="h-4 w-4 text-[#019444]" />
-									) : (
-										<ThumbsUp className="h-4 w-4 text-[#019444]" />
-									)}
-								</Button>
+								<div className="flex-1 flex items-center justify-center">
+									<Button
+										variant="ghost"
+										size="icon"
+										className={cn(
+											"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer disabled:opacity-100",
+											showThumbsUpSuccess && "pointer-events-none"
+										)}
+										title="Helpful"
+										onClick={handleThumbsUp}
+										disabled={isSubmitting || showThumbsUpSuccess}
+									>
+										<ThumbsUp 
+											className={cn("h-4 w-4 text-[#019444]")} 
+											fill={showThumbsUpSuccess ? "#019444" : "none"}
+										/>
+									</Button>
+								</div>
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
 
-								<Button
-									variant="ghost"
-									size="icon"
-									className="flex-1 h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-red-50 hover:text-red-500 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 cursor-pointer"
-									title="Not Helpful"
-									onClick={handleThumbsDown}
-									disabled={isSubmitting}
-								>
-									<ThumbsDown className="h-4 w-4 text-[#019444]" />
-								</Button>
+								<div className="flex-1 flex items-center justify-center">
+									<Button
+										variant="ghost"
+										size="icon"
+										className={cn(
+											"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-red-50 hover:text-red-500 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 cursor-pointer disabled:opacity-100",
+											showThumbsDownSuccess && "pointer-events-none"
+										)}
+										title="Not Helpful"
+										onClick={handleThumbsDown}
+										disabled={isSubmitting || showThumbsDownSuccess}
+									>
+										<ThumbsDown 
+											className={cn("h-4 w-4 text-[#019444]")} 
+											fill={showThumbsDownSuccess ? "#019444" : "none"}
+										/>
+									</Button>
+								</div>
 							</div>
 							</div>
 						</div>

@@ -71,7 +71,11 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 	if (!open) return null;
 
 	const handleSubmit = () => {
-		onSubmit(selectedReason, message);
+		const finalMessage = selectedReason === "other" 
+			? message 
+			: FEEDBACK_OPTIONS.find(o => o.id === selectedReason)?.label || selectedReason;
+		
+		onSubmit(selectedReason, finalMessage);
 		// Reset form
 		setSelectedReason("incorrect");
 		setMessage("");
@@ -132,40 +136,42 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 					</div>
 
 					{/* Message Section */}
-					<div className="px-6 pb-6">
-						<label className="block text-sm font-semibold text-gray-900 dark:text-gray-200 mb-2">
-							{t("feedback.messageLabel")}
-						</label>
-						<div className="relative">
-							<textarea
-								value={message}
-								onChange={(e) => setMessage(e.target.value)}
-								placeholder={typeof t("feedback.placeholder") === 'string' ? t("feedback.placeholder") as string : "Or tell us more about the issue..."}
-								className="w-full px-4 py-3 pr-24 border border-gray-200 dark:border-[var(--border-dark)] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-white dark:bg-[var(--inputBg-dark)] text-gray-900 dark:text-white dark:placeholder:text-gray-400"
-								rows={4}
-								style={{ fontStyle: message ? "normal" : "italic" }}
-							/>
-							<div className="absolute right-3 bottom-3 flex gap-1">
-								<button 
-									type="button"
-									onClick={handleListen}
-									disabled={!message}
-									className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 disabled:opacity-30 cursor-pointer"
-									title="Listen to feedback text"
-								>
-									<Volume2 className="h-5 w-5" />
-								</button>
-								<button 
-									type="button"
-									onClick={toggleRecording}
-									className={`p-2 rounded-full transition-colors cursor-pointer ${isRecording ? "bg-red-100 text-red-500 animate-pulse" : "hover:bg-gray-100 text-gray-400"}`}
-									title={isRecording ? "Stop recording" : "Record voice feedback"}
-								>
-									<Mic className="h-5 w-5" />
-								</button>
+					{selectedReason === "other" && (
+						<div className="px-6 pb-6">
+							<label className="block text-sm font-semibold text-gray-900 dark:text-gray-200 mb-2">
+								{t("feedback.messageLabel")}
+							</label>
+							<div className="relative">
+								<textarea
+									value={message}
+									onChange={(e) => setMessage(e.target.value)}
+									placeholder={typeof t("feedback.placeholder") === 'string' ? t("feedback.placeholder") as string : "Or tell us more about the issue..."}
+									className="w-full px-4 py-3 pr-24 border border-gray-200 dark:border-[var(--border-dark)] rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm bg-white dark:bg-[var(--inputBg-dark)] text-gray-900 dark:text-white dark:placeholder:text-gray-400"
+									rows={4}
+									style={{ fontStyle: message ? "normal" : "italic" }}
+								/>
+								<div className="absolute right-3 bottom-3 flex gap-1">
+									<button 
+										type="button"
+										onClick={handleListen}
+										disabled={!message}
+										className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 disabled:opacity-30 cursor-pointer"
+										title="Listen to feedback text"
+									>
+										<Volume2 className="h-5 w-5" />
+									</button>
+									<button 
+										type="button"
+										onClick={toggleRecording}
+										className={`p-2 rounded-full transition-colors cursor-pointer ${isRecording ? "bg-red-100 text-red-500 animate-pulse" : "hover:bg-gray-100 text-gray-400"}`}
+										title={isRecording ? "Stop recording" : "Record voice feedback"}
+									>
+										<Mic className="h-5 w-5" />
+									</button>
+								</div>
 							</div>
 						</div>
-					</div>
+					)}
 				</div>
 
 				{/* Action Buttons */}
