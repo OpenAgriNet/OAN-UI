@@ -20,6 +20,14 @@ export async function startAnonymousSessionIfNeeded(): Promise<void> {
   if (tokenFromUrl) return;
   if (authState().isAuthed()) return;
 
+  // If a bootstrap session is already recorded, avoid double-calling the API.
+  if (
+    typeof sessionStorage !== "undefined" &&
+    sessionStorage.getItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY)
+  ) {
+    return;
+  }
+
   const sessionId = crypto.randomUUID?.() ?? `sess-${Date.now()}`;
   sessionStorage.setItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY, sessionId);
 
