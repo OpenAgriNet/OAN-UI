@@ -15,9 +15,9 @@ const login = (payload: LoginPayload) =>
     skipAuth: true,
   });
 
-/** POST /auth/anonymous – no auth, no body; returns 1-day JWT for anonymous usage */
+/** POST /api/auth/anonymous – no auth, no body; returns 1-day JWT for anonymous usage */
 const fetchAnonymousToken = () =>
-  request<TokenResponse>("/auth/anonymous", {
+  request<TokenResponse>("/api/auth/anonymous", {
     method: "POST",
     skipAuth: true,
   });

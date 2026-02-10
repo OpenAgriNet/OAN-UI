@@ -24,7 +24,7 @@ export async function startAnonymousSessionIfNeeded(): Promise<void> {
   sessionStorage.setItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY, sessionId);
 
   try {
-    const data = await request<TokenResponse>("/auth/anonymous", {
+    const data = await request<TokenResponse>("/api/auth/anonymous", {
       method: "POST",
       skipAuth: true,
     });
