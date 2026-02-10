@@ -332,7 +332,7 @@ export function ChatInput({
           <Lottie animationData={loadingAnim} loop={true} />
         </div>
         <span className="text-base text-gray-500">
-			{isTranscribing ? "Transcribing..." : "Loading..."}
+			{isTranscribing ? "Transcribing..." : ""}
 		</span>
       </div>
     </div>

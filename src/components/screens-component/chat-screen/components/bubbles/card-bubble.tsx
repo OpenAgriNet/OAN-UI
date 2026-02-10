@@ -161,45 +161,50 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
 
-								<div className="flex-1 flex items-center justify-center">
-									<Button
-										variant="ghost"
-										size="icon"
-										className={cn(
-											"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer disabled:opacity-100",
-											showThumbsUpSuccess && "pointer-events-none"
-										)}
-										title="Helpful"
-										onClick={handleThumbsUp}
-										disabled={isSubmitting || showThumbsUpSuccess}
-									>
-										<ThumbsUp 
-											className={cn("h-4 w-4 text-[#019444]")} 
-											fill={showThumbsUpSuccess ? "#019444" : "none"}
-										/>
-									</Button>
-								</div>
+								{!showThumbsDownSuccess && (
+									<>
+										<div className="flex-1 flex items-center justify-center">
+											<Button
+												variant="ghost"
+												size="icon"
+												className={cn(
+													"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer disabled:opacity-100",
+													showThumbsUpSuccess && "pointer-events-none"
+												)}
+												title="Helpful"
+												onClick={handleThumbsUp}
+												disabled={isSubmitting || showThumbsUpSuccess}
+											>
+												<ThumbsUp 
+													className={cn("h-4 w-4 text-[#019444]")} 
+													fill={showThumbsUpSuccess ? "#019444" : "none"}
+												/>
+											</Button>
+										</div>
+										{!showThumbsUpSuccess && <div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />}
+									</>
+								)}
 
-								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
-
-								<div className="flex-1 flex items-center justify-center">
-									<Button
-										variant="ghost"
-										size="icon"
-										className={cn(
-											"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-red-50 hover:text-red-500 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 cursor-pointer disabled:opacity-100",
-											showThumbsDownSuccess && "pointer-events-none"
-										)}
-										title="Not Helpful"
-										onClick={handleThumbsDown}
-										disabled={isSubmitting || showThumbsDownSuccess}
-									>
-										<ThumbsDown 
-											className={cn("h-4 w-4 text-[#019444]")} 
-											fill={showThumbsDownSuccess ? "#019444" : "none"}
-										/>
-									</Button>
-								</div>
+								{!showThumbsUpSuccess && (
+									<div className="flex-1 flex items-center justify-center">
+										<Button
+											variant="ghost"
+											size="icon"
+											className={cn(
+												"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-red-50 hover:text-red-500 dark:text-gray-400 dark:hover:bg-red-900/20 dark:hover:text-red-400 cursor-pointer disabled:opacity-100",
+												showThumbsDownSuccess && "pointer-events-none"
+											)}
+											title="Not Helpful"
+											onClick={handleThumbsDown}
+											disabled={isSubmitting || showThumbsDownSuccess}
+										>
+											<ThumbsDown 
+												className={cn("h-4 w-4 text-[#019444]")} 
+												fill={showThumbsDownSuccess ? "#019444" : "none"}
+											/>
+										</Button>
+									</div>
+								)}
 							</div>
 							</div>
 						</div>
