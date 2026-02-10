@@ -5,6 +5,8 @@ import { WelcomePanel } from "./welcome-panel";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components";
+import { startAnonymousSessionIfNeeded } from "@/lib/anonymous-bootstrap";
+import { authState } from "@/hooks/store/auth";
 
 export function ChatShell() {
 	const { language, t } = useLanguage();
@@ -19,6 +21,14 @@ export function ChatShell() {
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const showWelcome = messages.length === 0;
+
+	// If /chat is loaded directly and auth isn't set, ensure anonymous
+	// bootstrap runs as a safety net (in addition to the root bootstrap).
+	useEffect(() => {
+		if (!authState().isAuthed()) {
+			startAnonymousSessionIfNeeded();
+		}
+	}, []);
 
 	useEffect(() => {
 		if (!sessionId && user) {

@@ -121,6 +121,7 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 }
 
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
+import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -137,7 +138,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	setToast: (toast) => set({ toast }),
 
 	initializeSession: (user) => {
-		const sid = uuidv4();
+		const sid =
+			(typeof sessionStorage !== "undefined" &&
+				sessionStorage.getItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY)) ||
+			uuidv4();
+		if (typeof sessionStorage !== "undefined") {
+			sessionStorage.removeItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY);
+		}
 		set({ sessionId: sid });
 		apiService.setSessionId(sid);
 		try {
