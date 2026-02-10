@@ -367,7 +367,9 @@ export const logAnonymousTokenIssued = (
   sessionId: string,
   deviceId: string,
 ) => {
-  const endpoint = `${env.telemetryUrl}/v1/telemetry`;
+  // Align with existing working telemetry endpoint:
+  // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
+  const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
   const payload = {
     eid: "OE_ANONYMOUS_TOKEN_ISSUED",
     ver: "2.2",

@@ -51,6 +51,9 @@ export const setTelemetryUserData = (userData: any) => {
 
 const getHostUrl = (): string => typeof window !== 'undefined' ? window.location.origin : 'unknown-host';
 
+// Use same telemetry base URL config as the v3 telemetry client
+import { env } from "@/config/env";
+
 const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
   try {
     const telemetryPayload = {
@@ -62,7 +65,9 @@ const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
       ...eventData
     };
     
-    const endpoint = '/observability-service/v1/telemetry';
+    // Align with working endpoint:
+    // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
+    const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
     
     fetch(endpoint, {
       method: 'POST',
