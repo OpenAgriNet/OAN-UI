@@ -8,14 +8,12 @@ import type { TokenResponse } from "@/hooks/apis/auth/type";
 export const ANONYMOUS_BOOTSTRAP_SESSION_KEY = "oan_anonymous_session_id";
 
 /**
- * When loaded on dev.amulai.in without ?token and not already authed,
+ * When the app is loaded without ?token and not already authed,
  * fetches anonymous token, sets session, and sends OE_ANONYMOUS_TOKEN_ISSUED.
  * Session id is generated here and stored so the chat store can reuse it.
  */
 export async function startAnonymousSessionIfNeeded(): Promise<void> {
   if (typeof window === "undefined") return;
-  const hostname = window.location.hostname;
-  if (!hostname.includes("dev.amulai.in")) return;
   const tokenFromUrl = new URLSearchParams(window.location.search).get("token");
   if (tokenFromUrl) return;
   if (authState().isAuthed()) return;
