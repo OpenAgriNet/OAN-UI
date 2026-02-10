@@ -51,19 +51,76 @@ export type FAQItem = {
 	image?: string;
 };
 
-export const FAQ_DATA: FAQItem[] = [
-	{
-		id: "1",
-		question: "How can I get subsidy for farm machinery?",
-		answer: "Farmers can apply for machinery subsidy through the MahaDBT portal. Subsidy amount depends on machine type, farmer category, and scheme availability.",
-		image: "/faq-machinery.png"
-	},
-	{
-		id: "2",
-		question: "Why is my crop not growing properly?",
-		answer: "Proper crop growth depends on soil health, water quality, and appropriate fertilizer usage. We recommend testing your soil at the nearest government lab.",
-	}
-];
+export const FAQ_DATA: Record<LanguageCode, FAQItem[]> = {
+	gu: [
+		{ id: "1", question: "વેતર આવેલ ગાય- ભેંસ ક્યારે ફેળવવી?", answer: "" },
+		{ id: "2", question: "વિયાણ બાદ ગાય/ભેંસને ફરી ક્યારે ફેળવવી?", answer: "" },
+		{ id: "3", question: "મેલી ન પડવાના કારણો શું છે?", answer: "" },
+		{ id: "4", question: "વિયાણ બાદ મેલી ક્યારે પડાવી જોઈએ?", answer: "" },
+		{ id: "5", question: "આઉનો સોજો કેવી રીતે અટકાવી શકાય?", answer: "" },
+		{ id: "6", question: "ખરવામોંવાસો અટકાવવા શું કરવું?", answer: "" },
+		{ id: "7", question: "આફરામાં ઘરગથ્થુ ઉપચાર શું છે?", answer: "" },
+		{ id: "8", question: "કરમિયા અટકાવવા શું કરવું?", answer: "" },
+		{ id: "9", question: "ઈતરડી નિયંત્રણ માટે શું કરવું?", answer: "" },
+		{ id: "10", question: "બચ્ચાઓને કરમિયાની દવા ક્યારે આપવી?", answer: "" },
+		{ id: "11", question: "ગાભણ પશુની માવજત કેવી રીતે કરવી?", answer: "" },
+		{ id: "12", question: "સાયલેજ એટલે શું?", answer: "" },
+		{ id: "13", question: "શિંગ ડામવા ક્યારે જોઈએ?", answer: "" },
+		{ id: "14", question: "કઈ ઓલાદના પશુ રાખવા જોઈએ?", answer: "" },
+		{ id: "15", question: "દૂધ વધારવા શું કરવું?", answer: "" },
+	],
+	en: [
+		{ id: "1", question: "When should a cow/buffalo in heat be bred?", answer: "" },
+		{ id: "2", question: "When should a cow/buffalo be bred again after calving?", answer: "" },
+		{ id: "3", question: "What are the reasons for the retention of the afterbirth (placenta)?", answer: "" },
+		{ id: "4", question: "When should the placenta be removed after calving?", answer: "" },
+		{ id: "5", question: "How can mastitis (udder swelling) be prevented?", answer: "" },
+		{ id: "6", question: "What to do to prevent FMD?", answer: "" },
+		{ id: "7", question: "What are the home remedies for bloat?", answer: "" },
+		{ id: "8", question: "What to do to prevent worms?", answer: "" },
+		{ id: "9", question: "What to do for tick control?", answer: "" },
+		{ id: "10", question: "When should deworming medicine be given to calves?", answer: "" },
+		{ id: "11", question: "How to take care of a pregnant animal?", answer: "" },
+		{ id: "12", question: "What is Silage?", answer: "" },
+		{ id: "13", question: "When should dehorning (disbudding) be done?", answer: "" },
+		{ id: "14", question: "Which animal breeds should be kept?", answer: "" },
+		{ id: "15", question: "What to do to increase milk yield?", answer: "" },
+	],
+	hi: [
+		{ id: "1", question: "When should a cow/buffalo in heat be bred?", answer: "" },
+		{ id: "2", question: "When should a cow/buffalo be bred again after calving?", answer: "" },
+		{ id: "3", question: "What are the reasons for the retention of the afterbirth (placenta)?", answer: "" },
+		{ id: "4", question: "When should the placenta be removed after calving?", answer: "" },
+		{ id: "5", question: "How can mastitis (udder swelling) be prevented?", answer: "" },
+		{ id: "6", question: "What to do to prevent FMD?", answer: "" },
+		{ id: "7", question: "What are the home remedies for bloat?", answer: "" },
+		{ id: "8", question: "What to do to prevent worms?", answer: "" },
+		{ id: "9", question: "What to do for tick control?", answer: "" },
+		{ id: "10", question: "When should deworming medicine be given to calves?", answer: "" },
+		{ id: "11", question: "How to take care of a pregnant animal?", answer: "" },
+		{ id: "12", question: "What is Silage?", answer: "" },
+		{ id: "13", question: "When should dehorning (disbudding) be done?", answer: "" },
+		{ id: "14", question: "Which animal breeds should be kept?", answer: "" },
+		{ id: "15", question: "What to do to increase milk yield?", answer: "" },
+	],
+	mr: [
+		{ id: "1", question: "When should a cow/buffalo in heat be bred?", answer: "" },
+		{ id: "2", question: "When should a cow/buffalo be bred again after calving?", answer: "" },
+		{ id: "3", question: "What are the reasons for the retention of the afterbirth (placenta)?", answer: "" },
+		{ id: "4", question: "When should the placenta be removed after calving?", answer: "" },
+		{ id: "5", question: "How can mastitis (udder swelling) be prevented?", answer: "" },
+		{ id: "6", question: "What to do to prevent FMD?", answer: "" },
+		{ id: "7", question: "What are the home remedies for bloat?", answer: "" },
+		{ id: "8", question: "What to do to prevent worms?", answer: "" },
+		{ id: "9", question: "What to do for tick control?", answer: "" },
+		{ id: "10", question: "When should deworming medicine be given to calves?", answer: "" },
+		{ id: "11", question: "How to take care of a pregnant animal?", answer: "" },
+		{ id: "12", question: "What is Silage?", answer: "" },
+		{ id: "13", question: "When should dehorning (disbudding) be done?", answer: "" },
+		{ id: "14", question: "Which animal breeds should be kept?", answer: "" },
+		{ id: "15", question: "What to do to increase milk yield?", answer: "" },
+	],
+};
 
 export const THEMES = {
 	light: "light",
