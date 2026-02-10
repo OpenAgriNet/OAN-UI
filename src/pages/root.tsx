@@ -9,10 +9,16 @@ export type TRouterContext = {
   // serverConfig: ServerConfig | null;
 };
 import { useThemeStore } from "@/hooks/store/theme";
+import { startAnonymousSessionIfNeeded } from "@/lib/anonymous-bootstrap";
+import { useEffect } from "react";
 
 const RootPage = () => {
     // Just call to ensure store is initialized and effect runs if any
-    useThemeStore(); 
+    useThemeStore();
+
+    useEffect(() => {
+        startAnonymousSessionIfNeeded();
+    }, []); 
 
     return (
         <QueryClientProvider client={queryClient}>

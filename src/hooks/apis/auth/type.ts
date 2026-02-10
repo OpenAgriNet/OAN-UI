@@ -17,3 +17,10 @@ export type LoginPayload = {
   };
 };
 
+/** Response from POST /auth/anonymous – 1-day JWT for anonymous usage */
+export type TokenResponse = {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+};
+

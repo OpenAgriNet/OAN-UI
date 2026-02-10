@@ -358,6 +358,49 @@ export const logFeedbackEvent = (
   Telemetry.response(feedbackData);
 };
 
+/**
+ * Log when an anonymous token is issued (session started anonymously).
+ * Sends OE_ANONYMOUS_TOKEN_ISSUED to the telemetry service.
+ */
+export const logAnonymousTokenIssued = (
+  userId: string,
+  sessionId: string,
+  deviceId: string,
+) => {
+  const endpoint = `${env.telemetryUrl}/v1/telemetry`;
+  const payload = {
+    eid: "OE_ANONYMOUS_TOKEN_ISSUED",
+    ver: "2.2",
+    mid: `OE_${Math.random().toString(36).substring(2, 15)}`,
+    ets: Date.now(),
+    channel: "AmulAI-" + getHostUrl(),
+    uid: userId,
+    sid: sessionId,
+    did: deviceId,
+    pdata: {
+      id: "AmulAI",
+      ver: "v0.1",
+      pid: "AmulAI",
+    },
+    edata: {
+      eks: {
+        type: "ANONYMOUS_TOKEN_ISSUED",
+        sid: sessionId,
+        uid: userId,
+      },
+    },
+    cdata: [],
+    etags: { partner: [] },
+  };
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
+};
+
 export const endTelemetry = () => {
   Telemetry.end({});
 };
