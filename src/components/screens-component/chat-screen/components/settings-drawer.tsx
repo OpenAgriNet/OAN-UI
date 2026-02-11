@@ -4,7 +4,6 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { useThemeStore } from "@/hooks/store/theme";
 import { THEMES, FAQ_DATA } from "@/components/screens-component/chat-screen/config";
-import { useChatStore } from "@/hooks/store/chat";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -25,11 +24,13 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const { t, language } = useLanguage();
 	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
-	const setDraft = useChatStore((s) => s.setDraft);
+	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
 
-	const handleFaqClick = (question: string) => {
-		setDraft(question);
-		onOpenChange(false);
+	const toggleFaq = (id: string) => {
+		setExpandedFaqs((prev) => ({
+			...prev,
+			[id]: !prev[id]
+		}));
 	};
 
 	return (
@@ -106,18 +107,34 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 							<CollapsibleContent className="px-5 pb-5 space-y-4">
 								<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-4">
 									{faqItems.map((faq, index) => (
-										<button
+										<div
 											key={faq.id}
-											onClick={() => handleFaqClick(faq.question)}
-											className="w-full flex items-start gap-3 px-4 py-4 text-left border border-gray-100 dark:border-gray-900 rounded-xl hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors"
+											className="border border-gray-100 dark:border-gray-900 rounded-xl overflow-hidden"
 										>
-											<span className="font-bold text-gray-400 dark:text-gray-500 mt-0.5 min-w-[20px]">
-												{index + 1}.
-											</span>
-											<span className="font-bold text-gray-900 dark:text-gray-100 flex-1 leading-snug">
-												{faq.question}
-											</span>
-										</button>
+											<button
+												onClick={() => toggleFaq(faq.id)}
+												className="w-full flex items-start gap-3 px-4 py-4 text-left hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors"
+											>
+												<span className="font-bold text-gray-400 dark:text-gray-500 mt-0.5 min-w-[20px]">
+													{index + 1}.
+												</span>
+												<span className="font-bold text-gray-900 dark:text-gray-100 flex-1 leading-snug">
+													{faq.question}
+												</span>
+												{expandedFaqs[faq.id] ? (
+													<ChevronUp className="h-4 w-4 text-gray-400 flex-shrink-0" />
+												) : (
+													<ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0" />
+												)}
+											</button>
+											{expandedFaqs[faq.id] && (
+												<div className="px-4 pb-4">
+													<p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-line">
+														{faq.answer}
+													</p>
+												</div>
+											)}
+										</div>
 									))}
 								</div>
 							</CollapsibleContent>

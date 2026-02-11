@@ -5,7 +5,6 @@ import { useThemeStore } from "@/hooks/store/theme";
 import { THEMES, FAQ_DATA } from "@/components/screens-component/chat-screen/config";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useState } from "react";
-import { useChatStore } from "@/hooks/store/chat";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -18,11 +17,13 @@ export default function SettingsPage() {
 	const { t, language } = useLanguage();
 	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
-	const setDraft = useChatStore((s) => s.setDraft);
+	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
 
-	const handleFaqClick = (question: string) => {
-		setDraft(question);
-		navigate({ to: "/chat", search: (old) => old });
+	const toggleFaq = (id: string) => {
+		setExpandedFaqs((prev) => ({
+			...prev,
+			[id]: !prev[id]
+		}));
 	};
 
 	return (
@@ -98,18 +99,34 @@ export default function SettingsPage() {
 					<CollapsibleContent className="px-5 pb-5 space-y-3">
 						<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-3">
 							{faqItems.map((faq, index) => (
-								<button
+								<div
 									key={faq.id}
-									onClick={() => handleFaqClick(faq.question)}
-									className="w-full flex items-start gap-3 px-4 py-4 text-left border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+									className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
 								>
-									<span className="font-bold text-gray-900 dark:text-gray-100 mt-0.5 min-w-[20px]">
-										{index + 1}.
-									</span>
-									<span className="font-medium text-gray-900 dark:text-gray-100 flex-1 leading-snug">
-										{faq.question}
-									</span>
-								</button>
+									<button
+										onClick={() => toggleFaq(faq.id)}
+										className="w-full flex items-start gap-3 px-4 py-4 text-left"
+									>
+										<span className="font-bold text-gray-900 dark:text-gray-100 mt-0.5 min-w-[20px]">
+											{index + 1}.
+										</span>
+										<span className="font-medium text-gray-900 dark:text-gray-100 flex-1 leading-snug">
+											{faq.question}
+										</span>
+										{expandedFaqs[faq.id] ? (
+											<ChevronUp className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+										) : (
+											<ChevronDown className="h-5 w-5 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+										)}
+									</button>
+									{expandedFaqs[faq.id] && (
+										<div className="px-4 pb-4">
+											<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
+												{faq.answer}
+											</p>
+										</div>
+									)}
+								</div>
 							))}
 						</div>
 					</CollapsibleContent>
