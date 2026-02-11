@@ -305,14 +305,69 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	sendAudio: async (blob, sessionId) => {
+	sendAudio: async (blob, sessionId, language) => {
 		if (!blob) return;
 		
 		set({ isTranscribing: true });
 
 		try {
-			const base64Audio = await apiService.blobToBase64(blob);
-			const transcription = await apiService.transcribeAudio(base64Audio, 'bhashini', sessionId);
+			// Convert raw MediaRecorder audio (WebM) to optimized WAV for ASR
+			const AudioContextClass = window.AudioContext || 
+				(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+			const audioContext = new AudioContextClass();
+			const arrayBuffer = await blob.arrayBuffer();
+			const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+			
+			// Create optimized WAV (16kHz, mono) - same as oan-ui-service
+			const offlineContext = new OfflineAudioContext({
+				numberOfChannels: 1,
+				length: audioBuffer.duration * 16000,
+				sampleRate: 16000
+			});
+			const source = offlineContext.createBufferSource();
+			source.buffer = audioBuffer;
+			source.connect(offlineContext.destination);
+			source.start();
+			const renderedBuffer = await offlineContext.startRendering();
+			
+			// Convert to WAV blob
+			const numChannels = renderedBuffer.numberOfChannels;
+			const sampleRate = renderedBuffer.sampleRate;
+			const length = renderedBuffer.length;
+			const bytesPerSample = 2;
+			const blockAlign = numChannels * bytesPerSample;
+			const byteRate = sampleRate * blockAlign;
+			const dataSize = length * blockAlign;
+			const wavBuffer = new ArrayBuffer(44 + dataSize);
+			const view = new DataView(wavBuffer);
+			
+			// WAV header
+			const writeStr = (offset: number, str: string) => {
+				for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+			};
+			writeStr(0, 'RIFF');
+			view.setUint32(4, 36 + dataSize, true);
+			writeStr(8, 'WAVE');
+			writeStr(12, 'fmt ');
+			view.setUint32(16, 16, true);
+			view.setUint16(20, 1, true);
+			view.setUint16(22, numChannels, true);
+			view.setUint32(24, sampleRate, true);
+			view.setUint32(28, byteRate, true);
+			view.setUint16(32, blockAlign, true);
+			view.setUint16(34, 16, true);
+			writeStr(36, 'data');
+			view.setUint32(40, dataSize, true);
+			
+			const channelData = renderedBuffer.getChannelData(0);
+			for (let i = 0; i < length; i++) {
+				const sample = Math.max(-1, Math.min(1, channelData[i]!));
+				view.setInt16(44 + i * bytesPerSample, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+			}
+			
+			const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
+			const base64Audio = await apiService.blobToBase64(wavBlob);
+			const transcription = await apiService.transcribeAudio(base64Audio, 'bhashini', sessionId, language);
 			
 			if (transcription && transcription.text) {
 				set((state) => ({
