@@ -31,13 +31,13 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 
 	if (isUser) {
 		return (
-			<div className="flex w-full flex-col items-end gap-1 mb-4">
+			<div className="flex w-full flex-col pr-1 items-end gap-1 mb-4">
 				{/* User Header: Name and Avatar */}
 				{showLabel && (
 					<div className="flex items-center gap-2">
-						<span className="text-sm font-semibold text-foreground">{user?.username || user?.name || meta.name}</span>
-						<Avatar className="h-8 w-8 rounded-full border border-[#019444] bg-[green-100]">
-							<AvatarFallback className="text-[#019444] text-xs font-bold">{initials}</AvatarFallback>
+						<span className="text-sm font-semibold text-[var(--primary)] text-foreground">{user?.username || user?.name || meta.name}</span>
+						<Avatar className="h-8 w-8 rounded-full border border-[var(--primary)] bg-indigo-50/50">
+							<AvatarFallback className="text-[var(--primary)] text-xs font-bold">{initials}</AvatarFallback>
 						</Avatar>
 					</div>
 				)}
@@ -48,18 +48,18 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 
 	// Assistant / System
 	return (
-		<div className="flex w-full flex-col items-start gap-1">
+		<div className="flex w-full pl-1 flex-col items-start gap-1">
 			{/* AI Header: Avatar and Name */}
 			{showLabel && (
 				<div className="flex items-center gap-2">
-					<Avatar className="h-8 w-8 border border-[#00a651] bg-white p-[2px]">
+					<Avatar className="h-10 w-10 bg-background p-[2px]">
 						<AvatarImage src={meta.avatar} className="object-contain" />
 						<AvatarFallback className="bg-transparent text-[#00a651] font-bold text-xs">{initials}</AvatarFallback>
 					</Avatar>
 					<span className="text-sm font-semibold text-foreground dark:text-white">{meta.name}</span>
 				</div>
 			)}
-			<div className="pl-10 w-full">
+			<div className="w-full">
 				{children}
 				{/* Loading dots for AI (if passed as children) should align here */}
 			</div>

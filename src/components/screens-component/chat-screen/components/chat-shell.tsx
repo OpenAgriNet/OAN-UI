@@ -48,7 +48,7 @@ export function ChatShell() {
 						<div
 							style={{
 								padding: "1px",
-								background: "#077439",
+								background: "var(--primary)",
 								borderRadius: "24px",
 								width: "100%",
 								maxWidth: "350px"
@@ -56,7 +56,7 @@ export function ChatShell() {
 						>
 							<div
 								style={{
-									background: "#212C28",
+									background: "var(--brand-900)",
 									borderRadius: "23px",
 									overflow: "hidden",
 									position: "relative"

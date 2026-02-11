@@ -5,27 +5,27 @@
       "url": "https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
     },
     "colors": {
-      "primary": "#315C0A",
-      "secondary": "#fef89e",
-      "accent": "#00bd52",
-      "background": "#f6f6f6",
-      "foreground": "#3d3d3d",
-      "userBubble": "#bbf7d0",
+      "primary": "#4343ff",
+      "secondary": "#E0E7FF",
+      "accent": "#3b82f6",
+      "background": "linear-gradient(to right, #f1f3ff, #FFFFFF)",
+      "foreground": "#1E293B",
+      "userBubble": "#E0E7FF",
       "dark": {
-        "background": "#131313",
-        "headerBg": "#1C1C1C",
-        "headerText": "#FFFFFF",
-        "userBubble": "#077439",
-        "userBubbleText": "#FFFFFF",
-        "aiBubble": "#FFFFFF0D",
-        "aiBubbleText": "#FFFFFF",
-        "suggestionBg": "#3D3D3D",
-        "suggestionText": "#FFFFFF",
-        "inputBg": "#131313",
-        "inputText": "#FFFFFF",
-        "wave": "#FFFFFF",
-        "icon": "#FFFFFF",
-        "border": "#3D3D3D"
+        "background": "#020617",
+        "headerBg": "#0F172A",
+        "headerText": "#F8FAFC",
+        "userBubble": "#1E293B",
+        "userBubbleText": "#F8FAFC",
+        "aiBubble": "#1E293B80",
+        "aiBubbleText": "#F8FAFC",
+        "suggestionBg": "#1E293B",
+        "suggestionText": "#F8FAFC",
+        "inputBg": "#020617",
+        "inputText": "#F8FAFC",
+        "wave": "#F8FAFC",
+        "icon": "#F8FAFC",
+        "border": "#1E293B"
       }
     },
     "fontSizes": {
@@ -39,7 +39,7 @@
     }
   },
   "icons": {
-    "assistant": "/maha-logo.svg",
+    "assistant": "/chatBotIcon.svg",
     "user": "",
     "language": "अ",
     "settings": "Settings",

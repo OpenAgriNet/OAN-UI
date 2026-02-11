@@ -280,9 +280,9 @@ export function ChatInput({
 					<div className="relative">
 						{micHint ? (
 							<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
-								<div className="relative whitespace-nowrap rounded-lg bg-[#dcfce7] px-3 py-2 text-sm font-medium text-[#166534] shadow-sm">
+								<div className="relative whitespace-nowrap rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
 									{t("chatMicHint")}
-									<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 bg-[#dcfce7]"></div>
+									<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 bg-[var(--secondary)]"></div>
 								</div>
 						<style>{`
 									@keyframes float {
@@ -308,13 +308,13 @@ export function ChatInput({
 							disabled={disabled || isLoading || isUnauthenticated}
 							onClick={startRecording}
 							className={cn(
-								"h-11 w-11 shrink-0 rounded-full text-black bg-[#ABFFA9] hover:bg-[#ABFFA9]/90 dark:bg-[#019444] dark:hover:bg-[#019444]/90 shadow-md",
+								"h-11 w-11 shrink-0 rounded-full text-black bg-[var(--primary)] hover:bg-[var(--accent)]/90 dark:bg-[var(--primary)] dark:hover:bg-[var(--primary)]/90 shadow-md",
 								isListening ? "animate-pulse" : "",
 								disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
 							)}
 							aria-label="Record voice"
 						>
-							<Mic className="h-5 w-5" />
+							<Mic color="white" className="h-5 w-5" />
 						</Button>
 					</div>
 
@@ -329,7 +329,9 @@ export function ChatInput({
     <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white dark:bg-[var(--inputBg-dark)] rounded-[16px]">
       <div className="flex items-center gap-1">
         <div className="h-8 w-8">
-          <Lottie animationData={loadingAnim} loop={true} />
+			{isTranscribing && (
+				<Lottie animationData={loadingAnim} loop={true} />
+			)}
         </div>
         <span className="text-base text-gray-500">
 			{isTranscribing ? "Transcribing..." : ""}

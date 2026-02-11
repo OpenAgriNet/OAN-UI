@@ -2,15 +2,14 @@ import { ChevronDown } from "lucide-react";
 import settingsIcon from "@/assets/settings.svg";
 import langIcon from "@/assets/langIcon.svg";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/components/LanguageProvider";
 import { LANGUAGES } from "@/components/screens-component/chat-screen/config";
 import { LanguageSelectionDropdown } from "@/components/screens-component/chat-screen/components/language-selection-dialog";
+import logo from "../../../../public/maha-logo.svg";
 
 export type ChatHeaderProps = {
 	title: string;
 	subtitle?: string;
-	leftAvatarUrl?: string;
 	rightAvatarUrl?: string;
 	rightLabel?: string;
 	onBack?: () => void;
@@ -22,7 +21,6 @@ export type ChatHeaderProps = {
 export function ChatHeader(props: ChatHeaderProps) {
 	const {
 		title,
-		leftAvatarUrl,
 		onOpenSettings
 	} = props;
 
@@ -34,11 +32,11 @@ export function ChatHeader(props: ChatHeaderProps) {
 			<div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
 				{/* Left: Logo & Title */}
 				<div className="flex items-center gap-2 min-w-0">
-					<Avatar className="h-9 w-9 shrink-0">
-						<AvatarImage src={leftAvatarUrl} alt={title} />
-						<AvatarFallback>{title.slice(0, 2).toUpperCase()}</AvatarFallback>
-					</Avatar>
-					<span className="text-sm sm:text-lg font-medium text-foreground truncate dark:text-[var(--headerText-dark)]">{title}</span>
+					<img 
+						src={logo} 
+						alt={title} 
+						className="h-11 sm:h-12 w-auto object-contain shrink-0" 
+					/>
 				</div>
 
 				{/* Right: Language + Settings */}
@@ -48,7 +46,7 @@ export function ChatHeader(props: ChatHeaderProps) {
 						{/* Desktop Language Button */}
 						<Button
 							variant="outline"
-							className="hidden h-9 w-auto gap-2 rounded-full border hover:border-[#019444] px-3 font-normal text-foreground dark:text-[var(--headerText-dark)] sm:flex cursor-pointer hover:bg-[#C1FDD6]/90 dark:hover:text-black"
+							className="hidden h-9 w-auto gap-2 rounded-full border hover:border-[var(--primary)] px-3 font-normal text-foreground dark:text-[var(--headerText-dark)] sm:flex cursor-pointer hover:bg-[var(--secondary)]/90 dark:hover:text-black"
 						>
 							<img src={langIcon} alt="Language" className="h-5 w-5" />
 							<span className="font-medium text-xs">{currentLanguage.name}</span>
@@ -70,10 +68,10 @@ export function ChatHeader(props: ChatHeaderProps) {
 					<Button 
 						variant="ghost" 
 						size="icon" 
-						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[#C1FDD6]"
+						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[var(--secondary)]"
 						onClick={onOpenSettings}
 					>
-						<img src={settingsIcon} alt="Settings" className="h-7 w-7 text-[#019444]" />
+						<img src={settingsIcon} alt="Settings" className="h-7 w-7 text-[var(--primary)]" />
 					</Button>
 				</div>
 			</div>
