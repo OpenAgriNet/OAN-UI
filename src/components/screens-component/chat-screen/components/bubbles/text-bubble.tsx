@@ -9,7 +9,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 			className={cn(
 				"max-w-full rounded-[20px] px-4 py-3 text-base shadow-sm sm:max-w-[85%]", // Increased padding/text-size
 				isUser
-					? "rounded-tr-md bg-[#C1FDD6] text-black dark:bg-[var(--userBubble-dark)] dark:text-[var(--userBubbleText-dark)]" // Custom green color #bbf7d0 (matches image), black text
+					? "rounded-tr-md bg-[var(--secondary)] text-black dark:bg-[var(--userBubble-dark)] dark:text-[var(--userBubbleText-dark)]" // Custom blue color, black text
 					: "rounded-tl-md border bg-card text-card-foreground dark:bg-[var(--aiBubble-dark)] dark:text-[var(--aiBubbleText-dark)] dark:border-[var(--border-dark)]"
 			)}
 		>

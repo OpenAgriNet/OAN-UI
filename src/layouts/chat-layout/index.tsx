@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
-import { CHAT_ASSISTANT, CHAT_USER } from "@/components/screens-component/chat-screen/config";
+import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -38,7 +38,10 @@ function ChatLayout() {
 	}, [setToast]);
 
 	return (
-		<div className="flex h-svh w-full flex-col overflow-hidden bg-background dark:bg-[var(--background-dark)] text-foreground relative">
+		<div 
+			className="flex h-svh w-full flex-col overflow-hidden text-foreground relative"
+			style={{ background: 'var(--background)' }}
+		>
 			{toastData && (
 				<Toast
 					message={toastData.message}
@@ -49,7 +52,6 @@ function ChatLayout() {
 			<ChatHeader
 				title={t("appTitle") as string}
 				subtitle="Government assistance and agriculture insights"
-				leftAvatarUrl={CHAT_ASSISTANT.avatar}
 				rightAvatarUrl={CHAT_USER.avatar}
 				rightLabel={CHAT_USER.name}
 				onClearChat={clearChat}
@@ -57,7 +59,7 @@ function ChatLayout() {
 				onBack={() => window.history.back()}
 			/>
 			{/* Only this area can scroll (via ChatShell/MessageList) */}
-			<main className="min-h-0 flex-1 bg-muted/30 dark:bg-transparent">
+			<main className="min-h-0 flex-1 bg-transparent">
 				<Outlet />
 			</main>
 			<div className="relative z-20">

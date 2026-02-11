@@ -28,9 +28,11 @@ export const DEFAULT_LANGUAGE: LanguageCode = rootConfig.defaultLanguage as Lang
 // ============================================================================
 
 export const CHAT_ASSISTANT = {
-	name: "Bharat-VISTAAR",
+	name: "Bharti-AI",
 	avatar: rootConfig.icons.assistant
 };
+
+export const APP_LOGO = rootConfig.icons.appLogo || rootConfig.icons.assistant;
 
 export const CHAT_USER = {
 	name: "",
@@ -116,9 +118,9 @@ export const FONTS = {
 
 export const COLORS = {
 	primary: {
-		main: "#22c55e",
-		light: "#86efac",
-		dark: "#16a34a",
+		main: "#06038D",
+		light: "#818CF8",
+		dark: "#312E81",
 		contrast: "#ffffff"
 	},
 	secondary: {
@@ -128,8 +130,8 @@ export const COLORS = {
 		contrast: "#000000"
 	},
 	accent: {
-		green: "#22c55e",
-		lightGreen: "#d1fae5",
+		blue: "#3b82f6",
+		lightBlue: "#E0E7FF",
 		white: "#ffffff",
 		gray: "#6b7280",
 		lightGray: "#f9fafb"

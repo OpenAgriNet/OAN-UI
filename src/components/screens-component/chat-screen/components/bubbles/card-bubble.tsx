@@ -119,7 +119,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									<Button
 										key={a.id}
 										variant="outline"
-										className="h-8 rounded-full border-green-200 bg-white px-4 text-xs font-medium text-green-700 hover:bg-green-50"
+										className="h-8 rounded-full border-indigo-200 bg-white px-4 text-xs font-medium text-indigo-700 hover:bg-indigo-50"
 									>
 										{a.label}
 									</Button>
@@ -131,35 +131,35 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 					{/* Footer Row */}
 					{message.showListenRow && (
 						<div className="flex flex-col gap-3">
-							<div className="mx-[-1rem] h-px bg-gray-200 dark:bg-green-800/20" />
+							<div className="mx-[-1rem] h-px bg-gray-200 dark:bg-indigo-800/20" />
 							<div className="flex items-center justify-start -ml-3">
 							<div className="flex items-center gap-0">
 								<Button
 									variant="ghost"
-									className="group h-10 gap-2 rounded-none pl-6 pr-4 text-sm font-bold text-[#019444] transition-all hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/30 cursor-pointer"
+									className="group h-10 gap-2 rounded-none pl-6 pr-4 text-sm font-bold text-[var(--primary)] transition-all hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 cursor-pointer"
 									onClick={handleListen}
 								>
-									<Volume2 className="h-4 w-4 text-[#019444] group-hover:scale-110 transition-transform" />
+									<Volume2 className="h-4 w-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
 									<span>Listen</span>
 								</Button>
 
-								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
+								<div className="h-5 w-px self-center bg-gray-200 dark:bg-indigo-800/30" />
 
 								<Button
 									variant="ghost"
 									size="icon"
-									className="flex-1 h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer"
+									className="flex-1 h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-indigo-50 hover:text-[var(--primary)] dark:text-gray-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 cursor-pointer"
 									title="Copy"
 									onClick={handleCopy}
 								>
 									{showCopySuccess ? (
-										<Check className="h-4 w-4 text-[#019444]" />
+										<Check className="h-4 w-4 text-[var(--primary)]" />
 									) : (
-										<Copy className="h-4 w-4 text-[#019444]" />
+										<Copy className="h-4 w-4 text-[var(--primary)]" />
 									)}
 								</Button>
 
-								<div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />
+								<div className="h-5 w-px self-center bg-gray-200 dark:bg-indigo-800/30" />
 
 								{!showThumbsDownSuccess && (
 									<>
@@ -168,7 +168,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 												variant="ghost"
 												size="icon"
 												className={cn(
-													"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-green-50 hover:text-[#019444] dark:text-gray-400 dark:hover:bg-green-900/30 dark:hover:text-green-300 cursor-pointer disabled:opacity-100",
+													"h-10 w-12 rounded-none text-foreground/60 transition-all hover:bg-indigo-50 hover:text-[var(--primary)] dark:text-gray-400 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-300 cursor-pointer disabled:opacity-100",
 													showThumbsUpSuccess && "pointer-events-none"
 												)}
 												title="Helpful"
@@ -176,12 +176,12 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 												disabled={isSubmitting || showThumbsUpSuccess}
 											>
 												<ThumbsUp 
-													className={cn("h-4 w-4 text-[#019444]")} 
-													fill={showThumbsUpSuccess ? "#019444" : "none"}
+													className={cn("h-4 w-4 text-[var(--primary)]")} 
+													fill={showThumbsUpSuccess ? "var(--primary)" : "none"}
 												/>
 											</Button>
 										</div>
-										{!showThumbsUpSuccess && <div className="h-5 w-px self-center bg-gray-200 dark:bg-green-800/30" />}
+										{!showThumbsUpSuccess && <div className="h-5 w-px self-center bg-gray-200 dark:bg-indigo-800/30" />}
 									</>
 								)}
 
@@ -199,8 +199,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 											disabled={isSubmitting || showThumbsDownSuccess}
 										>
 											<ThumbsDown 
-												className={cn("h-4 w-4 text-[#019444]")} 
-												fill={showThumbsDownSuccess ? "#019444" : "none"}
+												className={cn("h-4 w-4 text-[var(--primary)]")} 
+												fill={showThumbsDownSuccess ? "var(--primary)" : "none"}
 											/>
 										</Button>
 									</div>

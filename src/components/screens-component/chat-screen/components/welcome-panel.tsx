@@ -18,15 +18,15 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 		<div className="flex w-full flex-col items-center px-4 py-8">
 			{/* Logo & Greeting */}
 			<div className="mb-8 flex flex-col items-center gap-4 text-center">
-				<Avatar className="h-24 w-24 p-1">
+				<Avatar className="h-30 w-30">
 					<AvatarImage src={CHAT_ASSISTANT.avatar} alt={CHAT_ASSISTANT.name} className="object-contain" />
-					<AvatarFallback className="bg-transparent text-2xl font-bold text-[#00a651]">
+					<AvatarFallback className="bg-transparent text-2xl font-bold text-[var(--primary)]">
 						{CHAT_ASSISTANT.name.slice(0, 1)}
 					</AvatarFallback>
 				</Avatar>
 				
 				<div className="space-y-1">
-					<div className="text-2xl font-semibold text-[#00a651]">
+					<div className="text-2xl font-semibold text-[var(--primary)]">
 						{t("appTitle")}
 					</div>
 					<div className="text-xl font-medium text-black dark:text-[#F6F6F6]">

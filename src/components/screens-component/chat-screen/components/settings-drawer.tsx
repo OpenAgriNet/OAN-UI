@@ -36,7 +36,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 		<Sheet open={open} onOpenChange={onOpenChange}>
 			<SheetContent
 				side="right" 
-				className="w-full sm:max-w-[50%] p-0 flex flex-col h-full bg-background dark:bg-[var(--background-dark)] border-l border-gray-200 dark:border-[var(--border-dark)]"
+				className="w-full sm:max-w-[50%] p-0 flex flex-col h-full bg-[#f1f3ff] dark:bg-[var(--background-dark)] border-l border-gray-200 dark:border-[var(--border-dark)]"
 			>
 				{/* Custom Header to match the design */}
 				<div className="flex items-center justify-between px-6 h-16 border-b border-gray-200 dark:border-[var(--border-dark)] bg-white dark:bg-[var(--headerBg-dark)]">
@@ -45,7 +45,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 						variant="ghost"
 						size="icon"
 						onClick={() => onOpenChange(false)}
-						className="h-10 w-10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-[#C1FDD6]"
+						className="h-10 w-10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 hover:bg-indigo-50"
 					>
 						<X className="h-6 w-6" />
 					</Button>
@@ -60,11 +60,11 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								onClick={() => setTheme(THEMES.light)}
 								className={`flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border-2 transition-all ${
 									theme === THEMES.light
-										? "border-[#00a651] text-[#00a651] bg-[#00a651]/5"
+										? "border-[var(--primary)] text-[var(--primary)] bg-indigo-50/50 dark:bg-indigo-900/10"
 										: "border-[#4F4F4F] dark:border-[#4F4F4F] text-gray-600 dark:text-gray-400 bg-[#FFFFFF0D] dark:bg-[#FFFFFF0D]"
 								}`}
 							>
-								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#00a651]" : "text-[#B0B0B0]"}`} />
+								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[var(--primary)]" : "text-[#B0B0B0]"}`} />
 								<span className="font-bold text-sm dark:text-[#B0B0B0]">{t("settingsPage.lightMode")}</span>
 							</button>
 
@@ -72,11 +72,11 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 								onClick={() => setTheme(THEMES.dark)}
 								className={`flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border-2 transition-all ${
 									theme === THEMES.dark
-										? "border-[#00a651] text-[#00a651] bg-[#00a651]/5"
+										? "border-[var(--primary)] text-[var(--primary)] bg-indigo-50/50 dark:bg-indigo-900/10"
 										: "border-gray-100 dark:border-gray-900 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50"
 								}`}
 							>
-								<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[#00a651]" : "text-gray-400"}`} />
+								<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[var(--primary)]" : "text-gray-400"}`} />
 								<span className="font-bold text-sm">{t("settingsPage.darkMode")}</span>
 							</button>
 						</div>

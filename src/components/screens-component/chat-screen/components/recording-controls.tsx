@@ -155,7 +155,7 @@ export function RecordingControls({
 						variant="ghost"
 						size="icon"
 						onClick={onPause}
-						className="h-12 w-12 cursor-pointer text-[#00a651] hover:bg-green-50"
+						className="h-12 w-12 cursor-pointer text-[var(--primary)] hover:bg-indigo-50"
 					>
 						<img src={pauseRecordIcon} alt="Pause" className="h-8 w-8" />
 					</Button>
@@ -164,7 +164,7 @@ export function RecordingControls({
 						variant="ghost"
 						size="icon"
 						onClick={onResume}
-						className="h-12 w-12 cursor-pointer text-[#00a651] hover:bg-green-50"
+						className="h-12 w-12 cursor-pointer text-[var(--primary)] hover:bg-indigo-50"
 					>
 						<img src={micIcon} alt="Mic" className="h-8 w-8" />
 					</Button>
@@ -175,7 +175,7 @@ export function RecordingControls({
 					size="icon"
 					onClick={onSend}
 					className={cn(
-						"h-12 w-12 cursor-pointer rounded-full text-white shadow-lg hover:bg-[#00a651]/90 relative bg-[#00a651]"
+						"h-12 w-12 cursor-pointer rounded-full text-white shadow-lg hover:bg-[var(--primary)]/90 relative bg-[var(--primary)]"
 					)}
 				>
 					<img 
