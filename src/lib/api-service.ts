@@ -276,7 +276,8 @@ class ApiService {
     }
     
     const config = {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      timeout: 120000, // 120s timeout for TTS (can be slow on cold start)
     };
     
     return this.axiosInstance.post(`/api/tts/`, {

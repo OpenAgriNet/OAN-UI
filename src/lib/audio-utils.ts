@@ -286,8 +286,12 @@ let lastRequestId = 0;
  */
 export const stopAudio = () => {
   if (currentAudio) {
+    const src = currentAudio.src;
     currentAudio.pause();
     currentAudio.currentTime = 0;
+    if (src && src.startsWith('blob:')) {
+      URL.revokeObjectURL(src);
+    }
     currentAudio = null;
   }
 };
@@ -309,12 +313,21 @@ export const playTTS = async (text: string, language: string, sessionId: string)
 
     if (response.data.status === 'success' && response.data.audio_data) {
       const audioContent = response.data.audio_data;
-      const audioUrl = `data:audio/wav;base64,${audioContent}`;
+      // Convert base64 to binary and create a blob URL (CSP-friendly)
+      const binaryString = atob(audioContent);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const audioBlob = new Blob([bytes], { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
       
       // Stop any audio that might have started playing while we were decoding the string
       stopAudio();
       
       currentAudio = new Audio(audioUrl);
+      currentAudio.onended = () => URL.revokeObjectURL(audioUrl);
+      currentAudio.onerror = () => URL.revokeObjectURL(audioUrl);
       await currentAudio.play();
     } else {
       console.error("Failed to get TTS audio data");
