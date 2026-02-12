@@ -59,7 +59,7 @@ type ChatStore = {
 	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: (t: any) => void;
+	fetchLocation: () => void; // Disabled - location not being used
 };
 /* eslint-enable no-unused-vars */
 
@@ -133,22 +133,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: (t) => {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(
-				(position) => {
-					const locationData = {
-						latitude: position.coords.latitude,
-						longitude: position.coords.longitude,
-					};
-					apiService.setLocationData(locationData);
-				},
-				(error) => {
-					console.log("Unable to retrieve location:", error, t);
-					// Localized toasts for location errors could be added here if needed
-				}
-			);
-		}
+	// fetchLocation disabled as location is not being used
+	fetchLocation: () => {
+		// Geolocation permission request disabled
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),
