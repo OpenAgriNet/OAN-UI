@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { Play, Pause } from "lucide-react";
-import deleteIcon from "@/assets/delete.svg";
-import micIcon from "@/assets/micIcon.svg";
-import sendRecord from "@/assets/sendRecord.svg";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/components/LanguageProvider";
-import pauseRecordIcon from "@/assets/pauseRecordIcon.svg";
+
+const deleteIcon = "/assets/delete.svg";
+const micIcon = "/assets/micIcon.svg";
+const sendRecord = "/assets/sendRecord.svg";
+const pauseRecordIcon = "/assets/pauseRecordIcon.svg";
 
 type RecordingState = "recording" | "paused";
 

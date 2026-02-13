@@ -177,7 +177,7 @@ export function AppSidebar() {
                   <div className="h-8 w-8 overflow-hidden rounded-lg bg-muted">
                     <img
                       alt="user"
-                      src="https://github.com/shadcn.png"
+                      src="/images/default-avatar.png"
                       className="h-full w-full object-cover"
                     />
                   </div>

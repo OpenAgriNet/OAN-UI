@@ -127,18 +127,18 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 											</button>
 											{expandedFaqs[faq.id] && (
 												<div className="px-4 pb-4 space-y-4">
-													{faq.image && (
+													{/* {faq.image && (
 														<div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
 															<img
 																src={faq.image}
 																alt={faq.question}
 																className="w-full h-full object-cover"
 																onError={(e) => {
-																	(e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop";
+																	(e.target as HTMLImageElement).src = "/images/fallback-farm.jpg";
 																}}
 															/>
 														</div>
-													)}
+													)} */}
 													<p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
 														{faq.answer}
 													</p>

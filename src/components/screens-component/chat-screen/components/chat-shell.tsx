@@ -5,7 +5,8 @@ import { WelcomePanel } from "./welcome-panel";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components";
-import lockImg from "@/assets/lockImg.svg";
+
+const lockImg = "/assets/lockImg.svg";
 
 export function ChatShell() {
 	const { language, t } = useLanguage();
