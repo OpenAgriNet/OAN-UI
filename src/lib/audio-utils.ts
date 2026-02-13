@@ -280,6 +280,7 @@ export const stopRecording = (
 
 let currentAudio: HTMLAudioElement | null = null;
 let lastRequestId = 0;
+let onPlaybackEnd: (() => void) | null = null;
 
 /**
  * Stops any currently playing audio
@@ -288,19 +289,43 @@ export const stopAudio = () => {
   if (currentAudio) {
     currentAudio.pause();
     currentAudio.currentTime = 0;
+    currentAudio.onended = null;
     currentAudio = null;
+  }
+  if (onPlaybackEnd) {
+    onPlaybackEnd();
+    onPlaybackEnd = null;
+  }
+};
+
+/**
+ * Pauses currently playing audio
+ */
+export const pauseAudio = () => {
+  if (currentAudio) {
+    currentAudio.pause();
+  }
+};
+
+/**
+ * Resumes currently paused audio
+ */
+export const resumeAudio = async () => {
+  if (currentAudio) {
+    await currentAudio.play();
   }
 };
 
 /**
  * Fetches and plays TTS audio for a given text
  */
-export const playTTS = async (text: string, language: string, sessionId: string) => {
+export const playTTS = async (text: string, language: string, sessionId: string, onEnd?: () => void) => {
   const requestId = ++lastRequestId;
   
   try {
     // Stop previous audio immediately
     stopAudio();
+    onPlaybackEnd = onEnd || null;
 
     const response = await apiService.getTranscript(sessionId, text, language);
     
@@ -311,16 +336,28 @@ export const playTTS = async (text: string, language: string, sessionId: string)
       const audioContent = response.data.audio_data;
       const audioUrl = `data:audio/wav;base64,${audioContent}`;
       
-      // Stop any audio that might have started playing while we were decoding the string
-      stopAudio();
-      
       currentAudio = new Audio(audioUrl);
+      currentAudio.onended = () => {
+        if (onPlaybackEnd) {
+          onPlaybackEnd();
+          onPlaybackEnd = null;
+        }
+        currentAudio = null;
+      };
       await currentAudio.play();
     } else {
       console.error("Failed to get TTS audio data");
+      if (onPlaybackEnd) {
+        onPlaybackEnd();
+        onPlaybackEnd = null;
+      }
     }
   } catch (error) {
     console.error("Error playing TTS:", error);
+    if (onPlaybackEnd) {
+      onPlaybackEnd();
+      onPlaybackEnd = null;
+    }
     throw error;
   }
 };

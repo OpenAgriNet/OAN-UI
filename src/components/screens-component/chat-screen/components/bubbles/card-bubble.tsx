@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, ThumbsDown, ThumbsUp, Volume2, Check } from "lucide-react";
+import { Copy, ThumbsDown, ThumbsUp, Volume2, Check, Pause, Play } from "lucide-react";
 import { CardMessage } from "./chat-types";
 import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
@@ -11,6 +11,10 @@ import { cn } from "@/lib/utils";
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
 	const playTTS = useChatStore((s) => s.playTTS);
+	const pauseTTS = useChatStore((s) => s.pauseTTS);
+	const resumeTTS = useChatStore((s) => s.resumeTTS);
+	const currentlyPlayingId = useChatStore((s) => s.currentlyPlayingId);
+	const ttsStatus = useChatStore((s) => s.ttsStatus);
 	const submitFeedback = useChatStore((s) => s.submitMessageFeedback);
 	const setToast = useChatStore((s) => s.setToast);
 
@@ -20,11 +24,20 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
 	const [showThumbsDownSuccess, setShowThumbsDownSuccess] = useState(false);
 
+	const isThisPlaying = currentlyPlayingId === message.id && ttsStatus === "playing";
+	const isThisPaused = currentlyPlayingId === message.id && ttsStatus === "paused";
+
 	const handleListen = async () => {
 		try {
-			await playTTS(message.body, language);
+			if (isThisPlaying) {
+				pauseTTS();
+			} else if (isThisPaused) {
+				await resumeTTS();
+			} else {
+				await playTTS(message.body, language, message.id);
+			}
 		} catch (error) {
-			console.error("TTS play failed:", error);
+			console.error("TTS action failed:", error);
 		}
 	};
 
@@ -139,8 +152,14 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									className="group h-10 gap-2 rounded-none pl-6 pr-4 text-sm font-bold text-[var(--primary)] transition-all hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 cursor-pointer"
 									onClick={handleListen}
 								>
-									<Volume2 className="h-4 w-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
-									<span>Listen</span>
+									{isThisPlaying ? (
+										<Pause className="h-4 w-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
+									) : isThisPaused ? (
+										<Play className="h-4 w-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
+									) : (
+										<Volume2 className="h-4 w-4 text-[var(--primary)] group-hover:scale-110 transition-transform" />
+									)}
+									<span>{isThisPlaying ? "Pause" : isThisPaused ? "Resume" : "Listen"}</span>
 								</Button>
 
 								<div className="h-5 w-px self-center bg-gray-200 dark:bg-indigo-800/30" />

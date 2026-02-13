@@ -55,7 +55,12 @@ type ChatStore = {
 	clearSuggestions: () => void;
 	fetchSuggestionsForMessage: (messageId: string) => Promise<void>;
 	generateQuickActions: (t: any) => void;
-	playTTS: (text: string, language: string) => Promise<void>;
+	playTTS: (text: string, language: string, messageId: string) => Promise<void>;
+	pauseTTS: () => void;
+	resumeTTS: () => Promise<void>;
+	stopTTS: () => void;
+	currentlyPlayingId: string | null;
+	ttsStatus: "playing" | "paused" | "stopped";
 	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
@@ -110,7 +115,7 @@ function makeAssistantMessage(text: string, isError?: boolean, showListenRow = f
 	};
 }
 
-import { playTTS as playTTSHelper } from "@/lib/audio-utils";
+import { playTTS as playTTSHelper, pauseAudio, resumeAudio, stopAudio } from "@/lib/audio-utils";
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -123,6 +128,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isFetchingSuggestions: false,
 	sessionId: null,
 	toast: null,
+	currentlyPlayingId: null,
+	ttsStatus: "stopped",
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
@@ -155,7 +162,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	setSuggestions: (suggestions) => set({ suggestions }),
 	clearSuggestions: () => set({ suggestions: [] }),
 
-	startListening: () => set(() => ({ isListening: true })),
+	startListening: () => {
+		get().stopTTS();
+		set(() => ({ isListening: true }));
+	},
 	stopListening: () => set(() => ({ isListening: false })),
 
 	clearChat: () =>
@@ -172,6 +182,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	sendText: async (text, language, t) => {
 		const trimmed = text.trim();
 		if (!trimmed) return;
+
+		get().stopTTS();
 
 		const userMessage = makeUserMessage(trimmed);
 		set((state) => ({
@@ -400,15 +412,43 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		set({ quickActions: newActions });
 	},
 
-	playTTS: async (text, language) => {
+	playTTS: async (text, language, messageId) => {
 		const { sessionId } = get();
 		if (!sessionId) return;
+		
+		set({ currentlyPlayingId: messageId, ttsStatus: "playing" });
+		
 		try {
-			await playTTSHelper(text, language, sessionId);
+			await playTTSHelper(text, language, sessionId, () => {
+				// Only reset if it's the SAME message that just finished
+				if (get().currentlyPlayingId === messageId) {
+					set({ currentlyPlayingId: null, ttsStatus: "stopped" });
+				}
+			});
 		} catch (error) {
 			console.error("TTS Playback failed:", error);
+			set({ currentlyPlayingId: null, ttsStatus: "stopped" });
 			set({ toast: { message: "Error Playing Audio. Please try again.", type: "error" } });
 		}
+	},
+
+	pauseTTS: () => {
+		pauseAudio();
+		set({ ttsStatus: "paused" });
+	},
+
+	resumeTTS: async () => {
+		try {
+			await resumeAudio();
+			set({ ttsStatus: "playing" });
+		} catch (error) {
+			console.error("TTS Resume failed:", error);
+		}
+	},
+
+	stopTTS: () => {
+		stopAudio();
+		set({ currentlyPlayingId: null, ttsStatus: "stopped" });
 	},
 
 	submitMessageFeedback: async (messageId, isPositive, reason, feedback) => {
