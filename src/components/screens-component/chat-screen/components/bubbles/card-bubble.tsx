@@ -118,7 +118,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 								const content = isSource ? para.replace(/^\*\*|\*\*$/g, "").trim() : para;
 
 								return (
-									<p key={idx} className={cn("whitespace-pre-wrap", isSource && "font-bold", idx !== 0 && "mt-3")}>
+									<p key={idx} className={cn("whitespace-pre-wrap break-words break-all", isSource && "font-bold", idx !== 0 && "mt-3")}>
 										{renderFormattedText(content)}
 									</p>
 								);
