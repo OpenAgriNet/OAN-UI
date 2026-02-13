@@ -6,7 +6,24 @@ import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
-const JWT_EXPIRY_MINUTES = 20; // 20 minutes expiration
+
+const getTokenExpiryFromExp = (token: string): number | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const payloadPart = parts[1];
+    if (!payloadPart) return null;
+
+    const payloadBase64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = payloadBase64.padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+};
 
 // Location interface that matches the JWT structure
 export interface Location {
@@ -263,13 +280,15 @@ hwIDAQAB
   // Store JWT in localStorage with expiration
   const storeJWT = (token: string) => {
     try {
-      const now = new Date();
-      const expiryDate = new Date(now);
-      expiryDate.setMinutes(now.getMinutes() + JWT_EXPIRY_MINUTES);
+      const expiryFromToken = getTokenExpiryFromExp(token);
+      if (!expiryFromToken) {
+        console.error('JWT exp claim missing; refusing to store token with synthetic expiry');
+        return false;
+      }
       
       const tokenData = {
         token,
-        expiry: expiryDate.getTime()
+        expiry: expiryFromToken
       };
       
       localStorage.setItem(JWT_STORAGE_KEY, JSON.stringify(tokenData));

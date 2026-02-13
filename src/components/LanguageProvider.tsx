@@ -14,7 +14,7 @@ interface LanguageContextType {
 }
 
 interface TranslationObject {
-	[key: string]: string | string[] | TranslationObject;
+  [key: string]: string | string[] | TranslationObject | Array<Record<string, unknown>>;
 }
 
 const translations: Record<LanguageCode, TranslationObject> = { en, hi, mr, gu };

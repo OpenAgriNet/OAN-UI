@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
+import { getBrowserInfo } from '@/lib/utils';
 
 export interface LocationData {
   latitude: number;
@@ -34,12 +35,31 @@ interface AuthResponse {
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
 
+const getTokenExpiryFromExp = (token: string): number | null => {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const payloadPart = parts[1];
+    if (!payloadPart) return null;
+
+    const payloadBase64 = payloadPart.replace(/-/g, '+').replace(/_/g, '/');
+    const paddedPayload = payloadBase64.padEnd(Math.ceil(payloadBase64.length / 4) * 4, '=');
+    const payload = JSON.parse(atob(paddedPayload)) as { exp?: number };
+
+    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+};
+
 class ApiService {
   private apiUrl: string = environment.apiUrl;
   private locationData: LocationData | null = null;
   private currentSessionId: string | null = null;
   private axiosInstance: AxiosInstance;
-  private authToken: string | null = null;  
+  private authToken: string | null = null;
+  private refreshTokenPromise: Promise<string | null> | null = null;
 
   constructor() {
     this.authToken = this.getAuthToken();
@@ -54,9 +74,20 @@ class ApiService {
     // Add response interceptor for 401 errors
     this.axiosInstance.interceptors.response.use(
       (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          console.error("401 Unauthorized detected");
+      async (error) => {
+        if (error.response?.status === 401 && error.config) {
+          const originalRequest = error.config as any;
+          if (!originalRequest._retry) {
+            originalRequest._retry = true;
+            const refreshedToken = await this.performTokenRefresh();
+            if (refreshedToken) {
+              originalRequest.headers = {
+                ...(originalRequest.headers || {}),
+                Authorization: `Bearer ${refreshedToken}`,
+              };
+              return this.axiosInstance.request(originalRequest);
+            }
+          }
         }
         return Promise.reject(error);
       }
@@ -106,6 +137,51 @@ class ApiService {
       // Don't redirect here - let the 401 interceptor handle it when actual API calls fail
     }
   }
+
+  private async performTokenRefresh(): Promise<string | null> {
+    if (this.refreshTokenPromise) {
+      return this.refreshTokenPromise;
+    }
+
+    this.refreshTokenPromise = (async () => {
+      try {
+        const metadata = getBrowserInfo();
+        const newToken = await this.fetchAuthToken(metadata);
+        const expiry = getTokenExpiryFromExp(newToken);
+        if (!expiry) {
+          throw new Error('JWT exp claim missing; refusing to store token with synthetic expiry');
+        }
+
+        localStorage.setItem(
+          JWT_STORAGE_KEY,
+          JSON.stringify({
+            token: newToken,
+            expiry,
+          })
+        );
+
+        this.authToken = newToken;
+        this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        return newToken;
+      } catch (error) {
+        console.error('Failed to refresh auth token:', error);
+        this.authToken = null;
+        this.axiosInstance.defaults.headers.common['Authorization'] = 'NA';
+        return null;
+      } finally {
+        this.refreshTokenPromise = null;
+      }
+    })();
+
+    return this.refreshTokenPromise;
+  }
+
+  private async refreshAuthTokenIfExpiredOrMissing(): Promise<void> {
+    this.refreshAuthToken();
+    if (this.authToken) return;
+
+    await this.performTokenRefresh();
+  }
   
   // No longer redirecting to error page
   // private redirectToErrorPage(): void {
@@ -144,7 +220,7 @@ class ApiService {
     onStreamData?: (_data: string) => void
   ): Promise<ChatResponse> {
     try {
-      this.refreshAuthToken();
+      await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) {
         return { response: "Authentication error", status: "error" };
       }
@@ -161,10 +237,22 @@ class ApiService {
 
       if (onStreamData) {
         // Handle streaming response
-        const response = await fetch(`${this.apiUrl}/api/chat/?${new URLSearchParams(params)}`, {
+        let response = await fetch(`${this.apiUrl}/api/chat/?${new URLSearchParams(params)}`, {
           method: 'GET',
           headers: headers          
         });
+
+        if (response.status === 401) {
+          const refreshedToken = await this.performTokenRefresh();
+          if (refreshedToken) {
+            response = await fetch(`${this.apiUrl}/api/chat/?${new URLSearchParams(params)}`, {
+              method: 'GET',
+              headers: {
+                Authorization: `Bearer ${refreshedToken}`,
+              },
+            });
+          }
+        }
 
         if (!response.ok) {
           if (response.status === 401) {
@@ -215,7 +303,7 @@ class ApiService {
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
     try {
-      this.refreshAuthToken();
+      await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) {
         return [];
       }
@@ -247,7 +335,7 @@ class ApiService {
     lang_code: string
   ): Promise<TranscriptionResponse> {
     try {
-      this.refreshAuthToken();
+      await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) {
         return { text: "", lang_code: "", status: "error" };
       }
@@ -271,8 +359,8 @@ class ApiService {
     }
   }
 
-  getTranscript(sessionId: string, text: string, targetLang: string): Promise<AxiosResponse<TTSResponse>> {
-    this.refreshAuthToken();
+  async getTranscript(sessionId: string, text: string, targetLang: string): Promise<AxiosResponse<TTSResponse>> {
+    await this.refreshAuthTokenIfExpiredOrMissing();
     if (!this.validateAuth()) {
       return Promise.reject(new Error("Authentication required"));
     }
@@ -291,7 +379,7 @@ class ApiService {
 
   async submitPositiveFeedback(messageId: string): Promise<void> {
     try {
-      this.refreshAuthToken();
+      await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) return;
       
       const payload = {
@@ -310,7 +398,7 @@ class ApiService {
 
   async submitNegativeFeedback(messageId: string, reason: string, feedback: string): Promise<void> {
     try {
-      this.refreshAuthToken();
+      await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) return;
       
       const payload = {
