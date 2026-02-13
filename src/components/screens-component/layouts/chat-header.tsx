@@ -1,11 +1,11 @@
 import { ChevronDown } from "lucide-react";
-import settingsIcon from "@/assets/settings.svg";
-import langIcon from "@/assets/langIcon.svg";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
 import { LANGUAGES } from "@/components/screens-component/chat-screen/config";
 import { LanguageSelectionDropdown } from "@/components/screens-component/chat-screen/components/language-selection-dialog";
-import logo from "../../../../public/maha-logo.svg";
+const logo = "/maha-logo.svg";
+const settingsIcon = "/assets/settings.svg";
+const langIcon = "/assets/langIcon.svg";
 
 export type ChatHeaderProps = {
 	title: string;

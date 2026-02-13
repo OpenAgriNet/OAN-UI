@@ -1,4 +1,4 @@
-import lockImg from "@/assets/lockImg.svg";
+const lockImg = "/assets/lockImg.svg";
 
 export default function AuthError() {
   return (

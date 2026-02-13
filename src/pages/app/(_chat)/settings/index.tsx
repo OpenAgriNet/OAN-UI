@@ -109,7 +109,7 @@ export default function SettingsPage() {
 									</button>
 									{expandedFaqs[faq.id] && (
 										<div className="px-4 pb-4 space-y-4">
-											{faq.image && (
+											{/* {faq.image && (
 												<div className="relative w-full aspect-[2/1] bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden">
 													<img
 														src={faq.image}
@@ -117,11 +117,11 @@ export default function SettingsPage() {
 														className="w-full h-full object-cover"
 														onError={(e) => {
 															// Optional: generic agricultural image fallback for demo
-															(e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop";
+															// (e.target as HTMLImageElement).src = "/images/fallback-farm.jpg";
 														}}
 													/>
 												</div>
-											)}
+											)} */}
 											<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
 												{faq.answer}
 											</p>

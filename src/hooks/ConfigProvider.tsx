@@ -50,15 +50,6 @@ export const ConfigProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     // Apply Font Family & URL
     if (config.theme.fonts) {
       root.style.setProperty('--font-family', config.theme.fonts.family);
-
-      let link = document.getElementById('config-font') as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.id = 'config-font';
-        link.rel = 'stylesheet';
-        document.head.appendChild(link);
-      }
-      link.href = config.theme.fonts.url;
     }
   }, [theme]);
 
