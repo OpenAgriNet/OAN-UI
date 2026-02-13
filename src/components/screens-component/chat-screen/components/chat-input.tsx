@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Mic, X } from "lucide-react";
 import Lottie from "lottie-react";
 import loadingAnim from "@/assets/Loading.json";
+import sendIcon from "@/assets/send.svg";
+import activeSend from "@/assets/activeSend.svg";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +13,6 @@ import { Suggestions } from "./suggestions";
 import type { Suggestion } from "../api/suggestions-api";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
-
-const sendIcon = "/assets/send.svg";
-const activeSend = "/assets/activeSend.svg";
 
 export type ChatInputPayload = {
 	text: string;
@@ -330,10 +329,12 @@ export function ChatInput({
     <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white dark:bg-[var(--inputBg-dark)] rounded-[16px]">
       <div className="flex items-center gap-1">
         <div className="h-8 w-8">
-			<Lottie animationData={loadingAnim} loop={true} />
+			{isTranscribing && (
+				<Lottie animationData={loadingAnim} loop={true} />
+			)}
         </div>
         <span className="text-base text-gray-500">
-			{isTranscribing ? "Transcribing..." : "Typing..."}
+			{isTranscribing ? "Transcribing..." : ""}
 		</span>
       </div>
     </div>
