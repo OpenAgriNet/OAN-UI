@@ -4,23 +4,11 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
-import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
+import { shuffle } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
-
-// Static set of QA templates and the variable placeholders they need
-const QA_TEMPLATES: Array<{ key: string; vars?: string[] }> = [
-  { key: "qa.market.price.today", vars: ["crop", "market"] },
-  { key: "qa.market.price.modal", vars: ["crop", "district"] },
-  { key: "qa.weather.forecast.5day" },
-  { key: "qa.crop.weeds.management_practices", vars: ["crop"] },
-  { key: "qa.livestock.health.mastitis_treatment", vars: ["animal"] },
-  { key: "qa.fruit.irrigation.schedule", vars: ["fruit crop"] },
-  { key: "qa.flowers.requirements.sunlight_and_shade", vars: ["Flower crop"] },
-  { key: "qa.schemes.machinery.subsidy_how_to_get", vars: ["Scheme name"] }
-];
 
 /* eslint-disable no-unused-vars */
 export type QuickAction = {
@@ -384,62 +372,41 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	},
 
 	generateQuickActions: (t) => {
-		const VARS = {
-			crop: t("variables.crop") as string[],
-			"fruit crop": t("variables.fruit crop") as string[],
-			"Flower crop": t("variables.Flower crop") as string[],
-			market: t("variables.market") as string[],
-			district: t("variables.district") as string[],
-			animal: t("variables.animal") as string[],
-			"Scheme name": t("variables.Scheme name") as string[]
-		} as const;
-
-		if (t("questions") && Array.isArray(t("questions")) && t("questions").length > 0 && String(t("appTitle")).includes("ભારત વિસ્તાર")) {
-			const guQuestions = t("questions") as string[];
-			const selectedQuestions = shuffle([...guQuestions]).slice(0, 3);
+		// Use questions from translations
+		if (t("questions") && Array.isArray(t("questions")) && t("questions").length > 0) {
+			const questions = t("questions") as Array<{ key: string; text: string }>;
+			// Shuffle and select 3 random questions
+			const selectedQuestions = shuffle([...questions]).slice(0, 3);
+			
+			// Function to determine icon based on question key (dot notation)
+			const getIconForKey = (key: string): "tractor" | "wheat" | "cow" | "cloud" => {
+				// Parse the first part of the dot notation key
+				const category = key.split('.')[0];
+				
+				if (category === "schemes") return "tractor";
+				if (category === "status") return "cloud";
+				if (category === "grievance") return "cow";
+				if (category === "loan") return "tractor";
+				if (category === "soil") return "wheat";
+				if (category === "market") return "wheat";
+				if (category === "livestock") return "cow";
+				// Default to tractor for scheme-related app
+				return "tractor";
+			};
+			
+			// Create quick actions from selected questions
 			const newActions: QuickAction[] = selectedQuestions.map((q, index) => ({
-				id: `gu-${index}`,
-				title: q,
+				id: `question-${index}`,
+				title: q.text,
 				description: "",
-				icon: "tractor", // Default icon for gu questions
-				prompt: q
+				icon: getIconForKey(q.key),
+				prompt: q.text
 			}));
 			set({ quickActions: newActions });
-			return;
+		} else {
+			// Fallback to seed questions if no questions in translations
+			set({ quickActions: quickActionSeeds });
 		}
-
-		const newActions: QuickAction[] = shuffle(QA_TEMPLATES)
-			.slice(0, 3)
-			.map(({ key, vars }, index) => {
-				let prompt = "";
-				if (vars) {
-					const params: Record<string, string> = {};
-					vars.forEach(v => {
-						const rawValues = (VARS as any)[v] as string[];
-						const scopedValues = filterVariableValues(key, v, rawValues);
-						params[v] = randomPick(scopedValues);
-					});
-					prompt = t(key, params) as string;
-				} else {
-					prompt = t(key) as string;
-				}
-
-				// Map key prefix to icon
-				let icon: QuickAction["icon"] = "tractor";
-				if (key.includes("livestock")) icon = "cow";
-				else if (key.includes("market") || key.includes("crop")) icon = "wheat";
-				else if (key.includes("weather")) icon = "cloud";
-
-				return {
-					id: String(index + 1),
-					title: prompt,
-					description: "",
-					icon,
-					prompt
-				};
-			});
-
-		set({ quickActions: newActions });
 	},
 
 	playTTS: async (text, language) => {
