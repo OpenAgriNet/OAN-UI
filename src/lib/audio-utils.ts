@@ -290,7 +290,7 @@ let onPlaybackEnd: (() => void) | null = null;
  */
 export const stopAudio = () => {
   if (currentAudio) {
-    const src = currentAudio.src;
+    // const src = currentAudio.src;
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio.onended = null;
