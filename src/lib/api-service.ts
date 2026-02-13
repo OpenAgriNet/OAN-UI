@@ -242,8 +242,9 @@ class ApiService {
 
   async transcribeAudio(
     audioBase64: string,
-    serviceType: string = 'whisper',
-    sessionId: string
+    serviceType: string = 'bhashini',
+    sessionId: string,
+    lang_code: string
   ): Promise<TranscriptionResponse> {
     try {
       this.refreshAuthToken();
@@ -254,7 +255,8 @@ class ApiService {
       const payload = {
         audio_content: audioBase64,
         service_type: serviceType,
-        session_id: sessionId
+        session_id: sessionId,
+        lang_code: lang_code,
       };
 
       const config = {
@@ -276,7 +278,8 @@ class ApiService {
     }
     
     const config = {
-      headers: this.getAuthHeaders()
+      headers: this.getAuthHeaders(),
+      timeout: 120000, // 120s timeout for TTS (can be slow on cold start)
     };
     
     return this.axiosInstance.post(`/api/tts/`, {

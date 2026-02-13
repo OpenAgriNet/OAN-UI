@@ -4,7 +4,7 @@ import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 
@@ -24,14 +24,15 @@ function ChatLayout() {
 	const messages = useChatStore((s) => s.messages);
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
-	const fetchLocation = useChatStore((s) => s.fetchLocation);
+	// const fetchLocation = useChatStore((s) => s.fetchLocation); // Geolocation disabled
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
-	useEffect(() => {
-		fetchLocation(t);
-	}, [fetchLocation, t]);
+	// Geolocation disabled as location is not being used
+	// useEffect(() => {
+	//	fetchLocation(t);
+	// }, [fetchLocation, t]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);

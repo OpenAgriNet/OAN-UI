@@ -61,6 +61,7 @@ export const setupAudioRecording = (
   mediaRecorderRef: React.MutableRefObject<MediaRecorder | null>,
   handleAudioCallback: (text: string) => void,
   sessionId: string | null,
+  language: string,
   toastFn?: (props: { title: string; description: string; variant: "default" | "destructive" | "yellow" }) => void
 ) => {
   // Create MediaRecorder
@@ -92,11 +93,11 @@ export const setupAudioRecording = (
       
       // Create optimal WAV file for transcription
       const optimizedBlob = await createOptimizedWav(audioBuffer);
-      handleAudioSubmission(optimizedBlob, handleAudioCallback, sessionId, toastFn);
+      handleAudioSubmission(optimizedBlob, handleAudioCallback, sessionId, language, toastFn);
     } catch (error) {
       console.error("Error processing audio, using original:", error);
       // Fall back to original audio if processing fails
-      handleAudioSubmission(audioBlob, handleAudioCallback, sessionId, toastFn);
+      handleAudioSubmission(audioBlob, handleAudioCallback, sessionId, language, toastFn);
     }
   });
   
@@ -111,6 +112,7 @@ const handleAudioSubmission = async (
   audioBlob: Blob, 
   handleAudioCallback: (text: string) => void,
   sessionId: string | null,
+  language: string,
   toastFn?: (props: { title: string; description: string; variant: "default" | "destructive" | "yellow" }) => void
 ) => {
   try {
@@ -118,8 +120,9 @@ const handleAudioSubmission = async (
     // Transcribe the audio with Bhashini Pipeline Compute Call
     const transcription = await apiService.transcribeAudio(
       base64Audio,
-      'bhashini', // real Bhashini service ID string
-      sessionId || ''
+      'bhashini',
+      sessionId || '',
+      language
     ) as TranscriptionResponse;
     
     if (transcription && transcription.text) {
@@ -287,6 +290,7 @@ let onPlaybackEnd: (() => void) | null = null;
  */
 export const stopAudio = () => {
   if (currentAudio) {
+    const src = currentAudio.src;
     currentAudio.pause();
     currentAudio.currentTime = 0;
     currentAudio.onended = null;
@@ -334,7 +338,14 @@ export const playTTS = async (text: string, language: string, sessionId: string,
 
     if (response.data.status === 'success' && response.data.audio_data) {
       const audioContent = response.data.audio_data;
-      const audioUrl = `data:audio/wav;base64,${audioContent}`;
+      // Convert base64 to binary and create a blob URL (CSP-friendly)
+      const binaryString = atob(audioContent);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const audioBlob = new Blob([bytes], { type: 'audio/wav' });
+      const audioUrl = URL.createObjectURL(audioBlob);
       
       currentAudio = new Audio(audioUrl);
       currentAudio.onended = () => {

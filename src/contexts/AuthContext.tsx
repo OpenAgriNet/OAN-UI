@@ -6,7 +6,7 @@ import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
-const JWT_EXPIRY_DAYS = 365; // 1 year expiration
+const JWT_EXPIRY_MINUTES = 20; // 20 minutes expiration
 
 // Location interface that matches the JWT structure
 export interface Location {
@@ -265,7 +265,7 @@ hwIDAQAB
     try {
       const now = new Date();
       const expiryDate = new Date(now);
-      expiryDate.setDate(now.getDate() + JWT_EXPIRY_DAYS);
+      expiryDate.setMinutes(now.getMinutes() + JWT_EXPIRY_MINUTES);
       
       const tokenData = {
         token,
