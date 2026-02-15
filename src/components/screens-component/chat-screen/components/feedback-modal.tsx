@@ -45,7 +45,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 	const handleListen = async () => {
 		if (!message) return;
 		try {
-			await playTTS(message, language);
+			await playTTS(message, language, "feedback-voice");
 		} catch (error) {
 			console.error("TTS error in feedback:", error);
 		}
