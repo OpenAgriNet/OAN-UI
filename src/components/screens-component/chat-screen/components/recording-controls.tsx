@@ -95,7 +95,7 @@ export function RecordingControls({
 			{/* Top Pill Status - Absolute Positioned on the border */}
 			<div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 transform">
 				<div className="whitespace-nowrap rounded-full bg-blue-50 px-6 py-1.5 text-xs font-medium text-blue-600 shadow-sm border border-blue-100">
-					{t("recordingListening", { botName: "Bharat-VISTAAR" })}
+					{t("recordingListening", { botName: "Bharti-AI" })}
 				</div>
 			</div>
 

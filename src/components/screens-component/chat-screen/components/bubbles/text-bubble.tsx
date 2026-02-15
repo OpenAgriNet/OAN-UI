@@ -13,7 +13,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 					: "rounded-tl-md border bg-card text-card-foreground dark:bg-[var(--aiBubble-dark)] dark:text-[var(--aiBubbleText-dark)] dark:border-[var(--border-dark)]"
 			)}
 		>
-			<p className="leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">{message.text}</p>
+			<p className="leading-relaxed whitespace-pre-wrap break-words break-all">{message.text}</p>
 		</div>
 	);
 }

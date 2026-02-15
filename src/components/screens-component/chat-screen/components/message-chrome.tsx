@@ -31,7 +31,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 
 	if (isUser) {
 		return (
-			<div className="flex w-full flex-col pr-1 items-end gap-1 mb-4">
+			<div className="flex w-full flex-col pr-1 items-end gap-1 mb-4 min-w-0">
 				{/* User Header: Name and Avatar */}
 				{showLabel && (
 					<div className="flex items-center gap-2">
@@ -48,7 +48,7 @@ export function MessageChrome({ role, children, showLabel = true }: MessageChrom
 
 	// Assistant / System
 	return (
-		<div className="flex w-full pl-1 flex-col items-start gap-1">
+		<div className="flex w-full pl-1 flex-col items-start gap-1 min-w-0">
 			{/* AI Header: Avatar and Name */}
 			{showLabel && (
 				<div className="flex items-center gap-2">
