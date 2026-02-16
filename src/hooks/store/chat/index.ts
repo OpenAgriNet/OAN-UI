@@ -10,7 +10,7 @@ import {
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
-import { shuffle } from "@/lib/qa-utils";
+import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
@@ -427,9 +427,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	generateQuickActions: (t) => {
 		// Use questions from translations
 		if (t("questions") && Array.isArray(t("questions")) && t("questions").length > 0) {
-			const questions = t("questions") as Array<{ key: string; text: string }>;
+			const questions = t("questions") as Array<{ key: string; text: string; vars?: string[] }>;
 			// Shuffle and select 3 random questions
 			const selectedQuestions = shuffle([...questions]).slice(0, 3);
+
+			// Substitute variable placeholders with random values from translations
+			const resolveVars = (q: { key: string; text: string; vars?: string[] }): string => {
+				let resolved = q.text;
+				if (q.vars && q.vars.length > 0) {
+					for (const varName of q.vars) {
+						const values = t(`variables.${varName}`) as string[] | undefined;
+						if (Array.isArray(values) && values.length > 0) {
+							resolved = resolved.replace(`[${varName}]`, randomPick(values));
+						}
+					}
+				}
+				return resolved;
+			};
 
 			// Function to determine icon based on question key (dot notation)
 			const getIconForKey = (
@@ -461,6 +475,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					if (detail === "agriculture_fund") return "bank";
 					if (detail === "coverage") return "insurance";
 					if (subcategory === "general") return "tractor";
+					if (subcategory === "insurance") return "insurance";
 					return "tractor";
 				}
 
@@ -492,6 +507,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					return "bank";
 				}
 
+				// Mandi / market price category
+				if (category === "mandi") {
+					return "wheat";
+				}
+
+				// Weather category
+				if (category === "weather") {
+					return "cloud";
+				}
+
 				// Livestock and market
 				if (category === "livestock") return "cow";
 				if (category === "market") return "wheat";
@@ -500,14 +525,17 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return "tractor";
 			};
 
-			// Create quick actions from selected questions
-			const newActions: QuickAction[] = selectedQuestions.map((q, index) => ({
-				id: `question-${index}`,
-				title: q.text,
-				description: "",
-				icon: getIconForKey(q.key),
-				prompt: q.text
-			}));
+			// Create quick actions from selected questions with variable substitution
+			const newActions: QuickAction[] = selectedQuestions.map((q, index) => {
+				const resolvedText = resolveVars(q);
+				return {
+					id: `question-${index}`,
+					title: resolvedText,
+					description: "",
+					icon: getIconForKey(q.key),
+					prompt: resolvedText
+				};
+			});
 			set({ quickActions: newActions });
 		} else {
 			// Fallback to seed questions if no questions in translations

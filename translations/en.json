@@ -14,7 +14,6 @@
     { "key": "schemes.info.fasal_bima", "text": "I want to know about Pradhan Mantri Fasal Bima Yojana" },
     { "key": "schemes.benefits.soil_health_card", "text": "What are the benefits of Soil Health Card scheme?" },
     { "key": "schemes.info.pmksy", "text": "Can you explain PMKSY scheme to me?" },
-    { "key": "schemes.info.enam_platform", "text": "How does the e-NAM platform work?" },
     { "key": "schemes.general.available", "text": "What government schemes are available for farmers?" },
     { "key": "schemes.info.seed_authentication", "text": "I need information about seed authentication scheme" },
     { "key": "schemes.info.agriculture_fund", "text": "Tell me about the Agriculture Infrastructure Fund" },
@@ -25,8 +24,6 @@
     { "key": "status.claims.pmfby", "text": "Has my PMFBY claim been approved?" },
     { "key": "status.payment.installment_missing", "text": "I haven't received my PM-KISAN installment, can you check why?" },
     { "key": "grievance.payment.pm_kisan", "text": "I want to file a complaint about not receiving my PM-KISAN payment" },
-    { "key": "grievance.claims.insurance", "text": "How do I submit a grievance about my insurance claim?" },
-    { "key": "grievance.card.soil_health_pending", "text": "My Soil Health Card application is pending for months, I want to complain" },
     { "key": "grievance.benefits.not_received", "text": "I need to raise a grievance about scheme benefits not being received" },
     { "key": "grievance.payment.claim_approved", "text": "My insurance claim was approved but I haven't received the money in my bank account" },
     { "key": "grievance.payment.delay", "text": "Why is there a delay in receiving my PM-KISAN payment?" },
@@ -37,8 +34,27 @@
     { "key": "loan.credit.failed_crop", "text": "Can I get a loan if my previous crop failed and I couldn't repay?" },
     { "key": "loan.credit.default_impact", "text": "Will defaulting on a loan affect my eligibility for government schemes?" },
     { "key": "loan.credit.kcc_documents", "text": "What documents do I need to apply for Kisan Credit Card?" },
-    { "key": "schemes.insurance.coverage", "text": "How much insurance coverage will I get for my wheat crop in Punjab?" }
+    { "key": "schemes.insurance.coverage", "text": "How much insurance coverage will I get for my wheat crop in Punjab?" },
+    { "key": "mandi.price.today", "text": "What is today's mandi price for [crop] in [district]?", "vars": ["crop", "district"] },
+    { "key": "mandi.price.nearest", "text": "What are the latest rates for [crop] in [district] mandi?", "vars": ["crop", "district"] },
+    { "key": "mandi.price.crop", "text": "What is the current market price of [crop] in [district] mandi?", "vars": ["crop", "district"] },
+    { "key": "weather.forecast.today", "text": "What is today's weather forecast for [district]?", "vars": ["district"] },
+    { "key": "weather.forecast.week", "text": "Will it rain this week in [district]?", "vars": ["district"] }
   ],
+  "variables": {
+    "crop": [
+      "wheat", "rice", "maize", "soybean", "cotton",
+      "sugarcane", "mustard", "groundnut", "onion", "potato",
+      "tomato", "chilli", "gram", "sorghum", "pearl millet",
+      "turmeric", "garlic", "banana", "mango", "orange"
+    ],
+    "district": [
+      "Azadpur, Delhi", "Lucknow", "Indore", "Jaipur", "Patna",
+      "Bhopal", "Nagpur", "Pune", "Hyderabad", "Ahmedabad",
+      "Ludhiana", "Kanpur", "Varanasi", "Raipur", "Ranchi",
+      "Kolkata", "Chennai", "Bengaluru", "Nashik", "Amritsar"
+    ]
+  },
   "recordingListening": "[botName] is listening, start speaking",
   "capabilities": [
     "Answers are based only on standard university documents and crop SOPs.",
