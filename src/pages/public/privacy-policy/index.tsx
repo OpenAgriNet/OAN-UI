@@ -1,5 +1,14 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Shield, MapPin, Camera, Database, Users, FileText, Lock } from "lucide-react";
+import {
+	ArrowLeft,
+	Shield,
+	Database,
+	FileText,
+	Lock,
+	Link as LinkIcon,
+	Users,
+	AlertCircle
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function PrivacyPolicy() {
@@ -31,321 +40,258 @@ function PrivacyPolicy() {
 								<h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-gray-100">
 									Privacy Policy
 								</h2>
+								<p className="mb-3 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+									The Ministry of Agriculture and Farmer Welfare, Govt. of India (MOA&FW) built the
+									Bharat-VISTAAR app as a Free app. This SERVICE is provided by MOA&FW at no cost
+									and is intended for use as is.
+								</p>
+								<p className="mb-3 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+									This page is used to inform visitors regarding our policies with the collection,
+									use, and disclosure of Personal Information if anyone decided to use our Service.
+								</p>
 								<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-									The Event Participants Count System (EPCS) Mobile Application is committed to
-									protecting your privacy and ensuring the security of your personal information.
+									If you choose to use our Service, then you agree to the collection and use of
+									information in relation to this policy. The Personal Information that we collect
+									is used for providing and improving the Service. We will not use or share your
+									information with anyone except as described in this Privacy Policy.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* 1. Information We Collect */}
+					{/* Information Collection and Use */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
 							<Database className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
 							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								1. Information We Collect
+								Information Collection and Use
 							</h2>
 						</div>
-
-						<div className="ml-9 space-y-4">
-							{/* 1.1 Personal Information */}
-							<div>
-								<h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">
-									1.1 Personal Information
-								</h3>
-								<ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Name</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Mobile number</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Designation and organization (for Event Managers/Admins)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Authentication details (OTP)</span>
-									</li>
-								</ul>
-							</div>
-
-							{/* 1.2 Event and Participation Data */}
-							<div>
-								<h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">
-									1.2 Event and Participation Data
-								</h3>
-								<ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Event details (title, date, venue, department, SPOC details)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Participant counts (Male/Female/Total, category-wise)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Attendance counts and records (Manual)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Citizen participation details (where applicable)</span>
-									</li>
-								</ul>
-							</div>
-
-							{/* 1.3 Location and Media Data */}
-							<div>
-								<h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">
-									1.3 Location and Media Data
-								</h3>
-								<ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>GPS location data while creating or attending events</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Event photographs and short videos (with geo-tagging)</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Device information for security purposes</span>
-									</li>
-								</ul>
-							</div>
-
-							{/* 1.4 Automatically Collected Information */}
-							<div>
-								<h3 className="mb-2 font-medium text-gray-900 dark:text-gray-100">
-									1.4 Automatically Collected Information
-								</h3>
-								<ul className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>App usage logs</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Device type, Android version</span>
-									</li>
-									<li className="flex items-start gap-2">
-										<span className="mt-1 text-[#00a651]">•</span>
-										<span>Network status for synchronization</span>
-									</li>
-								</ul>
-							</div>
+						<div className="ml-9 space-y-3">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								For a better experience, while using our Service, we may require you to provide us
+								with certain personally identifiable information, including but not limited to:
+							</p>
+							<ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Farmer's Name</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Mobile Number</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Address</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Gender</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Caste</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Email ID</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Farmer's farming details like plot area, plot's geo-location</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>IP address</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>Unique device identifiers</span>
+								</li>
+							</ul>
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								The information that we request will be retained by us and used as described in this
+								privacy policy.
+							</p>
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								The app does use third-party services that may collect information used to identify
+								you.
+							</p>
 						</div>
 					</div>
 
-					{/* 2. Purpose of Data Collection */}
+					{/* Log Data */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
 							<FileText className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
-							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								2. Purpose of Data Collection
-							</h2>
+							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Log Data</h2>
 						</div>
 						<p className="mb-3 ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							The information collected is used solely for:
+							We want to inform you that whenever you use our Service, in a case of an error in the
+							app we collect data and information (through third-party products) on your phone
+							called Log Data.
 						</p>
-						<ul className="ml-9 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Managing and monitoring government events</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Participant counts and attendance</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Generating analytics, dashboards, and reports</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Sending notifications, alerts, and reminders</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Ensuring transparency, accountability, and impact assessment</span>
-							</li>
-						</ul>
+						<p className="ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+							This Log Data may include information such as your device Internet Protocol ("IP")
+							address, device name, operating system version, the configuration of the app when
+							utilizing our Service, the time and date of your use of the Service, and other
+							statistics.
+						</p>
 					</div>
 
-					{/* 3. Data Sharing and Disclosure */}
+					{/* Cookies */}
+					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+						<div className="mb-4 flex items-start gap-3">
+							<Database className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
+							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Cookies</h2>
+						</div>
+						<div className="ml-9 space-y-3">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								Cookies are files with a small amount of data that are commonly used as anonymous
+								unique identifiers. These are sent to your browser from the websites that you visit
+								and are stored on your device's internal memory.
+							</p>
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								This Service does not use these "cookies" explicitly. However, the app may use
+								third-party code and libraries that use "cookies" to collect information and improve
+								their services. You have the option to either accept or refuse these cookies and
+								know when a cookie is being sent to your device. If you choose to refuse our
+								cookies, you may not be able to use some portions of this Service.
+							</p>
+						</div>
+					</div>
+
+					{/* Service Providers */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
 							<Users className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
 							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								3. Data Sharing and Disclosure
+								Service Providers
 							</h2>
 						</div>
-						<ul className="ml-9 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Data is not shared with any third-party commercial entities.</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									Information may be shared internally with authorized Government Departments and
-									Ministries strictly for official purposes.
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Data may be disclosed if required by law or government directives.</span>
-							</li>
-						</ul>
+						<div className="ml-9 space-y-3">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								We may employ third-party companies and individuals due to the following reasons:
+							</p>
+							<ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>To facilitate our Service</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>To provide the Service on our behalf</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>To perform Service-related services</span>
+								</li>
+								<li className="flex items-start gap-2">
+									<span className="mt-1 text-[#00a651]">•</span>
+									<span>To assist us in analyzing how our Service is used</span>
+								</li>
+							</ul>
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								We want to inform users of this Service that these third parties have access to
+								their Personal Information. The reason is to perform the tasks assigned to them on
+								our behalf. However, they are obligated not to disclose or use the information for
+								any other purpose.
+							</p>
+						</div>
 					</div>
 
-					{/* 4. Data Storage and Security */}
+					{/* Security */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
 							<Lock className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
-							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								4. Data Storage and Security
-							</h2>
+							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Security</h2>
 						</div>
-						<ul className="ml-9 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									All data is securely stored on the Ministry-approved cloud infrastructure.
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									Appropriate technical and organizational security measures are implemented to
-									prevent unauthorized access, alteration, or disclosure.
-								</span>
-							</li>
-						</ul>
-					</div>
-
-					{/* 5. Permissions Used */}
-					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
-						<div className="mb-4 flex items-start gap-3">
-							<Camera className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
-							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								5. Permissions Used
-							</h2>
-						</div>
-						<p className="mb-3 ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							The mobile app may request the following permissions:
-						</p>
-						<ul className="ml-9 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									<strong className="text-gray-900 dark:text-gray-100">Camera:</strong> To capture
-									event photos/videos for attendance validation
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									<strong className="text-gray-900 dark:text-gray-100">Location:</strong> To geo-tag
-									event venues and media
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									<strong className="text-gray-900 dark:text-gray-100">Storage:</strong> To save
-									data and media
-								</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>
-									<strong className="text-gray-900 dark:text-gray-100">Internet:</strong> For data
-									sync and notifications
-								</span>
-							</li>
-						</ul>
-						<p className="mt-3 ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							Permissions are used strictly for app functionality.
+						<p className="ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+							We value your trust in providing us your Personal Information, thus we are striving to
+							use commercially acceptable means of protecting it. But remember that no method of
+							transmission over the internet, or method of electronic storage is 100% secure and
+							reliable, and we cannot guarantee its absolute security.
 						</p>
 					</div>
 
-					{/* 6. User Rights */}
+					{/* Links to Other Sites */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
-							<Shield className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
+							<LinkIcon className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
 							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								6. User Rights
-							</h2>
-						</div>
-						<p className="mb-3 ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							Users have the right to:
-						</p>
-						<ul className="ml-9 space-y-2 text-sm text-gray-700 dark:text-gray-300">
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Access their submitted information</span>
-							</li>
-							<li className="flex items-start gap-2">
-								<span className="mt-1 text-[#00a651]">•</span>
-								<span>Request correction of inaccurate data through authorized administrators</span>
-							</li>
-						</ul>
-					</div>
-
-					{/* 7. Children's Privacy */}
-					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
-						<div className="mb-4 flex items-start gap-3">
-							<Users className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
-							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								7. Children's Privacy
+								Links to Other Sites
 							</h2>
 						</div>
 						<p className="ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							The EPCS Mobile Application is not intended for use by children under 18 years of age.
-							No knowingly collected children's data is stored.
+							This Service may contain links to other sites. If you click on a third-party link, you
+							will be directed to that site. Note that these external sites are not operated by us.
+							Therefore, we strongly advise you to review the Privacy Policy of these websites. We
+							have no control over and assume no responsibility for the content, privacy policies,
+							or practices of any third-party sites or services.
 						</p>
 					</div>
 
-					{/* 8. Changes to This Privacy Policy */}
+					{/* Children's Privacy */}
+					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
+						<div className="mb-4 flex items-start gap-3">
+							<AlertCircle className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
+							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+								Children's Privacy
+							</h2>
+						</div>
+						<p className="ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+							These Services do not address anyone under the age of 13. We do not knowingly collect
+							personally identifiable information from children under 13 years of age. In the case
+							we discover that a child under 13 has provided us with personal information, we
+							immediately delete this from our servers. If you are a parent or guardian and you are
+							aware that your child has provided us with personal information, please contact us so
+							that we will be able to do the necessary actions.
+						</p>
+					</div>
+
+					{/* Changes to This Privacy Policy */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
 							<FileText className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
 							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								8. Changes to This Privacy Policy
+								Changes to This Privacy Policy
 							</h2>
 						</div>
-						<p className="ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							This Privacy Policy may be updated from time to time. Any changes will be reflected
-							within the app and/or official platforms.
-						</p>
+						<div className="ml-9 space-y-3">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								We may update our Privacy Policy from time to time. Thus, you are advised to review
+								this page periodically for any changes. We will notify you of any changes by posting
+								the new Privacy Policy on this page.
+							</p>
+							<p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+								This policy is effective as of{" "}
+								{new Date().toLocaleDateString("en-US", {
+									year: "numeric",
+									month: "2-digit",
+									day: "2-digit"
+								})}
+							</p>
+						</div>
 					</div>
 
-					{/* 9. Contact Information */}
+					{/* Contact Us */}
 					<div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-950">
 						<div className="mb-4 flex items-start gap-3">
-							<MapPin className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
-							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-								9. Contact Information
-							</h2>
+							<FileText className="mt-1 h-6 w-6 flex-shrink-0 text-[#00a651]" />
+							<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contact Us</h2>
 						</div>
-						<p className="mb-3 ml-9 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-							For questions or concerns regarding this Privacy Policy, please contact:
-						</p>
-						<div className="ml-9 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
-							<p className="mb-1 text-sm font-medium text-gray-900 dark:text-gray-100">
-								Department of Agriculture and Farmers Welfare
+						<div className="ml-9 space-y-3">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+								If you have any questions or suggestions about our Privacy Policy, do not hesitate
+								to contact us.
 							</p>
-							<p className="text-sm text-gray-700 dark:text-gray-300">
-								Ministry of Agriculture and Farmers Welfare
-							</p>
-							<p className="text-sm text-gray-700 dark:text-gray-300">Government of India</p>
+							<div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+								<p className="mb-1 text-sm font-medium text-gray-900 dark:text-gray-100">Email</p>
+								<a href="mailto:us-it@gov.in" className="text-sm text-[#00a651] hover:underline">
+									us-it@gov.in
+								</a>
+							</div>
 						</div>
 					</div>
 				</div>
