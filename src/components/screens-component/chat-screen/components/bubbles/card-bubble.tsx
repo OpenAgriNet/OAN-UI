@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, ThumbsDown, ThumbsUp, Volume2, Check, Pause, Play } from "lucide-react";
+import { Copy, ThumbsDown, ThumbsUp, Volume2, Check, Pause, Play, RefreshCw } from "lucide-react";
 import { CardMessage } from "./chat-types";
 import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
@@ -44,6 +44,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const currentlyPlayingId = useChatStore((s) => s.currentlyPlayingId);
 	const ttsStatus = useChatStore((s) => s.ttsStatus);
 	const submitFeedback = useChatStore((s) => s.submitMessageFeedback);
+	const retryLastMessage = useChatStore((s) => s.retryLastMessage);
 	const setToast = useChatStore((s) => s.setToast);
 
 	const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
@@ -51,9 +52,11 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const [showCopySuccess, setShowCopySuccess] = useState(false);
 	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
 	const [showThumbsDownSuccess, setShowThumbsDownSuccess] = useState(false);
+	const [isRetrying, setIsRetrying] = useState(false);
 
 	const isThisPlaying = currentlyPlayingId === message.id && ttsStatus === "playing";
 	const isThisPaused = currentlyPlayingId === message.id && ttsStatus === "paused";
+	const isRetryableError = message.isError && message.failedUserText;
 
 	const handleListen = async () => {
 		try {
@@ -67,6 +70,12 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 		} catch (error) {
 			console.error("TTS action failed:", error);
 		}
+	};
+
+	const handleRetry = () => {
+		if (isRetrying) return;
+		setIsRetrying(true);
+		retryLastMessage(language);
 	};
 
 	const handleThumbsUp = async () => {
@@ -92,7 +101,6 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 			await navigator.clipboard.writeText(message.body);
 			setShowCopySuccess(true);
 			setTimeout(() => setShowCopySuccess(false), 1000);
-			// setToast({ message: "The message has been copied to your clipboard", type: "success" });
 		} catch (error) {
 			console.error(error);
 			setToast({ message: "Failed to copy to clipboard. Please try again", type: "error" });
@@ -120,14 +128,19 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	return (
 		<>
 			<div className="w-full max-w-[95%] sm:max-w-[90%] mb-8">
-				<Card className="relative rounded-2xl border-none bg-white p-4 shadow-sm overflow-hidden dark:bg-[var(--aiBubble-dark)] dark:border-[var(--border-dark)]">
+				<Card className={cn(
+					"relative rounded-2xl border-none p-4 shadow-sm overflow-hidden",
+					isRetryableError
+						? "bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30"
+						: "bg-white dark:bg-[var(--aiBubble-dark)] dark:border-[var(--border-dark)]"
+				)}>
 					{/* Content */}
 					<div>
 						{message.title ? (
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)] break-words overflow-wrap-anywhere", message.isError && "text-red-500 font-medium")}>
+						<div className={cn("prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)] break-words overflow-wrap-anywhere", message.isError && "text-red-600 dark:text-red-400 font-medium")}>
 						<ReactMarkdown
 							remarkPlugins={[remarkGfm]}
 							rehypePlugins={[rehypeRaw]}
@@ -136,6 +149,22 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 							{message.body}
 						</ReactMarkdown>
 					</div>
+
+						{/* Retry Button for error messages */}
+						{isRetryableError && (
+							<div className="mt-3 flex items-center gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									className="gap-2 rounded-xl border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/40 cursor-pointer"
+									onClick={handleRetry}
+									disabled={isRetrying}
+								>
+									<RefreshCw className={cn("h-3.5 w-3.5", isRetrying && "animate-spin")} />
+									{isRetrying ? "Retrying..." : "Retry"}
+								</Button>
+							</div>
+						)}
 
 						{/* Action Chips */}
 						{message.actions?.length ? (
@@ -153,8 +182,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 						) : null}
 					</div>
 
-					{/* Footer Row */}
-					{message.showListenRow && (
+					{/* Footer Row — hidden for retryable errors */}
+					{message.showListenRow && !isRetryableError && (
 						<div className="flex flex-col gap-3">
 							<div className="mx-[-1rem] h-px bg-gray-200 dark:bg-indigo-800/20" />
 							<div className="flex items-center justify-start -ml-3">
@@ -252,3 +281,4 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 		</>
 	);
 }
+

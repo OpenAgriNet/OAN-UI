@@ -23,6 +23,8 @@ export type CardMessage = MessageBase & {
 	actions?: { id: string; label: string }[];
 	showListenRow?: boolean;
 	isError?: boolean;
+	failedUserText?: string;
+	failedLanguage?: string;
 };
 
 export type QuickRepliesMessage = MessageBase & {
