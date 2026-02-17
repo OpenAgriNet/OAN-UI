@@ -7,6 +7,34 @@ import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
+import type { Components } from "react-markdown";
+
+const markdownComponents: Components = {
+	p: ({ children }) => <p className="m-0 leading-relaxed">{children}</p>,
+	a: ({ href, children }) => (
+		<a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+			{children}
+		</a>
+	),
+	pre: ({ children }) => (
+		<pre className="bg-muted/50 p-2 rounded-lg overflow-x-auto">{children}</pre>
+	),
+	code: ({ className, children, ...props }) => {
+		const match = /language-(\w+)/.exec(className || "");
+		const isInline = !match;
+		return isInline ? (
+			<code className="bg-muted/50 rounded px-1 py-0.5" {...props}>{children}</code>
+		) : (
+			<code className={className} {...props}>{children}</code>
+		);
+	},
+	hr: () => (
+		<hr className="border-none h-px my-4 bg-primary/30 dark:bg-primary/40" />
+	),
+};
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -99,31 +127,15 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 							<div className="mb-2 text-base font-bold">{message.title}</div>
 						) : null}
 
-						<div className={cn("text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)]", message.isError && "text-red-500 font-medium")}>
-							{message.body.split("\n\n").map((para, idx) => {
-								const isSource = para.toLowerCase().includes("source:");
-								
-								// Helper to render inline bold text (handles **text**)
-								const renderFormattedText = (text: string) => {
-									const parts = text.split(/(\*\*.*?\*\*)/g);
-									return parts.map((part, i) => {
-										if (part.startsWith("**") && part.endsWith("**")) {
-											return <strong key={i} className="font-bold">{part.slice(2, -2)}</strong>;
-										}
-										return part;
-									});
-								};
-
-								// Strip surrounding markdown from source paragraphs if present
-								const content = isSource ? para.replace(/^\*\*|\*\*$/g, "").trim() : para;
-
-								return (
-									<p key={idx} className={cn("whitespace-pre-wrap break-words break-all", isSource && "font-bold", idx !== 0 && "mt-3")}>
-										{renderFormattedText(content)}
-									</p>
-								);
-							})}
-						</div>
+						<div className={cn("prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)] break-words overflow-wrap-anywhere", message.isError && "text-red-500 font-medium")}>
+						<ReactMarkdown
+							remarkPlugins={[remarkGfm]}
+							rehypePlugins={[rehypeRaw]}
+							components={markdownComponents}
+						>
+							{message.body}
+						</ReactMarkdown>
+					</div>
 
 						{/* Action Chips */}
 						{message.actions?.length ? (

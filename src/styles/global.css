@@ -2,6 +2,7 @@
 
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -229,57 +230,87 @@
 }
 
 @keyframes pulseBlueBorder {
-  0%,
-  100% {
-    border-color: #d1d5db; /* gray */
-  }
-  50% {
-    border-color: #06038D; /* blue */
-  }
+
+	0%,
+	100% {
+		border-color: #d1d5db;
+		/* gray */
+	}
+
+	50% {
+		border-color: #06038D;
+		/* blue */
+	}
 }
 
 @keyframes pulseBlueIcon {
-  0%,
-  100% {
-    color: #6b7280; /* gray */
-  }
-  50% {
-    color: #06038D; /* blue */
-  }
+
+	0%,
+	100% {
+		color: #6b7280;
+		/* gray */
+	}
+
+	50% {
+		color: #06038D;
+		/* blue */
+	}
 }
 
 .blink-border {
-  animation: pulseBlueBorder 1.2s ease-in-out infinite;
+	animation: pulseBlueBorder 1.2s ease-in-out infinite;
 }
 
 .blink-icon {
-  animation: pulseBlueIcon 1.2s ease-in-out infinite;
+	animation: pulseBlueIcon 1.2s ease-in-out infinite;
 }
 
 @keyframes send-1 {
-  0%, 100% {
-    background-color: #e5e7eb; /* gray-200 */
-  }
-  50% {
-    background-color: #818CF8; /* blue */
-  }
+
+	0%,
+	100% {
+		background-color: #e5e7eb;
+		/* gray-200 */
+	}
+
+	50% {
+		background-color: #818CF8;
+		/* blue */
+	}
 }
 
 .blink-send-bg {
-  animation: send-1 800ms linear infinite;
-  animation-delay: 1ms;
+	animation: send-1 800ms linear infinite;
+	animation-delay: 1ms;
 }
 
 @keyframes earthquake {
-  0%, 50%, 100% { transform: translate(0, 0) rotate(0deg); }
-  10% { transform: translate(-1px, -1px) rotate(-15deg); }
-  20% { transform: translate(1px, 1px) rotate(15deg); }
-  30% { transform: translate(-1px, -1px) rotate(-15deg); }
-  40% { transform: translate(1px, 1px) rotate(15deg); }
+
+	0%,
+	50%,
+	100% {
+		transform: translate(0, 0) rotate(0deg);
+	}
+
+	10% {
+		transform: translate(-1px, -1px) rotate(-15deg);
+	}
+
+	20% {
+		transform: translate(1px, 1px) rotate(15deg);
+	}
+
+	30% {
+		transform: translate(-1px, -1px) rotate(-15deg);
+	}
+
+	40% {
+		transform: translate(1px, 1px) rotate(15deg);
+	}
 }
 
 .animate-earthquake {
-  animation: earthquake 1.3s ease-in-out infinite;
+	animation: earthquake 1.3s ease-in-out infinite;
 }
 
 
@@ -288,10 +319,14 @@
 @layer utilities {
 	@media (max-width: 640px) {
 		.scrollbar-none {
-			-ms-overflow-style: none; /* IE and Edge */
-			scrollbar-width: none; /* Firefox */
+			-ms-overflow-style: none;
+			/* IE and Edge */
+			scrollbar-width: none;
+
+			/* Firefox */
 			&::-webkit-scrollbar {
-				display: none; /* Chrome, Safari and Opera */
+				display: none;
+				/* Chrome, Safari and Opera */
 			}
 		}
 	}
