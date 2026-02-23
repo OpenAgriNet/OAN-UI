@@ -40,6 +40,8 @@ export type QuickAction = {
 	prompt: string;
 };
 
+export type TranslationPipeline = 'default' | 'oss_translate';
+
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -50,6 +52,8 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	translationPipeline: TranslationPipeline;
+	setTranslationPipeline: (value: TranslationPipeline) => void;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -133,6 +137,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
+	translationPipeline: 'default',
+	setTranslationPipeline: (value) => set({ translationPipeline: value }),
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -242,6 +248,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
+			const useTranslationPipeline = get().translationPipeline === 'oss_translate';
 			const _response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
@@ -264,7 +271,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						}
 					});
-				}
+				},
+				useTranslationPipeline
 			);
 
 			set((state) => {
