@@ -189,8 +189,8 @@ export const SearchInput = forwardRef<SearchInputHandle, SearchInputProps>(
           aria-label={placeholder}
           className={clsx(
             'w-full',
-            'bg-white text-[#6D6D6D] placeholder-gray-400',
-            'border border-gray-200',
+            'bg-background text-foreground placeholder:text-muted-foreground',
+            'border border-border',
             'focus:outline-none focus:ring-1 focus:ring-[#6c47ff] focus:border-[#6c47ff]',
             'transition-all duration-200',
             'pl-10 pr-10', // Padding for icons on both sides
@@ -206,8 +206,8 @@ export const SearchInput = forwardRef<SearchInputHandle, SearchInputProps>(
 
         {/* Right-side controls (clear / loader) */}
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {showLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            {showLoading ? (
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           ) : null}
 
           {showClear &&
@@ -217,9 +217,9 @@ export const SearchInput = forwardRef<SearchInputHandle, SearchInputProps>(
                 type="button"
                 aria-label="Clear search"
                 onClick={handleClear}
-                className="p-1 rounded hover:bg-gray-100 transition-colors flex items-center justify-center"
+                className="p-1 rounded hover:bg-muted/60 transition-colors flex items-center justify-center"
               >
-                <X className="w-4 h-4 text-gray-600" />
+                <X className="w-4 h-4 text-muted-foreground" />
               </button>
             )}
         </div>

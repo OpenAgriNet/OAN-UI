@@ -77,10 +77,10 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	};
 
 	// AI Messages are always cards in this design
-	return (
+		return (
 		<>
 			<div className="w-full max-w-[95%] sm:max-w-[90%] mb-8">
-				<Card className="relative rounded-2xl border-none bg-white p-3 shadow-sm overflow-hidden">
+				<Card className="relative rounded-2xl border border-border bg-card p-3 shadow-sm overflow-hidden">
 					{/* Content */}
 					<div>
 						{message.title ? (
@@ -122,7 +122,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									<Button
 										key={a.id}
 										variant="outline"
-										className="h-8 rounded-full border-green-200 bg-white px-4 text-xs font-medium text-green-700 hover:bg-green-50"
+										className="h-8 rounded-full px-4 text-xs font-medium text-emerald-700 dark:text-emerald-300 border-emerald-200/70 dark:border-emerald-500/60 bg-card hover:bg-emerald-50 dark:hover:bg-emerald-900/40"
 									>
 										{a.label}
 									</Button>

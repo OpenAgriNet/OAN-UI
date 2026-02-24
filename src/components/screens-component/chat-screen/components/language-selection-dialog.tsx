@@ -29,11 +29,11 @@ export function LanguageSelectionDropdown({
 				{children}
 			</PopoverTrigger>
 			<PopoverContent 
-				className="w-[200px] p-0 rounded-2xl border border-gray-100 overflow-hidden shadow-xl"
+				className="w-[200px] p-0 rounded-2xl border border-border overflow-hidden shadow-xl bg-popover text-popover-foreground"
 				align="end"
 				sideOffset={8}
 			>
-				<div className="bg-white flex flex-col">
+				<div className="flex flex-col">
 					{Object.values(LANGUAGES).map((language) => {
 						const isActive = selectedLanguage === language.code;
 						return (
@@ -41,10 +41,10 @@ export function LanguageSelectionDropdown({
 								key={language.code}
 								onClick={() => handleLanguageSelect(language.code)}
 								className={cn(
-									"w-full flex items-center px-5 py-3.5 transition-colors text-left cursor-pointer",
+									"w-full flex items-center px-5 py-3.5 transition-colors text-left cursor-pointer border-l-[3px]",
 									isActive 
-										? "bg-[#FFE2E2] text-gray-900 font-bold border-l-[3px] border-[#F65151]" 
-										: "bg-white text-gray-800 font-medium hover:bg-gray-50 border-l-[3px] border-transparent"
+										? "bg-[#FFE2E2] text-foreground font-bold border-[#F65151]" 
+										: "bg-popover text-muted-foreground font-medium hover:bg-muted/60 border-transparent"
 								)}
 							>
 								<span className="text-sm font-medium">

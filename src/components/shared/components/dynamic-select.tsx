@@ -177,11 +177,11 @@ export default function DynamicSelect({
           aria-invalid={invalid ? 'true' : undefined}
           aria-describedby={ariaDescribedBy}
           className={cn(
-            'w-full h-10 rounded-md border bg-white px-3 text-left flex items-center justify-between',
+            'w-full h-10 rounded-md border bg-background px-3 text-left flex items-center justify-between',
             // default / success styling
             invalid
               ? 'border-red-500 focus:border-red-500 focus:ring-2 focus:ring-red-100'
-              : 'border-gray-200 focus:border-primary focus:ring-1 focus:ring-primary/20',
+              : 'border-border focus:border-primary focus:ring-1 focus:ring-primary/20',
             isLoading ? 'opacity-80' : '',
             'data-[placeholder]:text-gray-400'
           )}
@@ -199,7 +199,7 @@ export default function DynamicSelect({
           )}
         </SelectTrigger>
 
-        <SelectContent className="w-full min-w-[180px] max-h-64 overflow-auto border-gray-200 bg-white ">
+        <SelectContent className="w-full min-w-[180px] max-h-64 overflow-auto border-border bg-card ">
           {isLoading ? (
             <div className="flex justify-center items-center p-4">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -227,10 +227,10 @@ export default function DynamicSelect({
         <button
           type="button"
           onClick={handleClear}
-          className="absolute right-3 bg-white top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-slate-100 transition-colors"
+          className="absolute right-3 bg-background top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-muted/60 transition-colors"
           aria-label="Clear selection"
         >
-          <X className="h-4 w-4 text-gray-500" />
+          <X className="h-4 w-4 text-muted-foreground" />
         </button>
       )}
     </div>

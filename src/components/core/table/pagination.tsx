@@ -96,7 +96,7 @@ export function Pagination({
           size="sm"
           className={cn(
             btnBase,
-            'border-gray-200 text-gray-400 hover:bg-gray-50'
+            'border-border text-muted-foreground hover:bg-muted/60'
           )}
           onClick={() => handleGo(1)}
           disabled={page <= 1}
@@ -114,7 +114,7 @@ export function Pagination({
         onClick={() => handleGo(page - 1)}
         className={cn(
           btnBase,
-          'border-gray-200 text-gray-400 hover:bg-gray-50'
+          'border-border text-muted-foreground hover:bg-muted/60'
         )}
         aria-label="Previous page"
       >
@@ -122,7 +122,7 @@ export function Pagination({
       </Button>
 
       {/* Pages */}
-      <div className="flex items-center border border-gray-200 rounded-md overflow-hidden">
+      <div className="flex items-center border border-border rounded-md overflow-hidden">
         {visiblePages.map((p, i) =>
           p === 'left' ? (
             // left ellipsis — open dropdown with pages between 2..left-1
@@ -130,8 +130,8 @@ export function Pagination({
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'px-3 text-sm h-8 flex items-center justify-center min-w-[40px] text-gray-500',
-                    'hover:bg-gray-50'
+                    'px-3 text-sm h-8 flex items-center justify-center min-w-[40px] text-muted-foreground',
+                    'hover:bg-muted/60'
                   )}
                   aria-label="More pages"
                 >
@@ -172,8 +172,8 @@ export function Pagination({
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
-                    'px-3 text-sm h-8 flex items-center justify-center min-w-[40px] text-gray-500',
-                    'hover:bg-gray-50'
+                    'px-3 text-sm h-8 flex items-center justify-center min-w-[40px] text-muted-foreground',
+                    'hover:bg-muted/60'
                   )}
                   aria-label="More pages"
                 >
@@ -210,7 +210,7 @@ export function Pagination({
               onClick={() => handleGo(Number(p))}
               className={cn(
                 'h-8 w-8 p-0 text-xs border-0 shadow-none rounded-none',
-                Number(p) !== 1 && 'border-l border-gray-200',
+                Number(p) !== 1 && 'border-l border-border',
                 page === p && 'text-primary bg-primary/20'
               )}
               aria-current={page === p ? 'page' : undefined}
@@ -230,7 +230,7 @@ export function Pagination({
         onClick={() => handleGo(page + 1)}
         className={cn(
           btnBase,
-          'border-gray-200 text-gray-400 hover:bg-gray-50'
+          'border-border text-muted-foreground hover:bg-muted/60'
         )}
         aria-label="Next page"
       >
@@ -244,7 +244,7 @@ export function Pagination({
           size="sm"
           className={cn(
             btnBase,
-            'border-gray-200 text-gray-400 hover:bg-gray-50'
+            'border-border text-muted-foreground hover:bg-muted/60'
           )}
           onClick={() => handleGo(totalPages)}
           disabled={page >= totalPages}
@@ -257,10 +257,10 @@ export function Pagination({
       {/* Page size selector (optional) */}
       {pageSizeOptions && pageSizeOptions.length > 0 && onPageSizeChange && (
         <div className="flex items-center gap-2 ml-2">
-          <div className="text-xs text-gray-500">Rows</div>
+          <div className="text-xs text-muted-foreground">Rows</div>
           <select
             aria-label="Select page size"
-            className="h-8 px-2 rounded-md border border-gray-200 bg-white text-sm"
+            className="h-8 px-2 rounded-md border border-border bg-background text-sm"
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
           >
