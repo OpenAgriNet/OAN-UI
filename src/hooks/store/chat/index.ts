@@ -137,7 +137,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
-	translationPipeline: 'default',
+	translationPipeline: 'oss_translate',
 	setTranslationPipeline: (value) => set({ translationPipeline: value }),
 	toast: null,
 
