@@ -226,7 +226,7 @@ export function ChatInput({
 	}
 
 	return (
-		<div className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent border-t border-[#E3E3E3] dark:border-gray-800">
+		<div className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent border-t border-[#E3E3E3]">
 			<div className="mx-auto w-full max-w-3xl px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-4">
 				<Suggestions
 					suggestions={suggestions}
@@ -298,18 +298,18 @@ export function ChatInput({
 
 					<div
 						className={cn(
-							"flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border border-border bg-card shadow-sm transition-colors duration-200 relative",
-							canSend ? "border-foreground/60 dark:border-foreground/40" : "border-border",
-							isLoading ? "bg-muted/60 opacity-80 cursor-not-allowed" : ""
+							"flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border bg-white shadow-sm transition-colors duration-200 relative",
+							canSend ? "border-black" : "border-gray-300",
+							isLoading ? "bg-gray-50 opacity-80 cursor-not-allowed" : ""
 						)}
 					>
 						{isLoading && (
-							<div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-card rounded-[16px]">
+							<div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white rounded-[16px]">
 								<div className="flex items-center gap-1">
 									<div className="h-8 w-8">
 										<Lottie animationData={loadingAnim} loop={true} />
 									</div>
-									<span className="text-base text-muted-foreground">
+									<span className="text-base text-gray-500">
 										{isTranscribing ? "Transcribing..." : "Loading..."}
 									</span>
 								</div>
@@ -335,7 +335,7 @@ export function ChatInput({
 							className={cn(
 								"flex w-12 items-stretch justify-center transition-colors duration-200",
 								"rounded-r-[16px] rounded-l-none",
-								canSend && !isLoading ? "brand-gradient" : "bg-gray-200 dark:bg-gray-700"
+								canSend && !isLoading ? "brand-gradient" : "bg-gray-200"
 							)}
 						>
 							<Button

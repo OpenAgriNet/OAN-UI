@@ -30,7 +30,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
   return (
     <thead
       data-slot="table-header"
-      className={cn('sticky top-0 z-20 bg-muted [&_tr]:border-b', className)}
+      className={cn('sticky top-0 z-20 bg-gray-50 [&_tr]:border-b', className)}
       {...props}
     />
   );
@@ -64,11 +64,11 @@ export function DynamicTable<TData>({
   });
 
   return (
-    <div className="overflow-hidden bg-card">
+    <div className="overflow-hidden bg-white">
       {loading ? (
         <div
           className={cn(
-            'flex items-center justify-center text-muted-foreground',
+            'flex items-center justify-center ',
             `h-[${maxHeight}]`
           )}
         >
@@ -77,7 +77,7 @@ export function DynamicTable<TData>({
       ) : data.length === 0 ? (
         <div
           className={cn(
-            'flex items-center justify-center text-muted-foreground text-sm',
+            'flex items-center justify-center text-gray-500 text-sm',
             `h-[${maxHeight}]`
           )}
         >
@@ -89,16 +89,16 @@ export function DynamicTable<TData>({
             className="table-fixed w-full"
             style={{ minWidth: minTableWidth }}
           >
-            <TableHeader className="sticky top-0 z-10 bg-muted">
+            <TableHeader className="sticky top-0 z-10 bg-gray-50">
               {table.getHeaderGroups().map((hg) => (
                 <TableRow
                   key={hg.id}
-                  className="border-b border-border hover:bg-muted/60"
+                  className="border-b border-gray-200 hover:bg-gray-50"
                 >
                   {hg.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide whitespace-normal break-words leading-tight bg-muted"
+                      className="px-4 py-2 text-xs font-semibold text-gray-700 uppercase tracking-wide whitespace-normal break-words leading-tight bg-gray-50"
                       style={{
                         width: header.getSize()
                           ? `${header.getSize()}px`
@@ -123,12 +123,12 @@ export function DynamicTable<TData>({
               {table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="border-b border-border/60 hover:bg-muted/40 transition-colors"
+                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="px-6 py-4 text-sm text-foreground/80 align-top"
+                      className="px-6 py-4 text-sm text-gray-700 align-top"
                       style={{
                         width: cell.column.columnDef.size
                           ? `${cell.column.columnDef.size}px`

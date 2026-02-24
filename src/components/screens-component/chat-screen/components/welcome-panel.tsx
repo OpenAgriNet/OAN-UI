@@ -55,13 +55,13 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 						<Button
 							key={action.id}
 							variant="ghost"
-							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-border bg-card px-4 py-4 sm:px-6 sm:py-6 shadow-sm hover:bg-muted/60 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
+							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 sm:px-6 sm:py-6 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
 							onClick={() => onAction(action.id)}
 						>
 							<div className="text-2xl sm:text-3xl shrink-0">
 								{icon}
 							</div>
-							<span className="text-base font-medium text-foreground leading-snug">
+							<span className="text-base font-medium text-gray-900 leading-snug">
 								{action.title}
 							</span>
 						</Button>

@@ -52,7 +52,7 @@ export function CopyableCell({
           {/* Make button shrinkable and prevent it from overflowing the cell */}
           <button
             onClick={handleCopy}
-            className={`group text-sm text-foreground/80 hover:text-primary flex items-center gap-2 transition-colors
+            className={`group text-sm text-gray-700 hover:text-blue-600 flex items-center gap-2 transition-colors
               min-w-0 overflow-hidden text-left ${isMono ? 'font-mono' : ''} ${className}`}
             aria-label={`Copy ${value}`}
             title={value} // show full value on hover (native)
@@ -93,14 +93,14 @@ export function TruncatedTextCell({
   showTooltipAlways = false,
 }: TruncatedTextCellProps) {
   if (!value) {
-    return <span className="text-sm text-muted-foreground">—</span>;
+    return <span className="text-sm text-gray-500">—</span>;
   }
 
   const shouldShowTooltip = showTooltipAlways || value.length > 30;
 
   if (!shouldShowTooltip) {
     return (
-      <span className={`text-sm text-foreground/80 ${className}`}>{value}</span>
+      <span className={`text-sm text-gray-700 ${className}`}>{value}</span>
     );
   }
 
@@ -109,7 +109,7 @@ export function TruncatedTextCell({
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            className={`text-sm text-foreground/80 truncate block ${maxWidth} cursor-help ${className}`}
+            className={`text-sm text-gray-700 truncate block ${maxWidth} cursor-help ${className}`}
           >
             {value}
           </span>
@@ -135,7 +135,7 @@ export function EmptyStateCell({
   className = '',
 }: EmptyStateCellProps) {
   return (
-    <span className={`text-sm text-muted-foreground ${className}`}>{message}</span>
+    <span className={`text-sm text-gray-500 ${className}`}>{message}</span>
   );
 }
 
@@ -172,7 +172,7 @@ export function AvatarTextCell({
       >
         <span className="text-xs font-semibold">{initial}</span>
       </div>
-      <span className="text-sm text-foreground/80 truncate max-w-xs">
+      <span className="text-sm text-gray-700 truncate max-w-xs">
         {displayName}
       </span>
     </div>
@@ -218,7 +218,7 @@ export const InfoCell = ({
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-md p-0">
           <div
-            className={`w-[${width}] max-h-44 overflow-y-auto p-3 bg-card rounded-md border border-border text-sm text-foreground`}
+            className={`w-[${width}] max-h-44 overflow-y-auto p-3 bg-white rounded-md border border-gray-200 text-sm text-gray-800`}
           >
             {value}
           </div>

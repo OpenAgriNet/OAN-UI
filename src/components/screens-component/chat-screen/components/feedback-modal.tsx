@@ -95,13 +95,13 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 			/>
 
 			{/* Modal */}
-			<div className="relative w-full max-w-md sm:max-h-[90vh] bg-card text-card-foreground rounded-t-3xl sm:rounded-3xl shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300 flex flex-col border border-border">
+			<div className="relative w-full max-w-md sm:max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 duration-300 flex flex-col">
 				{/* Header */}
 				<div className="flex items-center justify-between px-6 pt-6 pb-4 flex-shrink-0">
-					<h2 className="text-lg font-bold text-foreground">{t("feedback.title")}</h2>
+					<h2 className="text-lg font-bold text-gray-900">{t("feedback.title")}</h2>
 					<button
 						onClick={handleCancel}
-						className="rounded-full p-1 hover:bg-muted/60 transition-colors cursor-pointer"
+						className="rounded-full p-1 hover:bg-gray-100 transition-colors cursor-pointer"
 					>
 						<X className="h-6 w-6 text-gray-500" />
 					</button>
@@ -111,7 +111,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 				<div className="overflow-y-auto flex-1 sm:px-0">
 					{/* Subtitle */}
 					<div className="px-6 pb-4">
-						<p className="text-xs text-muted-foreground">
+						<p className="text-xs text-gray-600">
 							{t("feedback.description")}
 						</p>
 					</div>
@@ -122,10 +122,10 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 							<button
 								key={option.id}
 								onClick={() => setSelectedReason(option.id)}
-								className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-colors cursor-pointer border ${
+								className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-colors cursor-pointer ${
 									selectedReason === option.id
-										? "bg-yellow-400 text-foreground"
-										: "bg-card border-border text-muted-foreground hover:bg-muted/60"
+										? "bg-yellow-400 text-gray-900"
+										: "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
 								}`}
 							>
 								{option.label}
@@ -135,7 +135,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 
 					{/* Message Section */}
 					<div className="px-6 pb-6">
-						<label className="block text-sm font-semibold text-foreground mb-2">
+						<label className="block text-sm font-semibold text-gray-900 mb-2">
 							{t("feedback.messageLabel")}
 						</label>
 						<div className="relative">
@@ -143,7 +143,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 								value={message}
 								onChange={(e) => setMessage(e.target.value)}
 								placeholder={t("feedback.placeholder") as string}
-								className="w-full px-4 py-3 pr-24 border border-border bg-background/60 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm text-foreground placeholder:text-muted-foreground"
+								className="w-full px-4 py-3 pr-24 border border-gray-200 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
 								rows={4}
 								style={{ fontStyle: message ? "normal" : "italic" }}
 							/>
@@ -152,7 +152,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 									type="button"
 									onClick={handleListen}
 									disabled={!message}
-									className="p-2 hover:bg-muted/60 rounded-full transition-colors text-muted-foreground disabled:opacity-30 cursor-pointer"
+									className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400 disabled:opacity-30 cursor-pointer"
 									title="Listen to feedback text"
 								>
 									<Volume2 className="h-5 w-5" />
@@ -160,7 +160,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 								<button 
 									type="button"
 									onClick={toggleRecording}
-									className={`p-2 rounded-full transition-colors cursor-pointer ${isRecording ? "bg-red-100 text-red-500 animate-pulse" : "hover:bg-muted/60 text-muted-foreground"}`}
+									className={`p-2 rounded-full transition-colors cursor-pointer ${isRecording ? "bg-red-100 text-red-500 animate-pulse" : "hover:bg-gray-100 text-gray-400"}`}
 									title={isRecording ? "Stop recording" : "Record voice feedback"}
 								>
 									<Mic className="h-5 w-5" />
@@ -175,7 +175,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 					<Button
 						onClick={handleCancel}
 						variant="outline"
-						className="flex-1 h-11 cursor-pointer rounded-xl border-border text-muted-foreground font-semibold hover:bg-muted/60 text-sm"
+						className="flex-1 h-11 cursor-pointer rounded-xl border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 text-sm"
 					>
 						{t("feedback.cancel")}
 					</Button>

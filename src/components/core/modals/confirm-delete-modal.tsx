@@ -63,7 +63,7 @@ export default function ConfirmDeleteModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className={`w-full ${maxWidth} bg-card text-card-foreground rounded-[24px] border border-border p-6 shadow-lg`}
+        className={`w-full ${maxWidth} bg-white rounded-[24px] border-0 p-6 shadow-lg`}
         aria-label="Confirm delete dialog"
       >
         <DialogHeader className="space-y-3">
@@ -91,7 +91,7 @@ export default function ConfirmDeleteModal({
 
             {/* Title */}
             <div className="flex-1">
-              <DialogTitle className="text-[18px] font-semibold text-foreground">
+              <DialogTitle className="text-[18px] font-semibold text-gray-900">
                 {title}
               </DialogTitle>
             </div>

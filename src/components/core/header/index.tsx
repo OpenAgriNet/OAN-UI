@@ -103,8 +103,8 @@ const handleDefaultBack = () => {
       <div
         ref={elRef}
         className={clsx(
-          'sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80',
-          showBorder && 'border-b border-border',
+          'sticky top-0 z-40 bg-white',
+          showBorder && 'border-b border-[#E6E8EC]',
           className
         )}
         style={{
@@ -124,8 +124,8 @@ const handleDefaultBack = () => {
                     key={c.id ?? i}
                     aria-label={c.ariaLabel ?? `left-${i}`}
                     onClick={c.onClick}
-                  className={clsx(
-                      'w-10 h-10 rounded-md flex items-center justify-center hover:bg-muted/60 transition',
+                    className={clsx(
+                      'w-10 h-10 rounded-md flex items-center justify-center hover:bg-gray-100 transition',
                       c.hiddenOnMobile && 'hidden sm:flex'
                     )}
                   >
@@ -136,7 +136,7 @@ const handleDefaultBack = () => {
                 <button
                   aria-label="Back"
                   onClick={handleDefaultBack}
-                  className="w-8 h-8 sm:w-9 sm:h-9 xl:w-10 xl:h-10 rounded-md flex items-center justify-center hover:bg-muted/60 transition flex-shrink-0"
+                  className="w-8 h-8 sm:w-9 sm:h-9 xl:w-10 xl:h-10 rounded-md flex items-center justify-center hover:bg-gray-100 transition flex-shrink-0"
                 >
                   <MoveLeft />
                 </button>
@@ -152,7 +152,7 @@ const handleDefaultBack = () => {
                     font-medium 
                     text-lg sm:text-xl xl:text-[24px]
                     leading-tight sm:leading-7 xl:leading-[36px]
-                    text-foreground
+                    text-black
                     truncate
                     flex-1
                   "
@@ -168,7 +168,7 @@ const handleDefaultBack = () => {
               {showRightText && (
                 <button
                   onClick={rightTextOnClick}
-                  className="text-sm font-medium text-[#6c47ff] px-3 py-2 rounded-md hover:bg-muted/60"
+                  className="text-sm font-medium text-[#6c47ff] px-3 py-2 rounded-md hover:bg-gray-50"
                 >
                   {showRightText}
                 </button>
@@ -179,7 +179,7 @@ const handleDefaultBack = () => {
                   aria-label={c.ariaLabel ?? `right-${i}`}
                   onClick={c.onClick}
                   className={clsx(
-                    'flex items-center justify-center hover:bg-muted/60 transition',
+                    'flex items-center justify-center hover:bg-gray-100 transition',
                     c.hiddenOnMobile && 'hidden sm:flex'
                   )}
                 >

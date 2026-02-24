@@ -88,9 +88,9 @@ export default function LazyFormModal<
       {/* flex-col and overflow-hidden so header/footer don't scroll */}
       <DialogContent
         className={cn(
-          'max-w-[90vw] w-full sm:max-w-md xl:max-w-lg bg-card text-card-foreground',
+          'max-w-[90vw] w-full sm:max-w-md xl:max-w-lg bg-white',
           /* Important layout classes */
-          'flex flex-col max-h-[80vh] border border-border',
+          'flex flex-col  max-h-[80vh]',
           className
         )}
       >
@@ -114,7 +114,7 @@ export default function LazyFormModal<
 
             {/* Footer is outside the scrolling content so it stays visible.
                 We still render it inside the form so submit button works naturally. */}
-            <DialogFooter className="sticky bottom-0 z-30 bg-card/95 backdrop-blur-sm px-4 py-3 border-t border-border/60">
+            <DialogFooter className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-sm  px-4 py-3">
               <div className="w-full">
                 <Button
                   type="submit"
