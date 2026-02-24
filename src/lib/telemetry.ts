@@ -306,10 +306,12 @@ export const logErrorEvent = (
   Telemetry.response(errorData);
 };
 
-/** Optional feedback metadata: service that generated the response, and 1–5 rating */
+/** Optional feedback metadata: service that generated the response, pipeline, and 1–5 rating */
 export type FeedbackMeta = {
   /** Label for the service/model generating the response (e.g. "chat-v1", "voice-agent") */
   serviceLabel?: string;
+  /** Pipeline that answered the question: "default" or "oss_translate" */
+  pipeline?: "default" | "oss_translate";
   /** Rating 1–5; must be in range [1, 5] if provided */
   rating?: number;
 };
@@ -331,6 +333,7 @@ export const logFeedbackEvent = (
     feedbackType,
   };
   if (meta?.serviceLabel != null) feedbackDetails.serviceLabel = meta.serviceLabel;
+  if (meta?.pipeline != null) feedbackDetails.pipeline = meta.pipeline;
   if (meta?.rating != null) {
     const r = Math.min(5, Math.max(1, Math.round(meta.rating)));
     feedbackDetails.rating = r;

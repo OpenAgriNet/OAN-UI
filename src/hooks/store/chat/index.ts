@@ -267,7 +267,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed }]
+								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
 							};
 						}
 					});
@@ -485,6 +485,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive ? "Liked the response" : (feedback || reason || "Negative feedback");
+		const pipeline = msg && msg.type === 'card' && msg.pipeline ? msg.pipeline : undefined;
+		const feedbackMeta = pipeline != null ? { ...meta, pipeline } : meta;
 
 		try {
 			const user = useAuthStore.getState().user;
@@ -499,7 +501,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				feedbackType,
 				questionText,
 				responseText,
-				meta
+				feedbackMeta
 			);
 			telemetry.endTelemetry();
 		} catch (e) {
