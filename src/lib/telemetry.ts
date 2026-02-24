@@ -202,7 +202,14 @@ export const logQuestionEvent = (
   questionId: string,
   sessionId: string,
   questionText: string,
+  pipeline?: "default" | "oss_translate",
 ) => {
+  const questionsDetails: Record<string, unknown> = {
+    questionText: questionText,
+    sessionId: sessionId,
+  };
+  if (pipeline != null) questionsDetails.pipeline = pipeline;
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -211,10 +218,7 @@ export const logQuestionEvent = (
       id: "p1",
       type: "default",
     },
-    questionsDetails: {
-      questionText: questionText,
-      sessionId: sessionId,
-    },
+    questionsDetails,
   };
 
   const questionData = {
@@ -233,6 +237,7 @@ export const logResponseEvent = (
   sessionId: string,
   questionText: string,
   responseText: string,
+  pipeline?: "default" | "oss_translate",
 ) => {
   // Calculate performance metrics
   const timer = window.__RESPONSE_TIMERS__?.[questionId];
@@ -245,6 +250,13 @@ export const logResponseEvent = (
       ? Math.round(timer.paintTime - timer.responseEnd)
       : null;
 
+  const questionsDetails: Record<string, unknown> = {
+    questionText: questionText,
+    answerText: responseText,
+    sessionId: sessionId,
+  };
+  if (pipeline != null) questionsDetails.pipeline = pipeline;
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -253,11 +265,7 @@ export const logResponseEvent = (
       id: "p1",
       type: "default",
     },
-    questionsDetails: {
-      questionText: questionText,
-      answerText: responseText,
-      sessionId: sessionId,
-    },
+    questionsDetails,
     performance: {
       server_response_time_ms: serverResponseTime,
       browser_render_time_ms: browserRenderTime,

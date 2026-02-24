@@ -236,10 +236,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
 
+		const useTranslationPipeline = get().translationPipeline === 'oss_translate';
+		const pipeline = useTranslationPipeline ? 'oss_translate' : 'default';
 		try {
 			const userDetails = get().getUserForTelemetry();
 			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed, pipeline);
 			telemetry.endTelemetry();
 		} catch (e) {
 			console.warn("Telemetry failed (question event)", e);
@@ -248,7 +250,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
-			const useTranslationPipeline = get().translationPipeline === 'oss_translate';
 			const _response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
