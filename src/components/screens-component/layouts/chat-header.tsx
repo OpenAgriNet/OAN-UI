@@ -57,16 +57,19 @@ export function ChatHeader(props: ChatHeaderProps) {
 						onValueChange={handlePipelineChange}
 						className="shrink-0"
 					>
-						<TabsList aria-label="Translation pipeline" className="h-9 rounded-full border border-[#CBCBCB] dark:border-gray-700 bg-transparent p-0.5 gap-0 min-w-0">
+						<TabsList
+							aria-label="Translation pipeline"
+							className="h-9 rounded-full border border-[#E3E3E3] dark:border-gray-700 bg-white/90 dark:bg-gray-900/80 p-0.5 gap-0 min-w-0 shadow-xs"
+						>
 							<TabsTrigger
 								value="default"
-								className="h-8 rounded-full px-2 sm:px-3 text-xs font-medium data-[state=active]:bg-[#FFE2E2] data-[state=active]:border-[#F65151] data-[state=active]:text-foreground border border-transparent data-[state=active]:border shrink-0"
+								className="h-8 rounded-full px-2 sm:px-3 text-xs font-medium text-foreground/80 dark:text-muted-foreground border border-transparent data-[state=active]:bg-[#FFE2E2] dark:data-[state=active]:bg-[#EEFFF4] data-[state=active]:border-[#F65151] dark:data-[state=active]:border-[#019444] data-[state=active]:text-foreground shrink-0"
 							>
 								Default
 							</TabsTrigger>
 							<TabsTrigger
 								value="oss_translate"
-								className="h-8 rounded-full px-2 sm:px-3 text-xs font-medium data-[state=active]:bg-[#FFE2E2] data-[state=active]:border-[#F65151] data-[state=active]:text-foreground border border-transparent data-[state=active]:border shrink-0"
+								className="h-8 rounded-full px-2 sm:px-3 text-xs font-medium text-foreground/80 dark:text-muted-foreground border border-transparent data-[state=active]:bg-[#FFE2E2] dark:data-[state=active]:bg-[#EEFFF4] data-[state=active]:border-[#F65151] dark:data-[state=active]:border-[#019444] data-[state=active]:text-foreground shrink-0"
 							>
 								<span className="hidden sm:inline">OSS Translate</span>
 								<span className="sm:hidden">OSS</span>
