@@ -40,6 +40,8 @@ export type QuickAction = {
 	prompt: string;
 };
 
+export type TranslationPipeline = 'default' | 'oss_translate';
+
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -50,6 +52,8 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	translationPipeline: TranslationPipeline;
+	setTranslationPipeline: (value: TranslationPipeline) => void;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -133,6 +137,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
+	translationPipeline: 'oss_translate',
+	setTranslationPipeline: (value) => set({ translationPipeline: value }),
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -230,10 +236,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
 
+		const useTranslationPipeline = get().translationPipeline === 'oss_translate';
+		const pipeline = useTranslationPipeline ? 'oss_translate' : 'default';
 		try {
 			const userDetails = get().getUserForTelemetry();
 			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed, pipeline);
 			telemetry.endTelemetry();
 		} catch (e) {
 			console.warn("Telemetry failed (question event)", e);
@@ -260,11 +268,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed }]
+								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
 							};
 						}
 					});
-				}
+				},
+				useTranslationPipeline
 			);
 
 			set((state) => {
@@ -477,6 +486,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive ? "Liked the response" : (feedback || reason || "Negative feedback");
+		const pipeline = msg && msg.type === 'card' && msg.pipeline ? msg.pipeline : undefined;
+		const feedbackMeta = pipeline != null ? { ...meta, pipeline } : meta;
 
 		try {
 			const user = useAuthStore.getState().user;
@@ -491,7 +502,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				feedbackType,
 				questionText,
 				responseText,
-				meta
+				feedbackMeta
 			);
 			telemetry.endTelemetry();
 		} catch (e) {

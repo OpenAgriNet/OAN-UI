@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
-import { QuickAction } from "@/hooks/store/chat";
+import { QuickAction, useChatStore } from "@/hooks/store/chat";
 import amulText from "@/assets/amulText.svg";
 
 /* eslint-disable no-unused-vars */
@@ -15,6 +15,13 @@ import { useLanguage } from "@/components/LanguageProvider";
 
 export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 	const { t } = useLanguage();
+	const translationPipeline = useChatStore((s) => s.translationPipeline);
+
+	const baseWelcome = t("welcome") as string;
+	const welcomeText =
+		translationPipeline === "oss_translate"
+			? baseWelcome.replace("AI Agent Sarlaben", "AI Agent Sarlaben (OSS)")
+			: baseWelcome;
 	return (
 		<div className="flex w-full flex-col items-center px-4 py-8">
 			{/* Logo & Greeting */}
@@ -30,8 +37,8 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 				
 				<div className="space-y-4">
 					<img src={amulText} alt="Amul AI" className="h-10 mx-auto object-contain" />
-					<div className="text-xl font-medium text-black whitespace-pre-line">
-						{t("welcome")}
+					<div className="text-xl font-medium text-foreground whitespace-pre-line">
+						{welcomeText}
 					</div>
 				</div>
 			</div>

@@ -49,9 +49,10 @@ export function MessageList(props: MessageListProps) {
                 // Or we can import the store to get sessionId.
                 import("@/hooks/store/chat").then(({ useChatStore }) => {
                    const sessionId = useChatStore.getState().sessionId; 
-                   if(sessionId && lastMessage.questionText && lastMessage.body) {                           
+                   if(sessionId && lastMessage.questionText && lastMessage.body) {
+                       const pipeline = lastMessage.type === "card" && "pipeline" in lastMessage ? lastMessage.pipeline : undefined;
                        markAnswerRendered(lastMessage.questionId!, () => {
-                           logResponseEvent(lastMessage.questionId!, sessionId, lastMessage.questionText!, lastMessage.body);
+                           logResponseEvent(lastMessage.questionId!, sessionId, lastMessage.questionText!, lastMessage.body, pipeline);
                            // endTelemetryWithWait is called in store action
                        });
                    }

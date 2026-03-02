@@ -136,7 +136,8 @@ class ApiService {
     session: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (data: string) => void
+    onStreamData?: (data: string) => void,
+    useTranslationPipeline?: boolean
   ): Promise<ChatResponse> {
     try {
       this.refreshAuthToken();
@@ -144,11 +145,12 @@ class ApiService {
         return { response: "Authentication error", status: "error" };
       }
       
-      const params = {
+      const params: Record<string, string> = {
         session_id: session,
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
+        use_translation_pipeline: useTranslationPipeline ? 'true' : 'false',
         ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
 
