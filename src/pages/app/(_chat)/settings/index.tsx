@@ -14,9 +14,10 @@ import {
 export default function SettingsPage() {
 	const navigate = useNavigate();
 	const { theme, setTheme } = useThemeStore();
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
+	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
-	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
+	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
 
 	const toggleFaq = (id: string) => {
 		setExpandedFaqs((prev) => ({
@@ -97,7 +98,7 @@ export default function SettingsPage() {
 					</CollapsibleTrigger>
 					<CollapsibleContent className="px-5 pb-5 space-y-3">
 						<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-3">
-							{FAQ_DATA.map((faq, index) => (
+							{faqItems.map((faq, index) => (
 								<div
 									key={faq.id}
 									className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden"
@@ -119,21 +120,8 @@ export default function SettingsPage() {
 										)}
 									</button>
 									{expandedFaqs[faq.id] && (
-										<div className="px-4 pb-4 space-y-4">
-											{faq.image && (
-												<div className="relative w-full aspect-[2/1] bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden">
-													<img
-														src={faq.image}
-														alt={faq.question}
-														className="w-full h-full object-cover"
-														onError={(e) => {
-															// Optional: generic agricultural image fallback for demo
-															(e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop";
-														}}
-													/>
-												</div>
-											)}
-											<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+										<div className="px-4 pb-4">
+											<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 whitespace-pre-line">
 												{faq.answer}
 											</p>
 										</div>

@@ -40,6 +40,18 @@ export type QuickAction = {
 	prompt: string;
 };
 
+export type TranslationPipeline = 'default' | 'oss_translate';
+
+const OSS_TRANSLATE_SESSION_PERCENT = 10;
+
+const getTranslationPipelineForSession = (sessionId: string): TranslationPipeline => {
+	let hash = 0;
+	for (let i = 0; i < sessionId.length; i += 1) {
+		hash = (hash * 31 + sessionId.charCodeAt(i)) % 100;
+	}
+	return hash < OSS_TRANSLATE_SESSION_PERCENT ? 'oss_translate' : 'default';
+};
+
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -50,6 +62,7 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	translationPipeline: TranslationPipeline;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -65,7 +78,7 @@ type ChatStore = {
 	fetchSuggestionsForMessage: (messageId: string) => Promise<void>;
 	generateQuickActions: (t: any) => void;
 	playTTS: (text: string, language: string) => Promise<void>;
-	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string) => Promise<void>;
+	submitMessageFeedback: (messageId: string, isPositive: boolean, reason?: string, feedback?: string, meta?: { serviceLabel?: string; rating?: number }) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
 	fetchLocation: (t: any) => void;
@@ -121,6 +134,7 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 }
 
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
+import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -132,13 +146,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
+	translationPipeline: 'default',
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
 
 	initializeSession: (user) => {
-		const sid = uuidv4();
-		set({ sessionId: sid });
+		const sid =
+			(typeof sessionStorage !== "undefined" &&
+				sessionStorage.getItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY)) ||
+			uuidv4();
+		const translationPipeline = getTranslationPipelineForSession(sid);
+		if (typeof sessionStorage !== "undefined") {
+			sessionStorage.removeItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY);
+		}
+		set({ sessionId: sid, translationPipeline });
 		apiService.setSessionId(sid);
 		try {
 			telemetry.startTelemetry(sid, { 
@@ -213,12 +235,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const { sessionId } = get();
 		const currentSession = sessionId || uuidv4();
+		const pipeline = sessionId ? get().translationPipeline : getTranslationPipelineForSession(currentSession);
+		const useTranslationPipeline = pipeline === 'oss_translate';
 		if (!sessionId) {
-			set({ sessionId: currentSession });
+			set({ sessionId: currentSession, translationPipeline: pipeline });
 			apiService.setSessionId(currentSession);
 		}
-
-
 
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
@@ -226,7 +248,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			const userDetails = get().getUserForTelemetry();
 			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed, pipeline);
 			telemetry.endTelemetry();
 		} catch (e) {
 			console.warn("Telemetry failed (question event)", e);
@@ -253,11 +275,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed }]
+								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline }]
 							};
 						}
 					});
-				}
+				},
+				useTranslationPipeline
 			);
 
 			set((state) => {
@@ -323,14 +346,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	sendAudio: async (blob, sessionId) => {
+	sendAudio: async (blob, sessionId, language) => {
 		if (!blob) return;
 		
 		set({ isTranscribing: true });
 
 		try {
 			const base64Audio = await apiService.blobToBase64(blob);
-			const transcription = await apiService.transcribeAudio(base64Audio, 'bhashini', sessionId);
+			const transcription = await apiService.transcribeAudio(base64Audio, sessionId, language);
 			
 			if (transcription && transcription.text) {
 				set((state) => ({
@@ -458,7 +481,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	submitMessageFeedback: async (messageId, isPositive, reason, feedback) => {
+	submitMessageFeedback: async (messageId, isPositive, reason, feedback, meta) => {
 		const { sessionId, messages } = get();
 		if (!sessionId) return;
 
@@ -470,6 +493,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive ? "Liked the response" : (feedback || reason || "Negative feedback");
+		const pipeline = msg && msg.type === 'card' && msg.pipeline ? msg.pipeline : undefined;
+		const feedbackMeta = pipeline != null ? { ...meta, pipeline } : meta;
 
 		try {
 			const user = useAuthStore.getState().user;
@@ -483,7 +508,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				feedbackMsg,
 				feedbackType,
 				questionText,
-				responseText
+				responseText,
+				feedbackMeta
 			);
 			telemetry.endTelemetry();
 		} catch (e) {

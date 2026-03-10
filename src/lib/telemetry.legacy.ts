@@ -51,6 +51,9 @@ export const setTelemetryUserData = (userData: any) => {
 
 const getHostUrl = (): string => typeof window !== 'undefined' ? window.location.origin : 'unknown-host';
 
+// Use same telemetry base URL config as the v3 telemetry client
+import { env } from "@/config/env";
+
 const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
   try {
     const telemetryPayload = {
@@ -62,7 +65,9 @@ const sendTelemetryToNetwork = async (eventType: string, eventData: any) => {
       ...eventData
     };
     
-    const endpoint = '/observability-service/v1/telemetry';
+    // Align with working endpoint:
+    // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
+    const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
     
     fetch(endpoint, {
       method: 'POST',
@@ -191,12 +196,31 @@ export const logErrorEvent = (questionId: string, sessionId: string, error: stri
   Telemetry.response({ qid: questionId, type: "CHOOSE", target, sid: sessionId, channel: "AmulAI-" + getHostUrl() });
 };
 
-export const logFeedbackEvent = (questionId: string, sessionId: string, feedbackText: string, feedbackType: string, questionText: string, responseText: string) => {
+export type FeedbackMeta = { serviceLabel?: string; rating?: number };
+
+export const logFeedbackEvent = (
+  questionId: string,
+  sessionId: string,
+  feedbackText: string,
+  feedbackType: string,
+  questionText: string,
+  responseText: string,
+  meta?: FeedbackMeta
+) => {
   if (typeof Telemetry === 'undefined') return;
+  const feedbackDetails: Record<string, unknown> = {
+    feedbackText,
+    sessionId,
+    questionText,
+    answerText: responseText,
+    feedbackType,
+  };
+  if (meta?.serviceLabel != null) feedbackDetails.serviceLabel = meta.serviceLabel;
+  if (meta?.rating != null) feedbackDetails.rating = Math.min(5, Math.max(1, Math.round(meta.rating)));
   const target = {
     "id": "default", "ver": "v0.1", "type": "Feedback",
     "parent": { "id": "p1", "type": "default" },
-    "feedbackDetails": { feedbackText, sessionId, questionText, answerText: responseText, feedbackType },
+    "feedbackDetails": feedbackDetails,
     "mobile": telemetryData.mobile, "username": telemetryData.username, "email": telemetryData.email,
     "role": telemetryData.role, "farmer_id": telemetryData.farmer_id, "unique_id": telemetryData.unique_id,
     "registered_location_district": telemetryData.registered_location?.district,

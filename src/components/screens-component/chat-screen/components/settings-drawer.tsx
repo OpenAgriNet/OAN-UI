@@ -21,9 +21,10 @@ interface SettingsDrawerProps {
 
 export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const { theme, setTheme } = useThemeStore();
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
+	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
-	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({ "1": true });
+	const [expandedFaqs, setExpandedFaqs] = useState<Record<string, boolean>>({});
 
 	const toggleFaq = (id: string) => {
 		setExpandedFaqs((prev) => ({
@@ -105,7 +106,7 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 							</CollapsibleTrigger>
 							<CollapsibleContent className="px-5 pb-5 space-y-4">
 								<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-4">
-									{FAQ_DATA.map((faq, index) => (
+									{faqItems.map((faq, index) => (
 										<div
 											key={faq.id}
 											className="border border-gray-100 dark:border-gray-900 rounded-xl overflow-hidden"
@@ -127,20 +128,8 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 												)}
 											</button>
 											{expandedFaqs[faq.id] && (
-												<div className="px-4 pb-4 space-y-4">
-													{faq.image && (
-														<div className="relative w-full aspect-video bg-gray-100 dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
-															<img
-																src={faq.image}
-																alt={faq.question}
-																className="w-full h-full object-cover"
-																onError={(e) => {
-																	(e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1000&auto=format&fit=crop";
-																}}
-															/>
-														</div>
-													)}
-													<p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+												<div className="px-4 pb-4">
+													<p className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-line">
 														{faq.answer}
 													</p>
 												</div>

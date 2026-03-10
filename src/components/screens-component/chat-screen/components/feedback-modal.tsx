@@ -63,7 +63,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 				setIsRecording(true);
 				setupAudioRecording(stream, mediaRecorderRef, (text) => {
 					setMessage(prev => prev ? `${prev} ${text}` : text);
-				}, sessionId);
+				}, sessionId, language);
 			} catch (error) {
 				console.error("Mic access error:", error);
 			}

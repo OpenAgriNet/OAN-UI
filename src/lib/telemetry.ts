@@ -202,7 +202,14 @@ export const logQuestionEvent = (
   questionId: string,
   sessionId: string,
   questionText: string,
+  pipeline?: "default" | "oss_translate",
 ) => {
+  const questionsDetails: Record<string, unknown> = {
+    questionText: questionText,
+    sessionId: sessionId,
+  };
+  if (pipeline != null) questionsDetails.pipeline = pipeline;
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -211,10 +218,7 @@ export const logQuestionEvent = (
       id: "p1",
       type: "default",
     },
-    questionsDetails: {
-      questionText: questionText,
-      sessionId: sessionId,
-    },
+    questionsDetails,
   };
 
   const questionData = {
@@ -233,6 +237,7 @@ export const logResponseEvent = (
   sessionId: string,
   questionText: string,
   responseText: string,
+  pipeline?: "default" | "oss_translate",
 ) => {
   // Calculate performance metrics
   const timer = window.__RESPONSE_TIMERS__?.[questionId];
@@ -245,6 +250,13 @@ export const logResponseEvent = (
       ? Math.round(timer.paintTime - timer.responseEnd)
       : null;
 
+  const questionsDetails: Record<string, unknown> = {
+    questionText: questionText,
+    answerText: responseText,
+    sessionId: sessionId,
+  };
+  if (pipeline != null) questionsDetails.pipeline = pipeline;
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -253,11 +265,7 @@ export const logResponseEvent = (
       id: "p1",
       type: "default",
     },
-    questionsDetails: {
-      questionText: questionText,
-      answerText: responseText,
-      sessionId: sessionId,
-    },
+    questionsDetails,
     performance: {
       server_response_time_ms: serverResponseTime,
       browser_render_time_ms: browserRenderTime,
@@ -306,6 +314,16 @@ export const logErrorEvent = (
   Telemetry.response(errorData);
 };
 
+/** Optional feedback metadata: service that generated the response, pipeline, and 1–5 rating */
+export type FeedbackMeta = {
+  /** Label for the service/model generating the response (e.g. "chat-v1", "voice-agent") */
+  serviceLabel?: string;
+  /** Pipeline that answered the question: "default" or "oss_translate" */
+  pipeline?: "default" | "oss_translate";
+  /** Rating 1–5; must be in range [1, 5] if provided */
+  rating?: number;
+};
+
 export const logFeedbackEvent = (
   questionId: string,
   sessionId: string,
@@ -313,7 +331,22 @@ export const logFeedbackEvent = (
   feedbackType: string,
   questionText: string,
   responseText: string,
+  meta?: FeedbackMeta,
 ) => {
+  const feedbackDetails: Record<string, unknown> = {
+    feedbackText,
+    sessionId,
+    questionText,
+    answerText: responseText,
+    feedbackType,
+  };
+  if (meta?.serviceLabel != null) feedbackDetails.serviceLabel = meta.serviceLabel;
+  if (meta?.pipeline != null) feedbackDetails.pipeline = meta.pipeline;
+  if (meta?.rating != null) {
+    const r = Math.min(5, Math.max(1, Math.round(meta.rating)));
+    feedbackDetails.rating = r;
+  }
+
   const target = {
     id: "default",
     ver: "v0.1",
@@ -322,13 +355,7 @@ export const logFeedbackEvent = (
       id: "p1",
       type: "default",
     },
-    feedbackDetails: {
-      feedbackText: feedbackText,
-      sessionId: sessionId,
-      questionText: questionText,
-      answerText: responseText,
-      feedbackType: feedbackType,
-    },
+    feedbackDetails,
   };
 
   const feedbackData = {
@@ -340,6 +367,51 @@ export const logFeedbackEvent = (
   };
 
   Telemetry.response(feedbackData);
+};
+
+/**
+ * Log when an anonymous token is issued (session started anonymously).
+ * Sends OE_ANONYMOUS_TOKEN_ISSUED to the telemetry service.
+ */
+export const logAnonymousTokenIssued = (
+  userId: string,
+  sessionId: string,
+  deviceId: string,
+) => {
+  // Align with existing working telemetry endpoint:
+  // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
+  const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
+  const payload = {
+    eid: "OE_ANONYMOUS_TOKEN_ISSUED",
+    ver: "2.2",
+    mid: `OE_${Math.random().toString(36).substring(2, 15)}`,
+    ets: Date.now(),
+    channel: "AmulAI-" + getHostUrl(),
+    uid: userId,
+    sid: sessionId,
+    did: deviceId,
+    pdata: {
+      id: "AmulAI",
+      ver: "v0.1",
+      pid: "AmulAI",
+    },
+    edata: {
+      eks: {
+        type: "ANONYMOUS_TOKEN_ISSUED",
+        sid: sessionId,
+        uid: userId,
+      },
+    },
+    cdata: [],
+    etags: { partner: [] },
+  };
+
+  fetch(endpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
 };
 
 export const endTelemetry = () => {

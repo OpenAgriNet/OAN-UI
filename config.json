@@ -41,7 +41,7 @@
     { "code": "en", "name": "English", "nativeName": "English", "icon": "अ" },
     { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" }
   ],
-  "defaultLanguage": "en",
+  "defaultLanguage": "gu",
   "languageTexts": {
     "en": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",

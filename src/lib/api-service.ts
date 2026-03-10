@@ -136,7 +136,8 @@ class ApiService {
     session: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (data: string) => void
+    onStreamData?: (data: string) => void,
+    useTranslationPipeline?: boolean
   ): Promise<ChatResponse> {
     try {
       this.refreshAuthToken();
@@ -144,11 +145,12 @@ class ApiService {
         return { response: "Authentication error", status: "error" };
       }
       
-      const params = {
+      const params: Record<string, string> = {
         session_id: session,
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
+        use_translation_pipeline: useTranslationPipeline ? 'true' : 'false',
         ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
 
@@ -243,8 +245,9 @@ class ApiService {
 
   async transcribeAudio(
     audioBase64: string,
-    serviceType: string = 'whisper',
-    sessionId: string
+    sessionId: string,
+    sourceLang: string = 'gu',
+    serviceType: string = environment.transcriptionProvider,
   ): Promise<TranscriptionResponse> {
     try {
       this.refreshAuthToken();
@@ -254,6 +257,7 @@ class ApiService {
       
       const payload = {
         audio_content: audioBase64,
+        source_lang: sourceLang,
         service_type: serviceType,
         session_id: sessionId
       };
@@ -283,7 +287,8 @@ class ApiService {
     return this.axiosInstance.post(`/api/tts/`, {
       session_id: sessionId,
       text: text,
-      target_lang: targetLang
+      target_lang: targetLang,
+      service_type: environment.ttsProvider,
     }, config);
   }
 
