@@ -3,6 +3,7 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
+import { environment } from "@/lib/config/environment";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -42,14 +43,12 @@ export type QuickAction = {
 
 export type TranslationPipeline = 'default' | 'oss_translate';
 
-const OSS_TRANSLATE_SESSION_PERCENT = 10;
-
 const getTranslationPipelineForSession = (sessionId: string): TranslationPipeline => {
 	let hash = 0;
 	for (let i = 0; i < sessionId.length; i += 1) {
 		hash = (hash * 31 + sessionId.charCodeAt(i)) % 100;
 	}
-	return hash < OSS_TRANSLATE_SESSION_PERCENT ? 'oss_translate' : 'default';
+	return hash < environment.ossTranslateSessionPercent ? 'oss_translate' : 'default';
 };
 
 type ChatStore = {
