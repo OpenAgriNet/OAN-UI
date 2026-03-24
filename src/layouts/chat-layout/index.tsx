@@ -7,6 +7,10 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
+import { ProfileDialog } from "@/components/screens-component/profile/profile-dialog";
+import { FarmerAlert } from "@/components/screens-component/chat-screen/components/farmer-alert";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/apis/profile";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -28,6 +32,19 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [profileOpen, setProfileOpen] = useState(false);
+
+	const { user } = useAuth();
+	const { data: profileData } = useUserProfile();
+
+	const isAnonymous = !user || user.is_guest_user || user.username === "Anonymous User";
+	const displayName = isAnonymous ? "" : user?.username || "";
+
+	// Determine alert state
+	const showWarningAlert =
+		!isAnonymous &&
+		profileData &&
+		(profileData.status === "error" || profileData.status === "not_found");
 
 	useEffect(() => {
 		fetchLocation(t);
@@ -51,11 +68,30 @@ function ChatLayout() {
 				subtitle="Government assistance and agriculture insights"
 				leftAvatarUrl={CHAT_ASSISTANT.avatar}
 				rightAvatarUrl={CHAT_USER.avatar}
-				rightLabel={CHAT_USER.name}
+				rightLabel={displayName}
 				onClearChat={clearChat}
+				onOpenProfile={() => setProfileOpen(true)}
 				onOpenSettings={() => setSettingsOpen(true)}
 				onBack={() => window.history.back()}
 			/>
+
+			{/* Alert cards */}
+			{showWarningAlert && profileData.status === "error" && (
+				<FarmerAlert
+					variant="error"
+					message="Your session may have expired. Please reload the app and sign in again."
+					actionLabel="Reload"
+					onAction={() => window.location.reload()}
+					dismissible={false}
+				/>
+			)}
+			{showWarningAlert && profileData.status === "not_found" && (
+				<FarmerAlert
+					variant="warning"
+					message="We couldn't fetch your farm data. Some features may be limited."
+				/>
+			)}
+
 			{/* Only this area can scroll (via ChatShell/MessageList) */}
 			<main className="min-h-0 flex-1 bg-transparent">
 				<Outlet />
@@ -89,9 +125,14 @@ function ChatLayout() {
 				/>
 			</div>
 
-			<SettingsDrawer 
-				open={settingsOpen} 
-				onOpenChange={setSettingsOpen} 
+			<SettingsDrawer
+				open={settingsOpen}
+				onOpenChange={setSettingsOpen}
+			/>
+
+			<ProfileDialog
+				open={profileOpen}
+				onOpenChange={setProfileOpen}
 			/>
 		</div>
 	);

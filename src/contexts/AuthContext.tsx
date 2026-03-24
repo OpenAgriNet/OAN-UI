@@ -23,6 +23,13 @@ export interface User {
   email: string;
   mobile: string;
   is_guest_user?: boolean;
+  farmerSummary?: {
+    farmerName?: string;
+    societyName?: string;
+    farmerCode?: string;
+    totalAnimals?: number;
+    recordCount?: number;
+  };
 }
 
 // Auth context interface
@@ -164,22 +171,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     
     // Extract mobile from payload, use fallback
-    const mobile = (payload as any)?.mobile as string || '';
+    const mobile = (payload as any)?.mobile as string || (payload as any)?.phone as string || '';
     
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
+
+    // Extract farmer summary from JWT (embedded at webview-url time)
+    const farmerSummary = (payload as any)?.farmer_summary as User['farmerSummary'] | undefined;
 
     // Extract additional user fields
     const _role = (payload as any)?.role as string || '';
     const _farmer_id = (payload as any)?.farmer_id as string || '';
     const _unique_id = (payload as any)?.unique_id as string | number | undefined;
     
+    // Use farmer name from JWT summary as display name when available
+    const displayName = farmerSummary?.farmerName || name;
+
     setUser({
       authenticated: true,
-      username: name,
+      username: displayName,
       email: email,
       mobile: mobile,
-      is_guest_user: is_guest_user
+      is_guest_user: is_guest_user,
+      farmerSummary: farmerSummary,
     });
 
     // Extract locations array from JWT payload
