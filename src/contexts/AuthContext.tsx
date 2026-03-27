@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '../lib/api-service';
+import { useAuthStore } from '../hooks/store/auth';
 // import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -94,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const result = await validateJWT(tokenFromUrl, importedPublicKey);
             if (result.isValid) {
               storeJWT(tokenFromUrl);
+              syncToZustandStore(tokenFromUrl, result.payload!);
               // Notify API service that token has been updated
               apiService.updateAuthToken();
               createUserFromPayload(result.payload);
@@ -118,6 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
              if (importedPublicKey) {
               const result = await validateJWT(storedToken, importedPublicKey);
               if (result.isValid) {
+                syncToZustandStore(storedToken, result.payload!);
                 createUserFromPayload(result.payload);
               } else {
                 // Token is invalid or expired, remove it
@@ -233,6 +236,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // });
   };
 
+  // Bridge the validated JWT into the Zustand auth store so request() and hooks can use it
+  const syncToZustandStore = (token: string, payload: JWTPayload) => {
+    const phone = (payload as any)?.phone as string || (payload as any)?.mobile as string || '';
+    const exp = payload.exp || Math.floor(Date.now() / 1000) + JWT_EXPIRY_DAYS * 86400;
+    useAuthStore.getState().setSession({
+      access_token: token,
+      refresh_token: '',
+      expires_at: exp,
+      user: {
+        id: (payload.sub as string) || phone || 'unknown',
+        email: (payload.email as string) || '',
+        name: (payload.name as string) || undefined,
+        username: phone || (payload.sub as string) || undefined,
+        is_guest_user: false,
+      },
+    });
+  };
+
   // Store JWT in localStorage with expiration
   const storeJWT = (token: string) => {
     try {
@@ -310,6 +331,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const result = await validateJWT(token, publicKey);
         if (result.isValid) {
           storeJWT(token);
+          syncToZustandStore(token, result.payload!);
           // Notify API service that token has been updated
           apiService.updateAuthToken();
           createUserFromPayload(result.payload);
@@ -346,6 +368,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
+    useAuthStore.getState().clear();
     // Clear all telemetry data on logout
     // setTelemetryUserData({});
   };

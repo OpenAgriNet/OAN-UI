@@ -37,8 +37,9 @@ function ChatLayout() {
 	const { user } = useAuth();
 	const { data: profileData } = useUserProfile();
 
-	const isAnonymous = !user || user.is_guest_user || user.username === "Anonymous User";
-	const displayName = isAnonymous ? "" : user?.username || "";
+	const isAnonymous = !user || user.is_guest_user || !user.mobile;
+	const farmerName = profileData?.farmer?.farmers?.[0]?.farmerName;
+	const displayName = isAnonymous ? "" : farmerName || user?.username || "";
 
 	// Determine alert state
 	const showWarningAlert =
