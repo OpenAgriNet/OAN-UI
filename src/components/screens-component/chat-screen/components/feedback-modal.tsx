@@ -86,6 +86,11 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 		setMessage("");
 	};
 
+	const handleFeedback = (id : FeedbackReason, label:any) => {
+		setSelectedReason(id);
+		setMessage(label);
+	}
+
 	return (
 		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
 			{/* Backdrop */}
@@ -121,7 +126,8 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 						{FEEDBACK_OPTIONS.map((option: any) => (
 							<button
 								key={option.id}
-								onClick={() => setSelectedReason(option.id)}
+								// onClick={() => setSelectedReason(option.id)}
+								onClick={() => handleFeedback(option.id, option.label)}
 								className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-colors cursor-pointer ${
 									selectedReason === option.id
 										? "bg-yellow-400 text-gray-900"
