@@ -32,7 +32,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const [selectedReason, setSelectedReason] = useState<any>("incorrect");
-	const [message, setMessage] = useState("");
+	const [message, setMessage] = useState<string>(FEEDBACK_OPTIONS[0]?.label as string || "");
 	const [isRecording, setIsRecording] = useState(false);
 
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -76,14 +76,14 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 		onSubmit(selectedReason, finalMessage);
 		// Reset form
 		setSelectedReason("incorrect");
-		setMessage("");
+		setMessage(FEEDBACK_OPTIONS[0]?.label as string || "");
 	};
 
 	const handleCancel = () => {
 		onClose();
 		// Reset form
 		setSelectedReason("incorrect");
-		setMessage("");
+		setMessage(FEEDBACK_OPTIONS[0]?.label as string || "");
 	};
 
 	const handleFeedback = (id : FeedbackReason, label:any) => {
