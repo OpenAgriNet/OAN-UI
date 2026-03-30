@@ -252,15 +252,37 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		try {
-			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
+			let inlineSuggestions: string[] | null = null;
 			const _response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
 				language, // source
 				language, // target
 				(chunk) => {
-					streamingText += chunk;
+					// Check for inline suggestions tag from backend
+					const combined = streamingText + chunk;
+					const sugStart = combined.indexOf("__SUGGESTIONS__");
+					if (sugStart !== -1) {
+						const sugEnd = combined.indexOf("__END_SUGGESTIONS__");
+						if (sugEnd !== -1) {
+							// Extract suggestions JSON, strip tag from display text
+							const jsonStr = combined.slice(sugStart + "__SUGGESTIONS__".length, sugEnd);
+							try {
+								inlineSuggestions = JSON.parse(jsonStr);
+							} catch (e) {
+								console.warn("Failed to parse inline suggestions", e);
+							}
+							streamingText = combined.slice(0, sugStart);
+						} else {
+							// Tag started but not ended yet — buffer without updating UI
+							streamingText = combined;
+							return;
+						}
+					} else {
+						streamingText += chunk;
+					}
+
 					set((state) => {
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
@@ -293,7 +315,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				}
 				return { isAssistantTyping: false };
 			});
-            
+
 			try {
 				const userDetailsResponse = get().getUserForTelemetry();
 				await telemetry.startTelemetry(currentSession, userDetailsResponse);
@@ -302,8 +324,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				console.warn("Telemetry failed (response event)", e);
 			}
 
-			const suggestions = await apiService.getSuggestions(currentSession, language);
-			set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+			// Use inline suggestions from stream if available, fall back to API
+			if (inlineSuggestions && inlineSuggestions.length > 0) {
+				set({ suggestions: inlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
+			} else {
+				const suggestions = await apiService.getSuggestions(currentSession, language);
+				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+			}
 
 			// Show success for text completion if needed, though usually silent is better for chat.
 			// But user asked for success too
