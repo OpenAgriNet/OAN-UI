@@ -362,6 +362,12 @@
     "flowers.greenhouse.benefits": "How can polyhouse or greenhouse benefit  [Flower crop] flower cultivation?",
     "flowers.export.best_cut_flower": "Which flowers are best for cut-flower production and export?"
   },
+  "farmerAlert": {
+    "notFound": "Your farm records were not found, but you can still ask questions about animal health, feeding, breeding, and dairy management.",
+    "error": "We couldn't load your farm data right now, but you can still ask questions about animal health, feeding, breeding, and dairy management.",
+    "profileNotFound": "No farm records found for your account.",
+    "profileError": "Unable to load farm data right now. Please try again later."
+  },
   "maintenance": {
     "title": "Under Maintenance",
     "heading": "MahaVISTAAR AI App",
