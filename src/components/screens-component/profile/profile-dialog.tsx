@@ -6,6 +6,7 @@ import {
 	DialogDescription,
 } from "@/components/ui/dialog";
 import { useUserProfile } from "@/hooks/apis/profile";
+import { useLanguage } from "@/components/LanguageProvider";
 import { Loader2, AlertTriangle, User, MapPin, Milk, PawPrint } from "lucide-react";
 import type { FarmerRecord } from "@/hooks/apis/profile/type";
 
@@ -130,6 +131,7 @@ interface ProfileDialogProps {
 
 export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 	const { data, isLoading } = useUserProfile();
+	const { t } = useLanguage();
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,20 +162,13 @@ export function ProfileDialog({ open, onOpenChange }: ProfileDialogProps) {
 					</div>
 				)}
 
-				{!isLoading && data?.status === "not_found" && (
+				{!isLoading && (data?.status === "not_found" || data?.status === "error") && (
 					<div className="flex flex-col items-center gap-2 py-6 text-center">
 						<AlertTriangle className="h-8 w-8 text-amber-500" />
 						<p className="text-sm text-muted-foreground">
-							No farm records found for your account.
-						</p>
-					</div>
-				)}
-
-				{!isLoading && data?.status === "error" && (
-					<div className="flex flex-col items-center gap-2 py-6 text-center">
-						<AlertTriangle className="h-8 w-8 text-red-500" />
-						<p className="text-sm text-muted-foreground">
-							Unable to load farm data. Please try logging in again.
+							{data.status === "not_found"
+								? t("farmerAlert.profileNotFound") as string
+								: t("farmerAlert.profileError") as string}
 						</p>
 					</div>
 				)}

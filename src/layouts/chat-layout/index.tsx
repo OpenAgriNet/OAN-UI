@@ -77,19 +77,14 @@ function ChatLayout() {
 			/>
 
 			{/* Alert cards */}
-			{showWarningAlert && profileData.status === "error" && (
-				<FarmerAlert
-					variant="error"
-					message="Your session may have expired. Please reload the app and sign in again."
-					actionLabel="Reload"
-					onAction={() => window.location.reload()}
-					dismissible={false}
-				/>
-			)}
-			{showWarningAlert && profileData.status === "not_found" && (
+			{showWarningAlert && (
 				<FarmerAlert
 					variant="warning"
-					message="We couldn't fetch your farm data. Some features may be limited."
+					message={
+						profileData.status === "not_found"
+							? (t("farmerAlert.notFound") as string)
+							: (t("farmerAlert.error") as string)
+					}
 				/>
 			)}
 
