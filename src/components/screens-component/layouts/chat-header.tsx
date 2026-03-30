@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import settingsIcon from "@/assets/settings.svg";
 import langIcon from "@/assets/langIcon.svg";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,15 @@ export function ChatHeader(props: ChatHeaderProps) {
 	const {
 		title,
 		leftAvatarUrl,
-		onOpenSettings
+		rightLabel,
+		onOpenProfile,
+		onOpenSettings,
 	} = props;
 
 	const { language } = useLanguage();
 	const currentLanguage = (LANGUAGES as any)[language] || LANGUAGES.en;
+
+	const showProfile = rightLabel && rightLabel !== "Anonymous User" && rightLabel !== "";
 
 	return (
 		<header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-950 border-b border-[#E3E3E3] dark:border-gray-800 transition-colors duration-300">
@@ -41,8 +45,23 @@ export function ChatHeader(props: ChatHeaderProps) {
 					<span className="text-xl sm:text-lg font-bold text-foreground truncate">{title}</span>
 				</div>
 
-				{/* Right: Language + Settings */}
+				{/* Right: User Profile + Language + Settings */}
 				<div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+					{/* User Profile Button */}
+					{showProfile && (
+						<button
+							onClick={onOpenProfile}
+							className="flex items-center gap-1.5 rounded-full px-2 py-1 hover:bg-[#EEFFF4] transition-colors cursor-pointer"
+						>
+							<div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+								<User className="h-4 w-4 text-green-700" />
+							</div>
+							<span className="text-sm font-medium text-foreground truncate max-w-[100px] hidden sm:inline">
+								{rightLabel}
+							</span>
+						</button>
+					)}
+
 					{/* Language Dropdown */}
 					<LanguageSelectionDropdown>
 						{/* Desktop Language Button */}
@@ -58,18 +77,18 @@ export function ChatHeader(props: ChatHeaderProps) {
 
 					{/* Mobile Language Button */}
 					<LanguageSelectionDropdown>
-						<Button 
-							variant="ghost" 
-							size="icon" 
+						<Button
+							variant="ghost"
+							size="icon"
 							className="h-9 w-9 sm:hidden cursor-pointer hover:bg-[#EEFFF4] hover:border-[#019444] border border-transparent"
 						>
 							<img src={langIcon} alt="Language" className="h-6 w-6" />
 						</Button>
 					</LanguageSelectionDropdown>
 
-					<Button 
-						variant="ghost" 
-						size="icon" 
+					<Button
+						variant="ghost"
+						size="icon"
 						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[#FFE2E2]"
 						onClick={onOpenSettings}
 					>

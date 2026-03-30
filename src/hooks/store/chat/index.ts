@@ -43,14 +43,6 @@ export type QuickAction = {
 
 export type TranslationPipeline = 'default' | 'oss_translate';
 
-const getTranslationPipelineForSession = (sessionId: string): TranslationPipeline => {
-	let hash = 0;
-	for (let i = 0; i < sessionId.length; i += 1) {
-		hash = (hash * 31 + sessionId.charCodeAt(i)) % 100;
-	}
-	return hash < environment.ossTranslateSessionPercent ? 'oss_translate' : 'default';
-};
-
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -62,6 +54,7 @@ type ChatStore = {
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
 	translationPipeline: TranslationPipeline;
+	setTranslationPipeline: (value: TranslationPipeline) => void;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -145,7 +138,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
-	translationPipeline: 'default',
+	translationPipeline: 'oss_translate',
+	setTranslationPipeline: (value) => set({ translationPipeline: value }),
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -155,11 +149,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			(typeof sessionStorage !== "undefined" &&
 				sessionStorage.getItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY)) ||
 			uuidv4();
-		const translationPipeline = getTranslationPipelineForSession(sid);
 		if (typeof sessionStorage !== "undefined") {
 			sessionStorage.removeItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY);
 		}
-		set({ sessionId: sid, translationPipeline });
+		set({ sessionId: sid });
 		apiService.setSessionId(sid);
 		try {
 			telemetry.startTelemetry(sid, { 
@@ -244,6 +237,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
 
+		const useTranslationPipeline = get().translationPipeline === 'oss_translate';
+		const pipeline = useTranslationPipeline ? 'oss_translate' : 'default';
 		try {
 			const userDetails = get().getUserForTelemetry();
 			await telemetry.startTelemetry(currentSession, userDetails);
@@ -274,7 +269,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline }]
+								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
 							};
 						}
 					});

@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '../lib/api-service';
+import { useAuthStore } from '../hooks/store/auth';
 // import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -23,6 +24,13 @@ export interface User {
   email: string;
   mobile: string;
   is_guest_user?: boolean;
+  farmerSummary?: {
+    farmerName?: string;
+    societyName?: string;
+    farmerCode?: string;
+    totalAnimals?: number;
+    recordCount?: number;
+  };
 }
 
 // Auth context interface
@@ -87,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             const result = await validateJWT(tokenFromUrl, importedPublicKey);
             if (result.isValid) {
               storeJWT(tokenFromUrl);
+              syncToZustandStore(tokenFromUrl, result.payload!);
               // Notify API service that token has been updated
               apiService.updateAuthToken();
               createUserFromPayload(result.payload);
@@ -111,6 +120,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
              if (importedPublicKey) {
               const result = await validateJWT(storedToken, importedPublicKey);
               if (result.isValid) {
+                syncToZustandStore(storedToken, result.payload!);
                 createUserFromPayload(result.payload);
               } else {
                 // Token is invalid or expired, remove it
@@ -164,22 +174,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     
     // Extract mobile from payload, use fallback
-    const mobile = (payload as any)?.mobile as string || '';
+    const mobile = (payload as any)?.mobile as string || (payload as any)?.phone as string || '';
     
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
+
+    // Extract farmer summary from JWT (embedded at webview-url time)
+    const farmerSummary = (payload as any)?.farmer_summary as User['farmerSummary'] | undefined;
 
     // Extract additional user fields
     const _role = (payload as any)?.role as string || '';
     const _farmer_id = (payload as any)?.farmer_id as string || '';
     const _unique_id = (payload as any)?.unique_id as string | number | undefined;
     
+    // Use farmer name from JWT summary as display name when available
+    const displayName = farmerSummary?.farmerName || name;
+
     setUser({
       authenticated: true,
-      username: name,
+      username: displayName,
       email: email,
       mobile: mobile,
-      is_guest_user: is_guest_user
+      is_guest_user: is_guest_user,
+      farmerSummary: farmerSummary,
     });
 
     // Extract locations array from JWT payload
@@ -217,6 +234,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     //   unique_id: unique_id,
     //   locations: validatedLocations
     // });
+  };
+
+  // Bridge the validated JWT into the Zustand auth store so request() and hooks can use it
+  const syncToZustandStore = (token: string, payload: JWTPayload) => {
+    const phone = (payload as any)?.phone as string || (payload as any)?.mobile as string || '';
+    const exp = payload.exp || Math.floor(Date.now() / 1000) + JWT_EXPIRY_DAYS * 86400;
+    const farmerSummary = (payload as any)?.farmer_summary as { farmerName?: string } | undefined;
+    const displayName = farmerSummary?.farmerName || (payload.name as string) || undefined;
+    useAuthStore.getState().setSession({
+      access_token: token,
+      refresh_token: '',
+      expires_at: exp,
+      user: {
+        id: (payload.sub as string) || phone || 'unknown',
+        email: (payload.email as string) || '',
+        name: displayName,
+        username: displayName,
+        is_guest_user: false,
+      },
+    });
   };
 
   // Store JWT in localStorage with expiration
@@ -296,6 +333,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const result = await validateJWT(token, publicKey);
         if (result.isValid) {
           storeJWT(token);
+          syncToZustandStore(token, result.payload!);
           // Notify API service that token has been updated
           apiService.updateAuthToken();
           createUserFromPayload(result.payload);
@@ -332,6 +370,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
+    useAuthStore.getState().clear();
     // Clear all telemetry data on logout
     // setTelemetryUserData({});
   };
