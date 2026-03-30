@@ -227,15 +227,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const { sessionId } = get();
 		const currentSession = sessionId || uuidv4();
-		const pipeline = sessionId ? get().translationPipeline : getTranslationPipelineForSession(currentSession);
-		const useTranslationPipeline = pipeline === 'oss_translate';
 		if (!sessionId) {
-			set({ sessionId: currentSession, translationPipeline: pipeline });
+			set({ sessionId: currentSession });
 			apiService.setSessionId(currentSession);
 		}
 
-		// const questionId = uuidv4(); // Already generated above
-		telemetry.markServerRequestStart(questionId); // Start timing
+		telemetry.markServerRequestStart(questionId);
 
 		const useTranslationPipeline = get().translationPipeline === 'oss_translate';
 		const pipeline = useTranslationPipeline ? 'oss_translate' : 'default';
