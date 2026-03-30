@@ -240,6 +240,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const syncToZustandStore = (token: string, payload: JWTPayload) => {
     const phone = (payload as any)?.phone as string || (payload as any)?.mobile as string || '';
     const exp = payload.exp || Math.floor(Date.now() / 1000) + JWT_EXPIRY_DAYS * 86400;
+    const farmerSummary = (payload as any)?.farmer_summary as { farmerName?: string } | undefined;
+    const displayName = farmerSummary?.farmerName || (payload.name as string) || undefined;
     useAuthStore.getState().setSession({
       access_token: token,
       refresh_token: '',
@@ -247,8 +249,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user: {
         id: (payload.sub as string) || phone || 'unknown',
         email: (payload.email as string) || '',
-        name: (payload.name as string) || undefined,
-        username: phone || (payload.sub as string) || undefined,
+        name: displayName,
+        username: displayName,
         is_guest_user: false,
       },
     });
