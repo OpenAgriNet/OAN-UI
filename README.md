@@ -55,6 +55,7 @@ Create `.env.local`:
 ```env
 VITE_API_BASE_URL=https://<your-supabase>.supabase.co
 VITE_API_KEY=<your-supabase-anon-key>
+VITE_OSS_TRANSLATE_SESSION_PERCENT=10
 MODE=development
 ```
 

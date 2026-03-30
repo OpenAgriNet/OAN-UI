@@ -1,10 +1,11 @@
-import { defineConfig, PluginOption } from "vite";
+import { defineConfig, loadEnv, PluginOption } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 import topLevelAwait from "vite-plugin-top-level-await";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
+
 const virtualRouteFileChangeReloadPlugin: PluginOption = {
 	name: "watch-config-restart",
 	configureServer(server) {
@@ -17,29 +18,46 @@ const virtualRouteFileChangeReloadPlugin: PluginOption = {
 		});
 	}
 };
+
 // https://vite.dev/config/
-export default defineConfig({
-	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "src"),
-			"~": path.resolve(__dirname)
+export default defineConfig(({ mode }) => {
+	const env = loadEnv(mode, process.cwd(), "");
+	const devProxyTarget = env.VITE_DEV_PROXY_TARGET;
+
+	return {
+		resolve: {
+			alias: {
+				"@": path.resolve(__dirname, "src"),
+				"~": path.resolve(__dirname)
+			}
+		},
+		plugins: [
+			tsconfigPaths(),
+			nodePolyfills({ globals: { Buffer: true } }),
+			tanstackRouter({
+				target: "react",
+				autoCodeSplitting: true,
+				routesDirectory: path.resolve(__dirname, "src/pages"),
+				virtualRouteConfig: "./src/routes.ts",
+				generatedRouteTree: "./src/routeTree.gen.ts"
+			}),
+			topLevelAwait(),
+			react(),
+			virtualRouteFileChangeReloadPlugin
+		],
+		server: {
+			port: 3000,
+			// In dev, proxy /api to the real API so you avoid CORS without hardcoding domains.
+			// Set VITE_API_BASE_URL=/api and VITE_DEV_PROXY_TARGET=https://api.prod.amulai.in in .env
+			proxy: devProxyTarget
+				? {
+						"/api": {
+							target: devProxyTarget,
+							changeOrigin: true,
+							secure: true
+						}
+					}
+				: undefined
 		}
-	},
-	plugins: [
-		tsconfigPaths(),
-		nodePolyfills({ globals: { Buffer: true } }),
-		tanstackRouter({
-			target: "react",
-			autoCodeSplitting: true,
-			routesDirectory: path.resolve(__dirname, "src/pages"),
-			virtualRouteConfig: "./src/routes.ts",
-			generatedRouteTree: "./src/routeTree.gen.ts"
-		}),
-		topLevelAwait(),
-		react(),
-		virtualRouteFileChangeReloadPlugin
-	],
-	server: {
-		port: 3000
-	}
+	};
 });

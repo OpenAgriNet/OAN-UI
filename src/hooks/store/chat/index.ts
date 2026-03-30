@@ -3,6 +3,7 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
+import { environment } from "@/lib/config/environment";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -226,12 +227,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const { sessionId } = get();
 		const currentSession = sessionId || uuidv4();
+		const pipeline = sessionId ? get().translationPipeline : getTranslationPipelineForSession(currentSession);
+		const useTranslationPipeline = pipeline === 'oss_translate';
 		if (!sessionId) {
-			set({ sessionId: currentSession });
+			set({ sessionId: currentSession, translationPipeline: pipeline });
 			apiService.setSessionId(currentSession);
 		}
-
-
 
 		// const questionId = uuidv4(); // Already generated above
 		telemetry.markServerRequestStart(questionId); // Start timing
