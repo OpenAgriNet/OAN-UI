@@ -432,7 +432,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						}
 					];
 
-					let icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+					const icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
 
 					return {
 						id: String(index + 1),
