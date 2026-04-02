@@ -1,5 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
+import { joinApiUrl, normalizeApiBaseUrl } from '@/lib/utils/join-api-url';
+
+let didLogChatUrlInDev = false;
 
 export interface LocationData {
   latitude: number;
@@ -31,7 +34,7 @@ interface TTSResponse {
 const JWT_STORAGE_KEY = 'auth_jwt';
 
 class ApiService {
-  private apiUrl: string = environment.apiUrl;
+  private apiUrl: string = normalizeApiBaseUrl(environment.apiUrl);
   private locationData: LocationData | null = null;
   private currentSessionId: string | null = null;
   private axiosInstance: AxiosInstance;
@@ -163,7 +166,13 @@ class ApiService {
             'Accept': '*/*'
         };
         
-        const response = await fetch(`${this.apiUrl}/api/chat/?${new URLSearchParams(params)}`, {
+        const chatPath = `${joinApiUrl(this.apiUrl, 'chat').replace(/\/+$/, '')}/`;
+        const chatUrl = `${chatPath}?${new URLSearchParams(params)}`;
+        if (import.meta.env.DEV && !didLogChatUrlInDev) {
+          didLogChatUrlInDev = true;
+          console.log(`[api] base="${this.apiUrl}" chat="${chatPath}"`);
+        }
+        const response = await fetch(chatUrl, {
           method: 'GET',
           headers: headers          
         });
@@ -207,7 +216,7 @@ class ApiService {
           params,
           headers: this.getAuthHeaders()
         };
-        const response = await this.axiosInstance.get('/api/chat/', config);
+        const response = await this.axiosInstance.get('chat/', config);
         return response.data;
       }
     } catch (error) {
@@ -233,7 +242,7 @@ class ApiService {
         headers: this.getAuthHeaders()
       };
 
-      const response = await this.axiosInstance.get('/api/suggest/', config);
+      const response = await this.axiosInstance.get('suggest/', config);
       return response.data.map((item: string) => ({
         question: item
       }));
@@ -266,7 +275,7 @@ class ApiService {
         headers: this.getAuthHeaders()
       };
 
-      const response = await this.axiosInstance.post('/api/transcribe/', payload, config);
+      const response = await this.axiosInstance.post('transcribe/', payload, config);
       return response.data;
     } catch (error) {
       console.error('Error transcribing audio:', error);
@@ -284,7 +293,7 @@ class ApiService {
       headers: this.getAuthHeaders()
     };
     
-    return this.axiosInstance.post(`/api/tts/`, {
+    return this.axiosInstance.post(`tts/`, {
       session_id: sessionId,
       text: text,
       target_lang: targetLang,
@@ -302,7 +311,7 @@ class ApiService {
         feedback: "positive"
       };
 
-      await this.axiosInstance.post('/api/feedback/positive/', payload, {
+      await this.axiosInstance.post('feedback/positive/', payload, {
         headers: this.getAuthHeaders()
       });
     } catch (error) {
@@ -322,7 +331,7 @@ class ApiService {
         feedback: feedback
       };
 
-      await this.axiosInstance.post('/api/feedback/negative/', payload, {
+      await this.axiosInstance.post('feedback/negative/', payload, {
         headers: this.getAuthHeaders()
       });
     } catch (error) {

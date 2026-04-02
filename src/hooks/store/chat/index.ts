@@ -253,7 +253,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		try {
 			let streamingText = "";
-			let inlineSuggestions: string[] | null = null;
+			const inlineSuggestionsRef: { value: string[] | null } = { value: null };
 			const _response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
@@ -269,7 +269,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							// Extract suggestions JSON, strip tag from display text
 							const jsonStr = combined.slice(sugStart + "__SUGGESTIONS__".length, sugEnd);
 							try {
-								inlineSuggestions = JSON.parse(jsonStr);
+								inlineSuggestionsRef.value = JSON.parse(jsonStr);
 							} catch (e) {
 								console.warn("Failed to parse inline suggestions", e);
 							}
@@ -325,7 +325,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 
 			// Use inline suggestions from stream if available, fall back to API
-			if (inlineSuggestions && inlineSuggestions.length > 0) {
+			const inlineSuggestions = inlineSuggestionsRef.value;
+			if (Array.isArray(inlineSuggestions) && inlineSuggestions.length > 0) {
 				set({ suggestions: inlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
 			} else {
 				const suggestions = await apiService.getSuggestions(currentSession, language);

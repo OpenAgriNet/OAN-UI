@@ -1,6 +1,7 @@
 import { env } from "./env";
 import { authState } from "@/hooks/store/auth";
 import { tokenService } from "@/lib/utils/tokenServices";
+import { joinApiUrl, splitPathAndSuffix } from "@/lib/utils/join-api-url";
 
 type RequestOptions = RequestInit & {
   skipAuth?: boolean;
@@ -32,7 +33,11 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     throw new Error("Session expired. Please sign in again.");
   }
 
-  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+  const { pathname, suffix } = splitPathAndSuffix(path);
+  const pathnameClean = pathname.replace(/^\/+/, "");
+  const url = joinApiUrl(env.apiBaseUrl, pathnameClean) + suffix;
+
+  const response = await fetch(url, {
     ...options,
     headers: buildHeaders(options),
   });

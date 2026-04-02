@@ -18,7 +18,7 @@ export function useUserProfile() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await request<UserMeResponse>("/api/user/me");
+      const response = await request<UserMeResponse>("user/me");
       setData(response);
     } catch (err) {
       setError(err instanceof Error ? err : new Error("Failed to fetch profile"));

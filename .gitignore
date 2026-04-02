@@ -26,6 +26,10 @@ dist-ssr
 .env
 .env.production
 .env.development
+.env.local
 
 coverage/
 .sonar/
+
+# TypeScript incremental cache (e.g. from `tsc -b`)
+*.tsbuildinfo
