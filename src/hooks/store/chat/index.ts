@@ -325,8 +325,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 
 			// Use inline suggestions from stream if available, fall back to API
-			if (inlineSuggestions && inlineSuggestions.length > 0) {
-				set({ suggestions: inlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
+			const parsedInlineSuggestions = Array.isArray(inlineSuggestions) ? inlineSuggestions : [];
+			if (parsedInlineSuggestions.length > 0) {
+				set({ suggestions: parsedInlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
 			} else {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
 				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
