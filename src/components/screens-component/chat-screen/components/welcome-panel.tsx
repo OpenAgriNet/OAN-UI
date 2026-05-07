@@ -20,7 +20,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 	const baseWelcome = t("welcome") as string;
 	const welcomeText =
 		translationPipeline === "oss_translate"
-			? baseWelcome.replace("AI Agent Sarlaben", "AI Agent Sarlaben (OSS)")
+			? baseWelcome.replace("AI Agent Sarlaben", "AI Agent Sarlaben")
 			: baseWelcome;
 	return (
 		<div className="flex w-full flex-col items-center px-4 py-8">
