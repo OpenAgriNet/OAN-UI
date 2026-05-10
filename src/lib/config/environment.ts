@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: '',
+  apiUrl: 'https://chat-vistaar.da.gov.in',
   maintenanceMode: false,
   guestUserLimit: 10,
   suggestionsDisabled: true,

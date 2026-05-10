@@ -75,7 +75,7 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: () => void; // Disabled - location not being used
+	fetchLocation: () => void;
 };
 /* eslint-enable no-unused-vars */
 
@@ -151,9 +151,108 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	// fetchLocation disabled as location is not being used
-	fetchLocation: () => {
-		// Geolocation permission request disabled
+	fetchLocation: async () => {
+		if (!navigator.geolocation) {
+			console.error("Geolocation is not supported by this browser.");
+			return;
+		}
+
+		// Helper function to calculate distance between two coordinates using Haversine formula
+		const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+			const R = 6371; // Radius of the Earth in kilometers
+			const dLat = (lat2 - lat1) * Math.PI / 180;
+			const dLon = (lon2 - lon1) * Math.PI / 180;
+			const a = 
+				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+				Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			return R * c; // Distance in kilometers
+		};
+
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				const latitude = position.coords.latitude;
+				const longitude = position.coords.longitude;
+				console.log("=== User Location ===");
+				console.log("Latitude:", latitude);
+				console.log("Longitude:", longitude);
+				console.log("Accuracy:", position.coords.accuracy, "meters");
+				console.log("====================");
+				
+				try {
+					// Load the weather JSON file
+					const response = await fetch('/assets/PxD_Weather.json');
+					if (!response.ok) {
+						throw new Error(`Failed to load weather data: ${response.statusText}`);
+					}
+					
+					const weatherData = await response.json();
+					console.log("Weather data loaded, total entries:", weatherData.length);
+
+					// Find the closest matching location
+					let closestMatch = null;
+					let minDistance = Infinity;
+
+					for (const location of weatherData) {
+						const distance = calculateDistance(
+							latitude,
+							longitude,
+							location.Lat,
+							location.Lon
+						);
+
+						if (distance < minDistance) {
+							minDistance = distance;
+							closestMatch = location;
+						}
+					}
+
+					if (closestMatch) {
+						console.log("\n=== MATCHED WEATHER DATA ===");
+						console.log("Distance from user:", minDistance.toFixed(2), "km");
+						console.log("Location Details:", {
+							state: closestMatch.state_name,
+							district: closestMatch.district_name,
+							subdistrict: closestMatch.subdistrict_name,
+							latitude: closestMatch.Lat,
+							longitude: closestMatch.Lon
+						});
+						console.log("\nForecast Message:");
+						console.log(closestMatch.forecast_message);
+						console.log("\nFull Matched Data:");
+						console.log(closestMatch);
+						console.log("============================\n");
+					} else {
+						console.log("No matching location found in weather data.");
+					}
+				} catch (error) {
+					console.error("Error loading or processing weather data:", error);
+				}
+			},
+			(error) => {
+				console.error("Error getting location:", error.message);
+				switch (error.code) {
+					case error.PERMISSION_DENIED:
+						console.error("User denied the request for Geolocation.");
+						break;
+					case error.POSITION_UNAVAILABLE:
+						console.error("Location information is unavailable.");
+						break;
+					case error.TIMEOUT:
+						console.error("The request to get user location timed out.");
+						break;
+					default:
+						console.error("An unknown error occurred.");
+						break;
+				}
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 0
+			}
+		);
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),

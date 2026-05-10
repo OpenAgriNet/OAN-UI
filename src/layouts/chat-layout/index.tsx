@@ -4,7 +4,7 @@ import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 import { NotificationsDrawer } from "@/components/screens-component/chat-screen/components/notifications-drawer";
@@ -25,17 +25,17 @@ function ChatLayout() {
 	const messages = useChatStore((s) => s.messages);
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
-	// const fetchLocation = useChatStore((s) => s.fetchLocation); // Geolocation disabled
+	const fetchLocation = useChatStore((s) => s.fetchLocation);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
-	// Geolocation disabled as location is not being used
-	// useEffect(() => {
-	//	fetchLocation(t);
-	// }, [fetchLocation, t]);
+	// Request location permission when component mounts
+	useEffect(() => {
+		fetchLocation();
+	}, [fetchLocation]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
