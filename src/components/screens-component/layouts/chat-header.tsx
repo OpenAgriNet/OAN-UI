@@ -6,6 +6,7 @@ import { LanguageSelectionDropdown } from "@/components/screens-component/chat-s
 const logo = "/maha-logo.svg";
 const settingsIcon = "/assets/settings.svg";
 const langIcon = "/assets/langIcon.svg";
+const bellIcon = "/assets/bell.svg";
 
 export type ChatHeaderProps = {
 	title: string;
@@ -16,12 +17,16 @@ export type ChatHeaderProps = {
 	onOpenProfile?: () => void;
 	onClearChat?: () => void;
 	onOpenSettings?: () => void;
+	onNotificationClick?: () => void;
+	hasUnreadNotifications?: boolean;
 };
 
 export function ChatHeader(props: ChatHeaderProps) {
 	const {
 		title,
-		onOpenSettings
+		onOpenSettings,
+		onNotificationClick,
+		hasUnreadNotifications = false
 	} = props;
 
 	const { language } = useLanguage();
@@ -39,8 +44,21 @@ export function ChatHeader(props: ChatHeaderProps) {
 					/>
 				</div>
 
-				{/* Right: Language + Settings */}
+				{/* Right: Notification + Language + Settings */}
 				<div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+					{/* Notification Bell */}
+					<Button 
+						variant="ghost" 
+						size="icon" 
+						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[var(--secondary)] relative"
+						onClick={onNotificationClick}
+					>
+						<img src={bellIcon} alt="Notifications" className="h-6 w-6" />
+						{hasUnreadNotifications && (
+							<span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500" />
+						)}
+					</Button>
+
 					{/* Language Dropdown */}
 					<LanguageSelectionDropdown>
 						{/* Desktop Language Button */}
