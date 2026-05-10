@@ -17,6 +17,28 @@ import type { ToastType } from "@/components/screens-component/chat-screen/compo
 import { environment } from "@/lib/config/environment";
 
 /* eslint-disable no-unused-vars */
+export type PxDWeatherRecord = {
+	unique_id_pm_kisan: number;
+	unique_id_iitm: number;
+	subdistrict_code: number;
+	subdistrict_name: string;
+	district_code: number;
+	district_name: string;
+	state_code: number;
+	state_name: string;
+	lang_abb: string;
+	forecast_message: string;
+	template_abbreviation: string;
+	Lat: number;
+	Lon: number;
+};
+
+export type WeatherForecastMatch = PxDWeatherRecord & {
+	distanceKm: number;
+	/** True local matches (ST_DWithin-style). False = KNN fallback when user is outside covered lat/lon extent. */
+	isWithinSearchRadius: boolean;
+};
+
 export type QuickAction = {
 	id: string;
 	title: string;
@@ -76,6 +98,7 @@ type ChatStore = {
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
 	fetchLocation: () => void;
+	weatherForecastMatches: WeatherForecastMatch[];
 };
 /* eslint-enable no-unused-vars */
 
@@ -141,6 +164,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
+	weatherForecastMatches: [],
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
@@ -170,6 +194,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			return R * c; // Distance in kilometers
 		};
 
+		const dedupeByPmKisan = (rows: WeatherForecastMatch[]): WeatherForecastMatch[] => {
+			const seen = new Set<number>();
+			const out: WeatherForecastMatch[] = [];
+			for (const x of rows) {
+				if (seen.has(x.unique_id_pm_kisan)) continue;
+				seen.add(x.unique_id_pm_kisan);
+				out.push(x);
+			}
+			return out;
+		};
+
+		/** PostGIS ST_DWithin-style: only points inside this radius count as “local”. */
+		const WITHIN_RADIUS_KM = 75;
+		const MAX_LOCAL_MATCHES = 10;
+		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
+		const FALLBACK_NEAREST_K = 8;
+
 		navigator.geolocation.getCurrentPosition(
 			async (position) => {
 				const latitude = position.coords.latitude;
@@ -187,51 +228,53 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						throw new Error(`Failed to load weather data: ${response.statusText}`);
 					}
 					
-					const weatherData = await response.json();
+					const weatherData = (await response.json()) as PxDWeatherRecord[];
 					console.log("Weather data loaded, total entries:", weatherData.length);
 
-					// Find the closest matching location
-					let closestMatch = null;
-					let minDistance = Infinity;
+					const withDist: WeatherForecastMatch[] = weatherData.map((location) => ({
+						...location,
+						distanceKm: calculateDistance(latitude, longitude, location.Lat, location.Lon),
+						isWithinSearchRadius: false
+					}));
+					withDist.sort((a, b) => a.distanceKm - b.distanceKm);
 
-					for (const location of weatherData) {
-						const distance = calculateDistance(
-							latitude,
-							longitude,
-							location.Lat,
-							location.Lon
-						);
-
-						if (distance < minDistance) {
-							minDistance = distance;
-							closestMatch = location;
-						}
-					}
-
-					if (closestMatch) {
-						console.log("\n=== MATCHED WEATHER DATA ===");
-						console.log("Distance from user:", minDistance.toFixed(2), "km");
-						console.log("Location Details:", {
-							state: closestMatch.state_name,
-							district: closestMatch.district_name,
-							subdistrict: closestMatch.subdistrict_name,
-							latitude: closestMatch.Lat,
-							longitude: closestMatch.Lon
-						});
-						console.log("\nForecast Message:");
-						console.log(closestMatch.forecast_message);
-						console.log("\nFull Matched Data:");
-						console.log(closestMatch);
-						console.log("============================\n");
-					} else {
+					if (withDist.length === 0) {
+						set({ weatherForecastMatches: [] });
 						console.log("No matching location found in weather data.");
+						return;
 					}
+
+					const within = dedupeByPmKisan(
+						withDist.filter((x) => x.distanceKm <= WITHIN_RADIUS_KM)
+					).slice(0, MAX_LOCAL_MATCHES);
+
+					let matches: WeatherForecastMatch[];
+					if (within.length > 0) {
+						matches = within.map((m) => ({ ...m, isWithinSearchRadius: true }));
+						console.log(
+							`Weather: ${matches.length} row(s) within ${WITHIN_RADIUS_KM} km (ST_DWithin-style).`
+						);
+					} else {
+						const nearest = dedupeByPmKisan(withDist).slice(0, FALLBACK_NEAREST_K);
+						matches = nearest.map((m) => ({ ...m, isWithinSearchRadius: false }));
+						const d0 = matches[0]?.distanceKm.toFixed(1) ?? "?";
+						console.warn(
+							`Weather: no PxD cells within ${WITHIN_RADIUS_KM} km of user. This JSON covers roughly lat 17.2°N–32.7°N; your point is outside that band. ` +
+								`Showing ${matches.length} nearest cells (KNN), closest ~${d0} km away.`
+						);
+					}
+
+					set({ weatherForecastMatches: matches });
+					console.log(matches);
+					
 				} catch (error) {
 					console.error("Error loading or processing weather data:", error);
+					set({ weatherForecastMatches: [] });
 				}
 			},
 			(error) => {
 				console.error("Error getting location:", error.message);
+				set({ weatherForecastMatches: [] });
 				switch (error.code) {
 					case error.PERMISSION_DENIED:
 						console.error("User denied the request for Geolocation.");

@@ -7,7 +7,6 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
-import { NotificationsDrawer } from "@/components/screens-component/chat-screen/components/notifications-drawer";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -29,8 +28,6 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const [notificationsOpen, setNotificationsOpen] = useState(false);
-	const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
 
 	// Request location permission when component mounts
 	useEffect(() => {
@@ -60,8 +57,6 @@ function ChatLayout() {
 				rightLabel={CHAT_USER.name}
 				onClearChat={clearChat}
 				onOpenSettings={() => setSettingsOpen(true)}
-				onNotificationClick={() => setNotificationsOpen(true)}
-				hasUnreadNotifications={hasUnreadNotifications}
 				onBack={() => window.history.back()}
 			/>
 			{/* Only this area can scroll (via ChatShell/MessageList) */}
@@ -102,10 +97,6 @@ function ChatLayout() {
 				onOpenChange={setSettingsOpen} 
 			/>
 
-			<NotificationsDrawer 
-				open={notificationsOpen} 
-				onOpenChange={setNotificationsOpen} 
-			/>
 		</div>
 	);
 }
