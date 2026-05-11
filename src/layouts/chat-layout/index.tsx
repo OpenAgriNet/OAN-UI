@@ -7,7 +7,6 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useCallback, useState } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
-import { IosAppBanner } from "@/components/screens-component/chat-screen/components/ios-app-banner";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -51,7 +50,7 @@ function ChatLayout() {
 					onClose={handleCloseToast}
 				/>
 			)}
-		<ChatHeader
+			<ChatHeader
 				title={t("appTitle") as string}
 				subtitle="Government assistance and agriculture insights"
 				rightAvatarUrl={CHAT_USER.avatar}
@@ -60,7 +59,6 @@ function ChatLayout() {
 				onOpenSettings={() => setSettingsOpen(true)}
 				onBack={() => window.history.back()}
 			/>
-			<IosAppBanner />
 			{/* Only this area can scroll (via ChatShell/MessageList) */}
 			<main className="min-h-0 flex-1 bg-transparent">
 				<Outlet />

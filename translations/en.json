@@ -165,9 +165,5 @@
   "auth": {
     "loginRequired": "Login required",
     "loginPrompt": "Please log in to continue and access this page."
-  },
-  "iosAppBanner": {
-    "text": "BharatVistaar iOS app is now live.",
-    "linkText": "Click here to download"
   }
 }

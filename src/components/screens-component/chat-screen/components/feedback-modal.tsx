@@ -32,7 +32,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const [selectedReason, setSelectedReason] = useState<any>("incorrect");
-	const [message, setMessage] = useState<string>(FEEDBACK_OPTIONS[0]?.label as string || "");
+	const [message, setMessage] = useState("");
 	const [isRecording, setIsRecording] = useState(false);
 
 	const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -76,20 +76,15 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 		onSubmit(selectedReason, finalMessage);
 		// Reset form
 		setSelectedReason("incorrect");
-		setMessage(FEEDBACK_OPTIONS[0]?.label as string || "");
+		setMessage("");
 	};
 
 	const handleCancel = () => {
 		onClose();
 		// Reset form
 		setSelectedReason("incorrect");
-		setMessage(FEEDBACK_OPTIONS[0]?.label as string || "");
+		setMessage("");
 	};
-
-	const handleFeedback = (id : FeedbackReason, label:any) => {
-		setSelectedReason(id);
-		setMessage(label);
-	}
 
 	return (
 		<div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
@@ -126,8 +121,7 @@ export function FeedbackModal({ open, onClose, onSubmit }: FeedbackModalProps) {
 						{FEEDBACK_OPTIONS.map((option: any) => (
 							<button
 								key={option.id}
-								// onClick={() => setSelectedReason(option.id)}
-								onClick={() => handleFeedback(option.id, option.label)}
+								onClick={() => setSelectedReason(option.id)}
 								className={`w-full text-left px-4 py-3 rounded-xl font-medium text-sm transition-colors cursor-pointer ${
 									selectedReason === option.id
 										? "bg-yellow-400 text-gray-900"

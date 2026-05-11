@@ -35,12 +35,6 @@ interface AuthResponse {
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
 
-// ── TESTING ONLY ─────────────────────────────────────────────────────────────
-// Set to a non-empty string to bypass /api/token and use this token everywhere.
-// Remove (or set to '') before merging to production.
-const DEBUG_TOKEN = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJtb2JpbGUiOiIxMTExMTExMTExIiwibmFtZSI6Imd1ZXN0Iiwicm9sZSI6InB1YmxpYyIsIm1ldGFkYXRhIjoie1widXNlckFnZW50XCI6XCJNb3ppbGxhLzUuMCAoTWFjaW50b3NoOyBJbnRlbCBNYWMgT1MgWCAxMF8xNV83KSBBcHBsZVdlYktpdC81MzcuMzYgKEtIVE1MLCBsaWtlIEdlY2tvKSBDaHJvbWUvMTQ3LjAuMC4wIFNhZmFyaS81MzcuMzZcIixcInBsYXRmb3JtXCI6XCJNYWNJbnRlbFwiLFwibGFuZ3VhZ2VcIjpcImVuLUdCXCIsXCJsYW5ndWFnZXNcIjpcImVuLUdCLGVuLVVTLGVuXCIsXCJzY3JlZW5SZXNvbHV0aW9uXCI6XCIxNTEyeDk4MlwiLFwiY29sb3JEZXB0aFwiOjMwLFwidGltZXpvbmVcIjpcIkFzaWEvQ2FsY3V0dGFcIixcInRpbWVzdGFtcFwiOlwiMjAyNi0wNC0yMlQxNzoyOToxNi4wMDVaXCJ9IiwiaWF0IjoxNzc2ODc4OTU2LCJleHAiOjE3NzY4Nzk4NTZ9.F9cmlZsugalTQcSMv40KqGomRj_nqVPhKSXKcZFNmhaaNuPtiEb7YnL9Z9E5oQRkm1F7nnGugtQuDrDRDMCq91yFYV6sXEzVbbd0pQhhJCrnB1Xx4MGQVsS26TBCFPftVR7FkPaX3UVdjDgWQPRyyYNKqUX5gKgulqpQxOtjkBtjfjnxdz8QlhTfE6Ly8FEX6bP1cHdEX1hdHYENX1ENOsyZ66NSYzwnq7SAtDvmI8aVsir7g4rh-Y2e6JgJhjc8syuBDydXmY1J2Vsjycr1RaCga27BM_63WTV7uRNzktJmX6uNMrdhhylTyymnwFMcG3y8Ce_G6VeZLehtkC10Pg';
-// ─────────────────────────────────────────────────────────────────────────────
-
 const getTokenExpiryFromExp = (token: string): number | null => {
   try {
     const parts = token.split('.');
@@ -101,8 +95,6 @@ class ApiService {
   }
 
   private getAuthToken(): string | null {
-    if (DEBUG_TOKEN) return DEBUG_TOKEN;
-
     const keys = [JWT_STORAGE_KEY, 'accessToken', 'token'];
     
     for (const key of keys) {
@@ -147,12 +139,6 @@ class ApiService {
   }
 
   private async performTokenRefresh(): Promise<string | null> {
-    if (DEBUG_TOKEN) {
-      this.authToken = DEBUG_TOKEN;
-      this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${DEBUG_TOKEN}`;
-      return DEBUG_TOKEN;
-    }
-
     if (this.refreshTokenPromise) {
       return this.refreshTokenPromise;
     }
