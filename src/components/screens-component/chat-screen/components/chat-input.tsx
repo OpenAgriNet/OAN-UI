@@ -13,6 +13,7 @@ import { Suggestions } from "./suggestions";
 import type { Suggestion } from "../api/suggestions-api";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import { environment } from "@/lib/config/environment";
 
 export type ChatInputPayload = {
 	text: string;
@@ -74,6 +75,10 @@ export function ChatInput({
 
 	const canSend = useMemo(() => value.trim().length > 0 || files.length > 0 || !!voice, [value, files, voice]);
 	const isLoading = isTranscribing || isAssistantTyping;
+	const maxLength = environment.chatMessageMaxLength;
+	const charCount = value.length;
+	const isNearLimit = charCount >= maxLength * 0.8;
+	const isAtLimit = charCount >= maxLength;
 
 	// Clean up on unmount
 	useEffect(() => {
@@ -278,7 +283,7 @@ export function ChatInput({
 
 				<div className="flex items-center gap-2">
 					<div className="relative">
-						{micHint ? (
+						{micHint && !value.trim() ? (
 							<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
 								<div className="relative whitespace-nowrap rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
 									{t("chatMicHint")}
@@ -342,7 +347,14 @@ export function ChatInput({
   <Textarea
     ref={taRef}
     value={value}
-    onChange={(e) => onValueChange(e.target.value)}
+    onChange={(e) => {
+      const newValue = e.target.value;
+      if (newValue.length <= maxLength) {
+        onValueChange(newValue);
+      } else {
+        onValueChange(newValue.slice(0, maxLength));
+      }
+    }}
     onKeyDown={onKeyDown}
     disabled={disabled || isLoading || isUnauthenticated}
     placeholder={(isLoading || isUnauthenticated) ? "" : placeholder}
@@ -354,6 +366,16 @@ export function ChatInput({
 	  disabled || isLoading || isUnauthenticated ? "cursor-not-allowed" : ""
     )}
   />
+
+  {/* Character counter — inside the input box, subtle */}
+  {isNearLimit && (
+    <span className={cn(
+      "absolute bottom-1 right-14 text-[10px] leading-none opacity-60 select-none pointer-events-none",
+      isAtLimit ? "text-red-500 opacity-90" : "text-muted-foreground"
+    )}>
+      {charCount}/{maxLength}
+    </span>
+  )}
 
   {/* Grey/Green area around send button */}
   <div

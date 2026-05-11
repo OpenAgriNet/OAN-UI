@@ -52,6 +52,7 @@ type ChatStore = {
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
 	sendQuickAction: (id: string, language: string, t?: any) => void;
 	sendQuickReply: (payload: string, language: string, t?: any) => void;
+	retryLastMessage: (language: string, t?: any) => void;
 	setDraft: (value: string) => void;
 	startListening: () => void;
 	stopListening: () => void;
@@ -114,7 +115,13 @@ function makeUserMessage(text: string): TextMessage {
 	};
 }
 
-function makeAssistantMessage(text: string, isError?: boolean, showListenRow = false): ChatMessage {
+function makeAssistantMessage(
+	text: string,
+	isError?: boolean,
+	showListenRow = false,
+	failedUserText?: string,
+	failedLanguage?: string
+): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: "assistant",
@@ -122,7 +129,9 @@ function makeAssistantMessage(text: string, isError?: boolean, showListenRow = f
 		body: text,
 		createdAt: new Date().toISOString(),
 		showListenRow,
-		isError
+		isError,
+		failedUserText,
+		failedLanguage
 	};
 }
 
@@ -296,12 +305,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
 				telemetry.endTelemetry();
 			} else {
-				set({
-					toast: {
-						message: "Sorry, there was an error processing your request. Please try again.",
-						type: "error"
-					}
-				});
+				// Show error as an in-chat message with retry capability
+				const errorMessage = t
+					? t("chatErrorMessage") || "Sorry, there was an error processing your request. Please try again."
+					: "Sorry, there was an error processing your request. Please try again.";
+				set((state) => ({
+					messages: [
+						...state.messages,
+						makeAssistantMessage(
+							errorMessage as string,
+							true,
+							false,
+							trimmed,
+							language
+						)
+					]
+				}));
 
 				// Telemetry: Log Error (Generic)
 				await telemetry.startTelemetry(currentSession, userDetails);
@@ -422,6 +441,40 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendQuickReply: (payload, language, t) => {
 		get().sendText(payload, language, t);
+	},
+
+	retryLastMessage: (language, t) => {
+		const { messages } = get();
+		// Find the last error message with retry info
+		const lastErrorIdx = messages.findLastIndex(
+			(m) => m.type === "card" && m.isError && (m as any).failedUserText
+		);
+		if (lastErrorIdx === -1) return;
+
+		const errorMsg = messages[lastErrorIdx] as any;
+		const textToRetry = errorMsg.failedUserText;
+		const langToUse = errorMsg.failedLanguage || language;
+
+		// Remove the error message from the list
+		set((state) => ({
+			messages: state.messages.filter((_, i) => i !== lastErrorIdx)
+		}));
+
+		// Also remove the corresponding user message (the one right before the error)
+		set((state) => {
+			const msgs = [...state.messages];
+			// Find the last user message before where the error was
+			for (let i = msgs.length - 1; i >= 0; i--) {
+				if (msgs[i]!.role === "user" && msgs[i]!.type === "text" && (msgs[i] as any).text === textToRetry) {
+					msgs.splice(i, 1);
+					break;
+				}
+			}
+			return { messages: msgs };
+		});
+
+		// Re-send the message
+		get().sendText(textToRetry, langToUse, t);
 	},
 
 	generateQuickActions: (t) => {
