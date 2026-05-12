@@ -22,6 +22,7 @@ import type { Suggestion } from "../api/suggestions-api";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatStore } from "@/hooks/store/chat";
+import { environment } from "@/lib/config/environment";
 
 const MAX_CLIENT_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/jpg"]);
@@ -90,6 +91,10 @@ export function ChatInput({
 	const canSend = useMemo(() => value.trim().length > 0 || !!voice, [value, voice]);
 	const isLoading = isTranscribing || Boolean(disabled);
 	const isPestSubmitDisabled = disabled || isLoading || isUnauthenticated || !pestImage;
+	const maxLength = environment.chatMessageMaxLength ?? 4000;
+	const charCount = value.length;
+	const isNearLimit = charCount >= maxLength * 0.8;
+	const isAtLimit = charCount >= maxLength;
 
 	// Clean up on unmount
 	useEffect(() => {
@@ -448,7 +453,7 @@ export function ChatInput({
 
 			<div className="flex items-center gap-2">
 				<div className="relative">
-					{micHint ? (
+					{micHint && !value.trim() ? (
 						<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
 							<div className="relative whitespace-nowrap rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
 								{t("chatMicHint")}
@@ -509,22 +514,39 @@ export function ChatInput({
       </div>
     </div>
   )}
-  <Textarea
-    ref={taRef}
-    value={value}
-    onChange={(e) => onValueChange(e.target.value)}
-    onKeyDown={onKeyDown}
-    disabled={disabled || isLoading || isUnauthenticated}
-    placeholder={(isLoading || isUnauthenticated) ? "" : placeholder}
+					<Textarea
+						ref={taRef}
+						value={value}
+						onChange={(e) => {
+							const newValue = e.target.value;
+							if (newValue.length <= maxLength) {
+								onValueChange(newValue);
+								return;
+							}
+							onValueChange(newValue.slice(0, maxLength));
+						}}
+						onKeyDown={onKeyDown}
+						disabled={disabled || isLoading || isUnauthenticated}
+						placeholder={(isLoading || isUnauthenticated) ? "" : placeholder}
     className={cn(
       "flex-1 min-w-0 max-h-[140px] min-h-[50px] mx-4 resize-none border-0 bg-transparent px-0 py-[13px] text-base leading-6 shadow-none",
       "focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
       "placeholder:text-gray-400 placeholder:leading-6 dark:text-[var(--inputText-dark)]",
       "break-words whitespace-pre-wrap overflow-y-auto block",
 	  disabled || isLoading || isUnauthenticated ? "cursor-not-allowed" : ""
-    )}
-  />
-  <div className="flex shrink-0 items-center pr-1">
+						)}
+					/>
+					{isNearLimit && (
+						<span
+							className={cn(
+								"absolute bottom-1 right-14 text-[10px] leading-none opacity-60 select-none pointer-events-none",
+								isAtLimit ? "text-red-500 opacity-90" : "text-muted-foreground"
+							)}
+						>
+							{charCount}/{maxLength}
+						</span>
+					)}
+					<div className="flex shrink-0 items-center pr-1">
     <Button
       type="button"
       size="icon"
