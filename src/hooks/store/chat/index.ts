@@ -16,7 +16,6 @@ import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 
-/* eslint-disable no-unused-vars */
 export type QuickAction = {
 	id: string;
 	title: string;
@@ -43,6 +42,7 @@ type ChatStore = {
 	draft: string;
 	suggestions: Suggestion[];
 	isAssistantTyping: boolean;
+	isInputLocked: boolean;
 	isListening: boolean;
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
@@ -50,6 +50,7 @@ type ChatStore = {
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
+	sendImage: (imageFile: File, language: string, t?: any) => Promise<void>;
 	sendQuickAction: (id: string, language: string, t?: any) => void;
 	sendQuickReply: (payload: string, language: string, t?: any) => void;
 	retryLastMessage: (language: string, t?: any) => void;
@@ -76,10 +77,8 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: () => void; // Disabled - location not being used
+	fetchLocation: (t?: any) => void;
 };
-/* eslint-enable no-unused-vars */
-
 const quickActionSeeds: QuickAction[] = [
 	{
 		id: "1",
@@ -103,6 +102,94 @@ const quickActionSeeds: QuickAction[] = [
 		prompt: "What is the ideal irrigation schedule for muskmelon?"
 	}
 ];
+
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/jpg"]);
+const NORMALIZED_IMAGE_MIME = "image/jpeg";
+const NORMALIZED_IMAGE_EXTENSION = ".jpg";
+const MAX_IMAGE_DIMENSION = 1600;
+const JPEG_QUALITY = 0.82;
+
+function isSupportedImageType(file: File): boolean {
+	const fileType = file.type.toLowerCase();
+	if (SUPPORTED_IMAGE_TYPES.has(fileType)) return true;
+
+	const fileName = file.name.toLowerCase();
+	return fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
+}
+
+function replaceFileExtension(fileName: string, extension: string): string {
+	const trimmedName = fileName.trim();
+	if (!trimmedName) {
+		return `crop-image${extension}`;
+	}
+
+	const dotIndex = trimmedName.lastIndexOf(".");
+	if (dotIndex <= 0) {
+		return `${trimmedName}${extension}`;
+	}
+
+	return `${trimmedName.slice(0, dotIndex)}${extension}`;
+}
+
+function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+	return new Promise((resolve, reject) => {
+		const imageUrl = URL.createObjectURL(file);
+		const image = new Image();
+
+		image.onload = () => {
+			URL.revokeObjectURL(imageUrl);
+			resolve(image);
+		};
+
+		image.onerror = () => {
+			URL.revokeObjectURL(imageUrl);
+			reject(new Error("Failed to load image for normalization."));
+		};
+
+		image.src = imageUrl;
+	});
+}
+
+async function normalizeImageForUpload(file: File): Promise<File> {
+	const image = await loadImageFromFile(file);
+	const width = image.naturalWidth || image.width;
+	const height = image.naturalHeight || image.height;
+	if (!width || !height) {
+		throw new Error("Invalid image dimensions.");
+	}
+
+	const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(width, height));
+	const targetWidth = Math.max(1, Math.round(width * scale));
+	const targetHeight = Math.max(1, Math.round(height * scale));
+
+	const canvas = document.createElement("canvas");
+	canvas.width = targetWidth;
+	canvas.height = targetHeight;
+
+	const context = canvas.getContext("2d");
+	if (!context) {
+		throw new Error("Canvas is unavailable for image normalization.");
+	}
+
+	context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+	const blob = await new Promise<Blob>((resolve, reject) => {
+		canvas.toBlob((result) => {
+			if (result) {
+				resolve(result);
+				return;
+			}
+
+			reject(new Error("Failed to normalize image for upload."));
+		}, NORMALIZED_IMAGE_MIME, JPEG_QUALITY);
+	});
+
+	return new File([blob], replaceFileExtension(file.name, NORMALIZED_IMAGE_EXTENSION), {
+		type: NORMALIZED_IMAGE_MIME,
+		lastModified: Date.now()
+	});
+}
 
 function makeUserMessage(text: string): TextMessage {
 	return {
@@ -135,6 +222,17 @@ function makeAssistantMessage(
 	};
 }
 
+function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
+	return {
+		id: crypto.randomUUID(),
+		role: "user",
+		type: "image",
+		imageUrl,
+		caption,
+		createdAt: new Date().toISOString()
+	};
+}
+
 import { playTTS as playTTSHelper, pauseAudio, resumeAudio, stopAudio } from "@/lib/audio-utils";
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -143,6 +241,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	draft: "",
 	suggestions: [],
 	isAssistantTyping: false,
+	isInputLocked: false,
 	isListening: false,
 	isTranscribing: false,
 	isFetchingSuggestions: false,
@@ -160,9 +259,47 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	// fetchLocation disabled as location is not being used
-	fetchLocation: () => {
-		// Geolocation permission request disabled
+	fetchLocation: (t) => {
+		if (typeof window === "undefined" || !navigator.geolocation) {
+			set({
+				toast: {
+					message: t ? String(t("toast.locationNotSupported.description")) : "Your browser does not support geolocation.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				apiService.setLocationData({
+					latitude: position.coords.latitude,
+					longitude: position.coords.longitude,
+				});
+			},
+			(error) => {
+				const key =
+					error.code === error.PERMISSION_DENIED
+						? "toast.locationPermissionDenied.description"
+						: error.code === error.TIMEOUT
+							? "toast.locationTimeout.description"
+							: error.code === error.POSITION_UNAVAILABLE
+								? "toast.locationUnavailable.description"
+								: "toast.locationError.description";
+
+				set({
+					toast: {
+						message: t ? String(t(key)) : "Could not get your location.",
+						type: "error"
+					}
+				});
+			},
+			{
+				enableHighAccuracy: false,
+				timeout: 10000,
+				maximumAge: 300000,
+			}
+		);
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),
@@ -181,6 +318,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			draft: "",
 			suggestions: [],
 			isAssistantTyping: false,
+			isInputLocked: false,
 			isListening: false,
 			isTranscribing: false,
 			isFetchingSuggestions: false
@@ -197,7 +335,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			messages: [...state.messages, userMessage],
 			draft: "",
 			suggestions: [],
-			isAssistantTyping: true
+			isAssistantTyping: true,
+			isInputLocked: true
 		}));
 
 		const { sessionId } = get();
@@ -242,27 +381,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText }]
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								isAssistantTyping: false
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText)]
+								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								isAssistantTyping: false
 							};
 						}
 					});
-				}
+				},
+				() => set({ isInputLocked: false })
 			);
 
-			set((state) => {
-				const lastMsg = state.messages[state.messages.length - 1];
-				if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
-					return {
-						messages: [...state.messages.slice(0, -1), { ...lastMsg, showListenRow: true }],
-						isAssistantTyping: false
-					};
-				}
-				return { isAssistantTyping: false };
-			});
+			set({ isAssistantTyping: false, isInputLocked: false });
 
 			// Telemetry: Log Response
 			await telemetry.startTelemetry(currentSession, userDetails);
@@ -285,7 +418,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 		} catch (error: any) {
 			console.error("Error sending text:", error);
-			set({ isAssistantTyping: false });
+			set({ isAssistantTyping: false, isInputLocked: false });
 
 			const isRateLimitError =
 				error?.status === 429 ||
@@ -339,6 +472,167 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			console.error("Error fetching suggestions:", error);
 			set({ isFetchingSuggestions: false });
 			// set({ toast: { message: "Failed to load suggestions.", type: "error" } });
+		}
+	},
+
+	sendImage: async (imageFile, language, t) => {
+		if (!imageFile) return;
+		if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.imageTooLarge")) : "Image too large. Max 10 MB.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		if (!isSupportedImageType(imageFile)) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.invalidFormat")) : "Invalid image format. Use JPEG or PNG.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		get().stopTTS();
+
+		let uploadFile = imageFile;
+		try {
+			uploadFile = await normalizeImageForUpload(imageFile);
+		} catch (error) {
+			console.error("Error normalizing image:", error);
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.processingFailed")) : "Could not process the image. Please try another photo.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		if (uploadFile.size > MAX_IMAGE_SIZE_BYTES) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.imageTooLarge")) : "Image too large. Max 10 MB.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		const imageUrl = URL.createObjectURL(uploadFile);
+		const imageMessage = makeImageMessage(imageUrl, uploadFile.name);
+		set((state) => ({
+			messages: [...state.messages, imageMessage],
+			suggestions: [],
+			isAssistantTyping: true,
+			isInputLocked: true
+		}));
+
+		const { sessionId } = get();
+		const currentSession = sessionId || uuidv4();
+		if (!sessionId) {
+			set({ sessionId: currentSession });
+			apiService.setSessionId(currentSession);
+		}
+
+		const questionId = uuidv4();
+
+		const user = useAuthStore.getState().user;
+		const userDetails = {
+			preferred_username: user?.username || "guest",
+			email: user?.email || ""
+		};
+
+		try {
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.logQuestionEvent(questionId, currentSession, `[Image] ${uploadFile.name}`);
+			telemetry.endTelemetry();
+		} catch (e) {
+			console.warn("Telemetry question log failed", e);
+		}
+
+		try {
+			let streamingText = "";
+
+			telemetry.markServerRequestStart(questionId);
+
+			const response = await apiService.sendImageQuery(
+				uploadFile,
+				currentSession,
+				language,
+				language,
+				(chunk) => {
+					streamingText += chunk;
+					set((state) => {
+						const lastMsg = state.messages[state.messages.length - 1];
+						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
+							return {
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								isAssistantTyping: false
+							};
+						} else {
+							return {
+								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								isAssistantTyping: false
+							};
+						}
+					});
+				},
+				() => set({ isInputLocked: false })
+			);
+
+			set({ isAssistantTyping: false, isInputLocked: false });
+
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.markAnswerRendered(questionId, () => {
+				telemetry.logResponseEvent(questionId, currentSession, `[Image] ${uploadFile.name}`, response.response);
+			});
+			await telemetry.endTelemetryWithWait(questionId);
+
+			if (!environment.suggestionsDisabled) {
+				const suggestions = await apiService.getSuggestions(currentSession, language);
+				set({
+					suggestions: suggestions.map((s) => ({
+						id: uuidv4(),
+						text: s.question,
+						label: s.question
+					}))
+				});
+			}
+		} catch (error: any) {
+			console.error("Error sending image:", error);
+			set({ isAssistantTyping: false, isInputLocked: false });
+
+			const isRateLimitError =
+				error?.status === 429 ||
+				error?.response?.status === 429 ||
+				(error instanceof Error && error.message.includes("Rate limit"));
+
+			if (isRateLimitError) {
+				const limitMessage = t
+					? t("limitMessage")
+					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
+				set((state) => ({
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+				}));
+				await telemetry.startTelemetry(currentSession, userDetails);
+				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
+				telemetry.endTelemetry();
+			} else {
+				set({
+					toast: {
+						message: "Sorry, there was an error analyzing your image. Please try again.",
+						type: "error"
+					}
+				});
+				await telemetry.startTelemetry(currentSession, userDetails);
+				telemetry.logErrorEvent(questionId, currentSession, String(error));
+				telemetry.endTelemetry();
+			}
 		}
 	},
 

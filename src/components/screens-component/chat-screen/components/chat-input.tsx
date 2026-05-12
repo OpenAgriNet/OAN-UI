@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Mic, X } from "lucide-react";
+import { Mic, X, Camera, ImageIcon } from "lucide-react";
 import Lottie from "lottie-react";
 import loadingAnim from "@/assets/Loading.json";
 import sendIcon from "@/assets/send.svg";
@@ -7,17 +7,30 @@ import activeSend from "@/assets/activeSend.svg";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { RecordingControls } from "./recording-controls";
 import { Suggestions } from "./suggestions";
 import type { Suggestion } from "../api/suggestions-api";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
+import { useChatStore } from "@/hooks/store/chat";
 import { environment } from "@/lib/config/environment";
+
+const MAX_CLIENT_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/jpg"]);
 
 export type ChatInputPayload = {
 	text: string;
 	files: File[];
+	mode?: "chat" | "pest_api";
 	voice?: Blob | null;
 	duration?: number;
 };
@@ -35,7 +48,6 @@ export type ChatInputProps = {
 	footerNote?: string;
 	isListening?: boolean;
 	isTranscribing?: boolean;
-	isAssistantTyping?: boolean;
 	suggestions?: Suggestion[];
 	onSuggestionClick?: (text: string) => void;
 };
@@ -53,14 +65,16 @@ export function ChatInput({
 	footerNote,
 	isListening,
 	isTranscribing,
-	isAssistantTyping,
 	suggestions = [],
 	onSuggestionClick
 }: ChatInputProps) {
 	const { t } = useLanguage();
 	const { user } = useAuth();
+	const setToast = useChatStore((s) => s.setToast);
 	const isUnauthenticated = !user;
-	const [files, setFiles] = useState<File[]>([]);
+	const [isPestDialogOpen, setIsPestDialogOpen] = useState(false);
+	const [pestImage, setPestImage] = useState<File | null>(null);
+	const [pestImagePreview, setPestImagePreview] = useState<string | null>(null);
 	const [voice, setVoice] = useState<Blob | null>(null);
 	const [recordingState, setRecordingState] = useState<"idle" | "recording" | "paused">("idle");
 	const [recordingDuration, setRecordingDuration] = useState(0);
@@ -70,12 +84,14 @@ export function ChatInput({
 	const chunksRef = useRef<BlobPart[]>([]);
 	const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-	const fileInputRef = useRef<HTMLInputElement>(null);
+	const pestCameraInputRef = useRef<HTMLInputElement>(null);
+	const pestGalleryInputRef = useRef<HTMLInputElement>(null);
 	const taRef = useRef<HTMLTextAreaElement | null>(null);
 
-	const canSend = useMemo(() => value.trim().length > 0 || files.length > 0 || !!voice, [value, files, voice]);
-	const isLoading = isTranscribing || isAssistantTyping;
-	const maxLength = environment.chatMessageMaxLength;
+	const canSend = useMemo(() => value.trim().length > 0 || !!voice, [value, voice]);
+	const isLoading = isTranscribing || Boolean(disabled);
+	const isPestSubmitDisabled = disabled || isLoading || isUnauthenticated || !pestImage;
+	const maxLength = environment.chatMessageMaxLength ?? 4000;
 	const charCount = value.length;
 	const isNearLimit = charCount >= maxLength * 0.8;
 	const isAtLimit = charCount >= maxLength;
@@ -87,13 +103,28 @@ export function ChatInput({
 			if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
 				mediaRecorderRef.current.stream.getTracks().forEach((t) => t.stop());
 			}
+			if (pestImagePreview) {
+				URL.revokeObjectURL(pestImagePreview);
+			}
 		};
-	}, []);
+	}, [pestImagePreview]);
 
 
 	useEffect(() => {
 		onTypingChange?.(value.trim().length > 0);
-	}, [value]);
+	}, [onTypingChange, value]);
+
+	useEffect(() => {
+		if (!isPestDialogOpen) {
+			setPestImage(null);
+			setPestImagePreview((currentPreview) => {
+				if (currentPreview) {
+					URL.revokeObjectURL(currentPreview);
+				}
+				return null;
+			});
+		}
+	}, [isPestDialogOpen]);
 
 	async function startRecording() {
 		try {
@@ -192,25 +223,83 @@ export function ChatInput({
 		}, 50);
 	}
 
-	function onFilesPicked(e: React.ChangeEvent<HTMLInputElement>) {
-		const list = e.target.files ? Array.from(e.target.files) : [];
-		if (list.length) setFiles((prev) => [...prev, ...list]);
-		e.target.value = "";
+	function openPestApiPicker() {
+		pestCameraInputRef.current?.click();
 	}
 
-	function removeFile(idx: number) {
-		setFiles((prev) => prev.filter((_, i) => i !== idx));
+	function openPestGalleryPicker() {
+		pestGalleryInputRef.current?.click();
 	}
 
 	function clearVoice() {
 		setVoice(null);
 	}
 
+	function setPestFile(file: File) {
+		setPestImage(file);
+		setPestImagePreview((currentPreview) => {
+			if (currentPreview) {
+				URL.revokeObjectURL(currentPreview);
+			}
+			return URL.createObjectURL(file);
+		});
+	}
+
+	function onPestFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+		const file = e.target.files?.[0];
+		if (!file) return;
+		if (!validateSelectedImage(file)) {
+			e.target.value = "";
+			return;
+		}
+		setPestFile(file);
+		e.target.value = "";
+	}
+
+	function validateSelectedImage(file: File) {
+		const fileType = file.type.toLowerCase();
+		const validType = ACCEPTED_IMAGE_TYPES.has(fileType);
+		if (!validType) {
+			setToast({
+				message: t("imageUpload.invalidFormat") as string,
+				type: "error"
+			});
+			return false;
+		}
+
+		if (file.size > MAX_CLIENT_IMAGE_SIZE_BYTES) {
+			setToast({
+				message: t("imageUpload.imageTooLarge") as string,
+				type: "error"
+			});
+			return false;
+		}
+
+		return true;
+	}
+
+	function removePestFile() {
+		setPestImage(null);
+		setPestImagePreview((currentPreview) => {
+			if (currentPreview) {
+				URL.revokeObjectURL(currentPreview);
+			}
+			return null;
+		});
+	}
+
+	function submitPestImage() {
+		if (!pestImage || isPestSubmitDisabled) return;
+
+		const selectedImage = pestImage;
+		setIsPestDialogOpen(false);
+		onSend({ text: "", files: [selectedImage], mode: "pest_api" });
+	}
+
 	function submit() {
 		if (!canSend || disabled || isLoading) return;
-		onSend({ text: value.trim(), files, voice });
+		onSend({ text: value.trim(), files: [], voice, mode: "chat" });
 		onValueChange("");
-		setFiles([]);
 		setVoice(null);
 	}
 
@@ -241,6 +330,103 @@ export function ChatInput({
 
 	return (
 		<div className="bg-[#FFFFFF] dark:bg-[var(--inputBg-dark)] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF] dark:supports-[backdrop-filter]:bg-[var(--inputBg-dark)]">
+			<Dialog open={isPestDialogOpen} onOpenChange={setIsPestDialogOpen}>
+				<DialogContent className="max-w-md overflow-hidden p-0 gap-0 bg-white dark:bg-[var(--background)]" showCloseButton={false}>
+					<DialogHeader className="gap-0">
+						<div className="bg-amber-500 px-6 py-4 text-white">
+							<DialogTitle>{t("pestApi.title") as string}</DialogTitle>
+							<DialogDescription className="mt-1 text-amber-50">
+								{t("pestApi.description") as string}
+							</DialogDescription>
+						</div>
+					</DialogHeader>
+					<div className="space-y-4 px-6 pb-6 pt-2">
+						<div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+							{t("pestApi.note") as string}
+						</div>
+
+						<div className="space-y-2">
+							<p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+								{t("pestApi.photoLabel") as string}
+							</p>
+							{pestImagePreview ? (
+								<div className="relative overflow-hidden rounded-2xl border border-border bg-muted/20 p-2">
+									<img
+										src={pestImagePreview}
+										alt={pestImage?.name || "Pest API upload preview"}
+										className="max-h-64 w-full rounded-xl object-contain"
+									/>
+									<Button
+										type="button"
+										variant="destructive"
+										size="icon"
+										className="absolute right-4 top-4 h-8 w-8 rounded-full"
+										onClick={removePestFile}
+									>
+										<X className="h-4 w-4" />
+									</Button>
+								</div>
+							) : (
+								<div className="rounded-2xl border-2 border-dashed border-border px-5 py-6">
+									<div className="flex items-start justify-center gap-6">
+										<button
+											type="button"
+											onClick={openPestApiPicker}
+											className="group flex flex-col items-center gap-2"
+										>
+											<div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-300 text-amber-700 transition-colors group-hover:border-amber-500 group-hover:bg-amber-50 dark:border-amber-900/60 dark:text-amber-200 dark:group-hover:bg-amber-950/40">
+												<Camera className="h-7 w-7" />
+											</div>
+											<span className="text-center text-xs text-muted-foreground">
+												{t("imageUpload.captureImage") as string}
+											</span>
+										</button>
+										<button
+											type="button"
+											onClick={openPestGalleryPicker}
+											className="group flex flex-col items-center gap-2"
+										>
+											<div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-300 text-amber-700 transition-colors group-hover:border-amber-500 group-hover:bg-amber-50 dark:border-amber-900/60 dark:text-amber-200 dark:group-hover:bg-amber-950/40">
+												<ImageIcon className="h-7 w-7" />
+											</div>
+											<span className="text-center text-xs text-muted-foreground">
+												{t("imageUpload.selectFromGallery") as string}
+											</span>
+										</button>
+									</div>
+									<p className="mt-4 text-center text-xs text-muted-foreground">
+										{t("imageUpload.imageFormatHint") as string}
+									</p>
+								</div>
+							)}
+						</div>
+
+						<input
+							ref={pestCameraInputRef}
+							type="file"
+							accept="image/jpeg,image/png,image/jpg"
+							capture="environment"
+							className="hidden"
+							onChange={onPestFilePicked}
+						/>
+						<input
+							ref={pestGalleryInputRef}
+							type="file"
+							accept="image/jpeg,image/png,image/jpg"
+							className="hidden"
+							onChange={onPestFilePicked}
+						/>
+					</div>
+					<DialogFooter className="border-t px-6 pb-6 pt-4 sm:justify-end">
+						<Button type="button" variant="outline" onClick={() => setIsPestDialogOpen(false)}>
+							{t("pestApi.cancel") as string}
+						</Button>
+						<Button type="button" onClick={submitPestImage} disabled={isPestSubmitDisabled}>
+							{t("pestApi.submit") as string}
+						</Button>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 
 
 			<div className="mx-auto w-full max-w-3xl px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-4">
@@ -249,83 +435,67 @@ export function ChatInput({
 					onSuggestionClick={(text) => onSuggestionClick?.(text)}
 					className="mb-2"
 				/>
-				{/* Attachment/voice preview row */}
-				{(files.length > 0 || voice) && (
+				{/* Voice preview row */}
+				{voice && (
 					<div className="mb-2 flex flex-wrap items-center gap-2">
-						{files.map((f, idx) => (
-							<Badge key={`${f.name}-${idx}`} variant="secondary" className="gap-1">
-								<span className="max-w-[14rem] truncate">{f.name}</span>
-								<button
-									type="button"
-									onClick={() => removeFile(idx)}
-									className="rounded-sm cursor-pointer p-0.5 hover:bg-muted"
-									aria-label="Remove file"
-								>
-									<X className="h-3.5 w-3.5" />
-								</button>
-							</Badge>
-						))}
-
-						{voice && (
-							<Badge variant="secondary" className="gap-2">
-								<span>Voice message</span>
-								<button
-									type="button"
-									onClick={clearVoice}
-									className="cursor-pointer rounded-sm p-0.5 hover:bg-muted"
-								>
-									<X className="h-3.5 w-3.5" />
-								</button>
-							</Badge>
-						)}
+						<Badge variant="secondary" className="gap-2">
+							<span>Voice message</span>
+							<button
+								type="button"
+								onClick={clearVoice}
+								className="cursor-pointer rounded-sm p-0.5 hover:bg-muted"
+							>
+								<X className="h-3.5 w-3.5" />
+							</button>
+						</Badge>
 					</div>
 				)}
 
-				<div className="flex items-center gap-2">
-					<div className="relative">
-						{micHint && !value.trim() ? (
-							<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
-								<div className="relative whitespace-nowrap rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
-									{t("chatMicHint")}
-									<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 bg-[var(--secondary)]"></div>
-								</div>
-						<style>{`
-									@keyframes float {
-										0%, 100% { transform: translateY(0); }
-										50% { transform: translateY(-5px); }
-									}
-									@keyframes earthquake {
-										0%, 50%, 100% { transform: translate(0, 0) rotate(0deg); }
-										10% { transform: translate(-1px, -1px) rotate(-15deg); }
-										20% { transform: translate(1px, 1px) rotate(15deg); }
-										30% { transform: translate(-1px, -1px) rotate(-15deg); }
-										40% { transform: translate(1px, 1px) rotate(15deg); }
-									}
-									.animate-earthquake {
-										animation: earthquake 1.3s ease-in-out infinite;
-									}
-								`}</style>
+			<div className="flex items-center gap-2">
+				<div className="relative">
+					{micHint && !value.trim() ? (
+						<div className="absolute bottom-full left-0 mb-3 animate-[float_3s_ease-in-out_infinite]">
+							<div className="relative whitespace-nowrap rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
+								{t("chatMicHint")}
+								<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 bg-[var(--secondary)]"></div>
 							</div>
-						) : null}
-						<Button
-							type="button"
-							size="icon"
-							disabled={disabled || isLoading || isUnauthenticated}
-							onClick={startRecording}
-							className={cn(
-								"h-11 w-11 shrink-0 rounded-full text-black bg-[var(--primary)] hover:bg-[var(--accent)]/90 dark:bg-[var(--primary)] dark:hover:bg-[var(--primary)]/90 shadow-md",
-								isListening ? "animate-pulse" : "",
-								disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-							)}
-							aria-label="Record voice"
-						>
-							<Mic color="white" className="h-5 w-5" />
-						</Button>
-					</div>
+							<style>{`
+								@keyframes float {
+									0%, 100% { transform: translateY(0); }
+									50% { transform: translateY(-5px); }
+								}
+								@keyframes earthquake {
+									0%, 50%, 100% { transform: translate(0, 0) rotate(0deg); }
+									10% { transform: translate(-1px, -1px) rotate(-15deg); }
+									20% { transform: translate(1px, 1px) rotate(15deg); }
+									30% { transform: translate(-1px, -1px) rotate(-15deg); }
+									40% { transform: translate(1px, 1px) rotate(15deg); }
+								}
+								.animate-earthquake {
+									animation: earthquake 1.3s ease-in-out infinite;
+								}
+							`}</style>
+						</div>
+					) : null}
+					<Button
+						type="button"
+						size="icon"
+						disabled={disabled || isLoading || isUnauthenticated}
+						onClick={startRecording}
+						className={cn(
+							"h-11 w-11 shrink-0 rounded-full text-black bg-[var(--primary)] hover:bg-[var(--accent)]/90 dark:bg-[var(--primary)] dark:hover:bg-[var(--primary)]/90 shadow-md",
+							isListening ? "animate-pulse" : "",
+							disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+						)}
+						aria-label="Record voice"
+					>
+						<Mic color="white" className="h-5 w-5" />
+					</Button>
+				</div>
 
 <div
   className={cn(
-    "flex flex-1 min-h-[50px] min-w-0 items-stretch gap-2 rounded-[16px] border bg-white dark:bg-[var(--inputBg-dark)] shadow-sm transition-colors duration-200 relative",
+    "flex flex-1 min-h-[50px] min-w-0 items-stretch rounded-[16px] border bg-white dark:bg-[var(--inputBg-dark)] shadow-sm transition-colors duration-200 relative",
     canSend ? "border-black dark:border-[var(--border-dark)]" : "border-gray-300 dark:border-gray-700",
     isLoading || isUnauthenticated ? "bg-gray-50 opacity-80 cursor-not-allowed" : ""
   )}
@@ -344,38 +514,54 @@ export function ChatInput({
       </div>
     </div>
   )}
-  <Textarea
-    ref={taRef}
-    value={value}
-    onChange={(e) => {
-      const newValue = e.target.value;
-      if (newValue.length <= maxLength) {
-        onValueChange(newValue);
-      } else {
-        onValueChange(newValue.slice(0, maxLength));
-      }
-    }}
-    onKeyDown={onKeyDown}
-    disabled={disabled || isLoading || isUnauthenticated}
-    placeholder={(isLoading || isUnauthenticated) ? "" : placeholder}
+					<Textarea
+						ref={taRef}
+						value={value}
+						onChange={(e) => {
+							const newValue = e.target.value;
+							if (newValue.length <= maxLength) {
+								onValueChange(newValue);
+								return;
+							}
+							onValueChange(newValue.slice(0, maxLength));
+						}}
+						onKeyDown={onKeyDown}
+						disabled={disabled || isLoading || isUnauthenticated}
+						placeholder={(isLoading || isUnauthenticated) ? "" : placeholder}
     className={cn(
       "flex-1 min-w-0 max-h-[140px] min-h-[50px] mx-4 resize-none border-0 bg-transparent px-0 py-[13px] text-base leading-6 shadow-none",
       "focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none",
       "placeholder:text-gray-400 placeholder:leading-6 dark:text-[var(--inputText-dark)]",
       "break-words whitespace-pre-wrap overflow-y-auto block",
 	  disabled || isLoading || isUnauthenticated ? "cursor-not-allowed" : ""
-    )}
-  />
-
-  {/* Character counter — inside the input box, subtle */}
-  {isNearLimit && (
-    <span className={cn(
-      "absolute bottom-1 right-14 text-[10px] leading-none opacity-60 select-none pointer-events-none",
-      isAtLimit ? "text-red-500 opacity-90" : "text-muted-foreground"
-    )}>
-      {charCount}/{maxLength}
-    </span>
-  )}
+						)}
+					/>
+					{isNearLimit && (
+						<span
+							className={cn(
+								"absolute bottom-1 right-14 text-[10px] leading-none opacity-60 select-none pointer-events-none",
+								isAtLimit ? "text-red-500 opacity-90" : "text-muted-foreground"
+							)}
+						>
+							{charCount}/{maxLength}
+						</span>
+					)}
+					<div className="flex shrink-0 items-center pr-1">
+    <Button
+      type="button"
+      size="icon"
+      disabled={disabled || isLoading || isUnauthenticated}
+      onClick={() => setIsPestDialogOpen(true)}
+      className={cn(
+        "h-9 w-9 rounded-full border border-transparent bg-transparent text-amber-700 hover:bg-amber-50 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100 shadow-none",
+        disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+      )}
+      aria-label={t("pestApi.trigger") as string}
+      title={t("pestApi.trigger") as string}
+    >
+      <Camera className="h-5 w-5" />
+    </Button>
+  </div>
 
   {/* Grey/Green area around send button */}
   <div
@@ -408,14 +594,6 @@ export function ChatInput({
       />
     </Button>
   </div>
-
-  <input
-    ref={fileInputRef}
-    type="file"
-    className="hidden"
-    multiple
-    onChange={onFilesPicked}
-  />
 </div>
 
 				</div>
