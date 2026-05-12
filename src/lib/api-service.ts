@@ -32,6 +32,10 @@ interface AuthResponse {
   token: string;
 }
 
+interface ImageUploadResponse {
+  image_id: string;
+}
+
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
 
@@ -308,7 +312,20 @@ class ApiService {
     }
   }
 
-  async uploadImage(imageFile: File): Promise<{ image_id: string; image_url: string; mimetype: string }> {
+  private parseImageUploadResponse(payload: unknown): ImageUploadResponse {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Upload response is not a valid object');
+    }
+
+    const imageId = (payload as { image_id?: unknown }).image_id;
+    if (typeof imageId !== 'string' || !imageId.trim()) {
+      throw new Error('Upload response missing image_id');
+    }
+
+    return { image_id: imageId.trim() };
+  }
+
+  async uploadImage(imageFile: File): Promise<ImageUploadResponse> {
     try {
       await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) {
@@ -337,13 +354,15 @@ class ApiService {
             if (!retryResponse.ok) {
               throw new Error(`Upload failed: ${retryResponse.status}`);
             }
-            return retryResponse.json();
+            const retryPayload = await retryResponse.json();
+            return this.parseImageUploadResponse(retryPayload);
           }
         }
         throw new Error(`Upload failed: ${response.status}`);
       }
 
-      return response.json();
+      const payload = await response.json();
+      return this.parseImageUploadResponse(payload);
     } catch (error) {
       console.error('Error uploading image:', error);
       throw error;
@@ -358,13 +377,13 @@ class ApiService {
     onStreamData?: (_data: string) => void,
     onResponseStarted?: () => void
   ): Promise<ChatResponse> {
-    // Step 1: Upload image to get URL
+    // Step 1: Upload image to get image ID
     const uploadResult = await this.uploadImage(imageFile);
-    const imageUrl = uploadResult.image_url;
+    const imageId = uploadResult.image_id;
 
-    // Step 2: Send chat query with image URL embedded
-    // The agent only sees the URL, never the raw bytes
-    const query = `Analyze this crop image for pests or diseases. Image: ${imageUrl}`;
+    // Step 2: Send only the image UUID.
+    // The backend resolves this ID to a localhost image URL internally.
+    const query = imageId;
 
     return this.sendUserQuery(query, session, sourceLang, targetLang, onStreamData, onResponseStarted);
   }
