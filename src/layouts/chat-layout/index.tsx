@@ -4,7 +4,7 @@ import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 
@@ -15,24 +15,44 @@ function ChatLayout() {
 	const setDraft = useChatStore((s) => s.setDraft);
 	const sendText = useChatStore((s) => s.sendText);
 	const sendAudio = useChatStore((s) => s.sendAudio);
+	const sendImage = useChatStore((s) => s.sendImage);
 	const isListening = useChatStore((s) => s.isListening);
 	const isTranscribing = useChatStore((s) => s.isTranscribing);
-	const isAssistantTyping = useChatStore((s) => s.isAssistantTyping);
+	const isInputLocked = useChatStore((s) => s.isInputLocked);
 	const startListening = useChatStore((s) => s.startListening);
 	const stopListening = useChatStore((s) => s.stopListening);
 	const suggestions = useChatStore((s) => s.suggestions);
 	const messages = useChatStore((s) => s.messages);
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
-	// const fetchLocation = useChatStore((s) => s.fetchLocation); // Geolocation disabled
+	const fetchLocation = useChatStore((s) => s.fetchLocation);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
-	// Geolocation disabled as location is not being used
-	// useEffect(() => {
-	//	fetchLocation(t);
-	// }, [fetchLocation, t]);
+	useEffect(() => {
+		if (typeof window === "undefined" || !navigator.geolocation || !navigator.permissions?.query) {
+			return;
+		}
+
+		let cancelled = false;
+
+		// Only auto-fetch when the browser already granted location permission.
+		void navigator.permissions
+			.query({ name: "geolocation" as PermissionName })
+			.then((status) => {
+				if (!cancelled && status.state === "granted") {
+					fetchLocation(t);
+				}
+			})
+			.catch(() => {
+				// Skip auto-request when the permission state cannot be checked.
+			});
+
+		return () => {
+			cancelled = true;
+		};
+	}, [fetchLocation, t]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
@@ -65,12 +85,22 @@ function ChatLayout() {
 			</main>
 			<div className="relative z-20">
 				<ChatInput
+					disabled={isInputLocked}
 					placeholder={t("inputPlaceholder") as string}
 					value={draft}
 					onValueChange={setDraft}
 					onSend={async (payload: ChatInputPayload) => {
-						const { text, voice } = payload;
-						if (text.trim()) {
+						const { text, voice, files, mode } = payload;
+						if (files && files.length > 0) {
+							const imageFile = files[0];
+							if (!imageFile) return;
+							try {
+								void mode;
+								await sendImage(imageFile, language, t);
+							} catch (error) {
+								console.error(error);
+							}
+						} else if (text.trim()) {
 							sendText(text, language, t);
 						} else if (voice) {
 							try {
@@ -84,7 +114,6 @@ function ChatLayout() {
 					onVoiceStop={stopListening}
 					isListening={isListening}
 					isTranscribing={isTranscribing}
-					isAssistantTyping={isAssistantTyping}
 					suggestions={suggestions}
 					onSuggestionClick={(text: string) => sendText(text, language, t)}
 					micHint={messages.length > 0 ? undefined : (t("chatMicHint") as string)}
