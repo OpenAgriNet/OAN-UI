@@ -22,6 +22,7 @@ import type { Suggestion } from "../api/suggestions-api";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatStore } from "@/hooks/store/chat";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { environment } from "@/lib/config/environment";
 
 const MAX_CLIENT_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
@@ -71,6 +72,7 @@ export function ChatInput({
 	const { t } = useLanguage();
 	const { user } = useAuth();
 	const setToast = useChatStore((s) => s.setToast);
+	const isMobile = useIsMobile();
 	const isUnauthenticated = !user;
 	const [isPestDialogOpen, setIsPestDialogOpen] = useState(false);
 	const [pestImage, setPestImage] = useState<File | null>(null);
@@ -331,70 +333,84 @@ export function ChatInput({
 	return (
 		<div className="bg-[#FFFFFF] dark:bg-[var(--inputBg-dark)] backdrop-blur supports-[backdrop-filter]:bg-[#FFFFFF] dark:supports-[backdrop-filter]:bg-[var(--inputBg-dark)]">
 			<Dialog open={isPestDialogOpen} onOpenChange={setIsPestDialogOpen}>
-				<DialogContent className="max-w-md overflow-hidden p-0 gap-0 bg-white dark:bg-[var(--background)]" showCloseButton={false}>
+				<DialogContent className="max-w-md overflow-hidden rounded-2xl p-0 gap-0 bg-white dark:bg-[var(--background)] border shadow-xl" showCloseButton={false}>
+					{/* Warm amber header — softer than before */}
 					<DialogHeader className="gap-0">
-						<div className="bg-amber-500 px-6 py-4 text-white">
-							<DialogTitle>{t("pestApi.title") as string}</DialogTitle>
-							<DialogDescription className="mt-1 text-amber-50">
+						<div className="bg-gradient-to-br from-amber-400 to-amber-500 px-6 py-5 text-white">
+							<div className="flex items-center gap-2 mb-1">
+								<Camera className="h-5 w-5 opacity-90" />
+								<DialogTitle className="text-lg font-semibold">
+									{t("pestApi.title") as string}
+								</DialogTitle>
+							</div>
+							<DialogDescription className="text-amber-50/90 text-sm leading-relaxed">
 								{t("pestApi.description") as string}
 							</DialogDescription>
 						</div>
 					</DialogHeader>
-					<div className="space-y-4 px-6 pb-6 pt-2">
-						<div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+
+					<div className="px-6 py-5 space-y-5">
+						{/* Refined amber note with icon */}
+						<div className="flex items-start gap-3 rounded-xl border border-amber-100 bg-amber-50/60 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/30 dark:bg-amber-950/20 dark:text-amber-100">
+							<svg className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+								<path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+							</svg>
 							{t("pestApi.note") as string}
 						</div>
 
-						<div className="space-y-2">
-							<p className="text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+						{/* Photo section */}
+						<div className="space-y-3">
+							<p className="text-sm font-semibold text-foreground flex items-center gap-2">
+								<span className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500" />
 								{t("pestApi.photoLabel") as string}
 							</p>
+
 							{pestImagePreview ? (
-								<div className="relative overflow-hidden rounded-2xl border border-border bg-muted/20 p-2">
+								<div className="relative overflow-hidden rounded-xl border border-border bg-muted/30 shadow-sm">
 									<img
 										src={pestImagePreview}
-										alt={pestImage?.name || "Pest API upload preview"}
-										className="max-h-64 w-full rounded-xl object-contain"
+										alt={pestImage?.name || "Crop image preview"}
+										className="max-h-56 w-full object-contain p-3"
 									/>
-									<Button
+									<button
 										type="button"
-										variant="destructive"
-										size="icon"
-										className="absolute right-4 top-4 h-8 w-8 rounded-full"
 										onClick={removePestFile}
+										className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-all hover:bg-black/70 hover:scale-105"
 									>
 										<X className="h-4 w-4" />
-									</Button>
+									</button>
 								</div>
 							) : (
-								<div className="rounded-2xl border-2 border-dashed border-border px-5 py-6">
-									<div className="flex items-start justify-center gap-6">
-										<button
-											type="button"
-											onClick={openPestApiPicker}
-											className="group flex flex-col items-center gap-2"
-										>
-											<div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-300 text-amber-700 transition-colors group-hover:border-amber-500 group-hover:bg-amber-50 dark:border-amber-900/60 dark:text-amber-200 dark:group-hover:bg-amber-950/40">
-												<Camera className="h-7 w-7" />
-											</div>
-											<span className="text-center text-xs text-muted-foreground">
-												{t("imageUpload.captureImage") as string}
-											</span>
-										</button>
+								<div className="rounded-xl border-2 border-dashed border-amber-200/70 bg-amber-50/30 px-4 py-8 transition-all hover:border-amber-300 hover:bg-amber-50/50 dark:border-amber-900/30 dark:bg-amber-950/10">
+									<div className={cn("flex items-center justify-center", isMobile ? "gap-8" : "gap-4 flex-col")}>
+										{isMobile && (
+											<button
+												type="button"
+												onClick={openPestApiPicker}
+												className="group flex flex-col items-center gap-2.5"
+											>
+												<div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-300/80 bg-white text-amber-600 shadow-sm transition-all group-hover:border-amber-400 group-hover:bg-amber-50 group-hover:shadow-md group-hover:scale-105 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+													<Camera className="h-6 w-6" />
+												</div>
+												<span className="text-center text-sm font-medium text-foreground">
+													{t("imageUpload.captureImage") as string}
+												</span>
+											</button>
+										)}
 										<button
 											type="button"
 											onClick={openPestGalleryPicker}
-											className="group flex flex-col items-center gap-2"
+											className="group flex flex-col items-center gap-2.5"
 										>
-											<div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-amber-300 text-amber-700 transition-colors group-hover:border-amber-500 group-hover:bg-amber-50 dark:border-amber-900/60 dark:text-amber-200 dark:group-hover:bg-amber-950/40">
-												<ImageIcon className="h-7 w-7" />
+											<div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-300/80 bg-white text-amber-600 shadow-sm transition-all group-hover:border-amber-400 group-hover:bg-amber-50 group-hover:shadow-md group-hover:scale-105 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+												<ImageIcon className="h-6 w-6" />
 											</div>
-											<span className="text-center text-xs text-muted-foreground">
+											<span className="text-center text-sm font-medium text-foreground">
 												{t("imageUpload.selectFromGallery") as string}
 											</span>
 										</button>
 									</div>
-									<p className="mt-4 text-center text-xs text-muted-foreground">
+									<p className="mt-5 text-center text-xs text-muted-foreground/80">
 										{t("imageUpload.imageFormatHint") as string}
 									</p>
 								</div>
@@ -417,11 +433,23 @@ export function ChatInput({
 							onChange={onPestFilePicked}
 						/>
 					</div>
-					<DialogFooter className="border-t px-6 pb-6 pt-4 sm:justify-end">
-						<Button type="button" variant="outline" onClick={() => setIsPestDialogOpen(false)}>
+
+					{/* Footer buttons */}
+					<DialogFooter className="border-t border-border/50 px-6 py-4 gap-3 sm:justify-end bg-muted/20">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setIsPestDialogOpen(false)}
+							className="flex-1 sm:flex-none rounded-xl border-border/80 hover:bg-muted"
+						>
 							{t("pestApi.cancel") as string}
 						</Button>
-						<Button type="button" onClick={submitPestImage} disabled={isPestSubmitDisabled}>
+						<Button
+							type="button"
+							onClick={submitPestImage}
+							disabled={isPestSubmitDisabled}
+							className="flex-1 sm:flex-none rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md hover:from-amber-600 hover:to-amber-700 hover:shadow-lg disabled:opacity-50 transition-all"
+						>
 							{t("pestApi.submit") as string}
 						</Button>
 					</DialogFooter>
@@ -546,20 +574,19 @@ export function ChatInput({
 							{charCount}/{maxLength}
 						</span>
 					)}
-					<div className="flex shrink-0 items-center pr-1">
+					<div className="flex shrink-0 items-center pr-2">
     <Button
       type="button"
-      size="icon"
       disabled={disabled || isLoading || isUnauthenticated}
       onClick={() => setIsPestDialogOpen(true)}
       className={cn(
-        "h-9 w-9 rounded-full border border-transparent bg-transparent text-amber-700 hover:bg-amber-50 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100 shadow-none",
+        "h-12 w-12 rounded-full border border-transparent bg-transparent text-amber-700 hover:bg-amber-50 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100 shadow-none p-0",
         disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
       )}
       aria-label={t("pestApi.trigger") as string}
       title={t("pestApi.trigger") as string}
     >
-      <Camera className="h-5 w-5" />
+      <Camera className="size-5" />
     </Button>
   </div>
 
