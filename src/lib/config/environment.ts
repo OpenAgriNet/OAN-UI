@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: '',
+  apiUrl: 'http://localhost:8000',
   maintenanceMode: false,
   guestUserLimit: 10,
   suggestionsDisabled: true,
