@@ -286,10 +286,10 @@
     "processingFailed": "Could not process the image. Please try another photo."
   },
   "pestApi": {
-    "trigger": "Pest API",
-    "title": "Use Pest API",
-    "description": "Upload a crop image only for pest or disease identification.",
-    "note": "This is only for the Pest API flow. Use a clear photo of the affected crop, leaf, stem, fruit, or visible pest.",
+    "trigger": "Pest & Disease Detection",
+    "title": "Pest & Disease Detection",
+    "description": "Upload a crop image to identify pests or diseases affecting your crop.",
+    "note": "Use a clear photo of the affected crop, leaf, stem, fruit, or visible pest for best results.",
     "photoLabel": "Plant/Pest Image",
     "continue": "Continue",
     "submit": "Analyze & Submit",

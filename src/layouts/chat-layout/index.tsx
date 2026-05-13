@@ -31,23 +31,36 @@ function ChatLayout() {
 	const [settingsOpen, setSettingsOpen] = useState(false);
 
 	useEffect(() => {
-		if (typeof window === "undefined" || !navigator.geolocation || !navigator.permissions?.query) {
+		if (typeof window === "undefined" || !navigator.geolocation) {
 			return;
 		}
 
 		let cancelled = false;
 
-		// Only auto-fetch when the browser already granted location permission.
-		void navigator.permissions
-			.query({ name: "geolocation" as PermissionName })
-			.then((status) => {
-				if (!cancelled && status.state === "granted") {
-					fetchLocation(t);
-				}
-			})
-			.catch(() => {
-				// Skip auto-request when the permission state cannot be checked.
-			});
+		const requestLocation = () => {
+			if (!cancelled) fetchLocation(t);
+		};
+
+		// If the Permissions API is available, check the current state first.
+		// - "granted"  → fetch silently (no prompt shown to user)
+		// - "prompt"   → actively request so the browser shows the permission dialog
+		// - "denied"   → skip (user has blocked it; don't bother)
+		if (navigator.permissions?.query) {
+			void navigator.permissions
+				.query({ name: "geolocation" as PermissionName })
+				.then((status) => {
+					if (status.state === "granted" || status.state === "prompt") {
+						requestLocation();
+					}
+				})
+				.catch(() => {
+					// Fallback: just try — the browser will show its own prompt.
+					requestLocation();
+				});
+		} else {
+			// Permissions API not available — request directly.
+			requestLocation();
+		}
 
 		return () => {
 			cancelled = true;

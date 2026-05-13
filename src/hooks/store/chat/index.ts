@@ -391,8 +391,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						}
 					});
-				},
-				() => set({ isInputLocked: false })
+				}
+				// Note: input stays locked until sendUserQuery fully resolves (after all stream chunks)
 			);
 
 			set({ isAssistantTyping: false, isInputLocked: false });
@@ -581,8 +581,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						}
 					});
-				},
-				() => set({ isInputLocked: false })
+				}
+				// Note: input stays locked until sendImageQuery fully resolves (after all stream chunks)
 			);
 
 			set({ isAssistantTyping: false, isInputLocked: false });
