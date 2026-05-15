@@ -29,3 +29,6 @@ dist-ssr
 
 coverage/
 .sonar/
+
+
+jwt_private_key.pem

@@ -125,6 +125,12 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 	};
 }
 
+function normalizeAssistantBodyForDisplay(text: string): string {
+	// Backend guardrail prefixes milk-collection payloads with a success line.
+	// Remove that prefix so the chat starts directly with markdown sections/tables.
+	return text.replace(/^Farmer milk collection details fetched successfully:\s*\n*/i, "");
+}
+
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
 import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
 
@@ -278,17 +284,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					}
 
 					set((state) => {
+						const displayBody = normalizeAssistantBodyForDisplay(streamingText);
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
 								messages: [
 									...state.messages.slice(0, -1),
-									{ ...lastMsg, body: streamingText }
+									{ ...lastMsg, body: displayBody }
 								]
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
+								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
 							};
 						}
 					});
