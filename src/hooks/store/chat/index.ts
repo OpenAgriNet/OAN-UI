@@ -3,7 +3,6 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import { environment } from "@/lib/config/environment";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -433,7 +432,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						}
 					];
 
-					let icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+					const icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
 
 					return {
 						id: String(index + 1),
