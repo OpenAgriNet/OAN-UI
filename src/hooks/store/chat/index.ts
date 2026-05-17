@@ -316,14 +316,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return { isAssistantTyping: false };
 			});
 
-			try {
-				const userDetailsResponse = get().getUserForTelemetry();
-				await telemetry.startTelemetry(currentSession, userDetailsResponse);
-				await telemetry.endTelemetryWithWait(questionId);
-			} catch (e) {
-				console.warn("Telemetry failed (response event)", e);
-			}
-
 			// Use inline suggestions from stream if available, fall back to API
 			const parsedInlineSuggestions = Array.isArray(inlineSuggestions) ? inlineSuggestions : [];
 			if (parsedInlineSuggestions.length > 0) {
@@ -513,7 +505,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const msg = messages.find(m => m.id === messageId);
 		if (!msg) return;
 
-		const userMsg = messages.findLast((m) => m.role === 'user');
+		const feedbackQuestionId = msg.questionId || messageId;
+		const userMsg = messages.findLast((m) => m.role === 'user' && m.questionId === msg.questionId);
 		const questionText = userMsg && userMsg.type === 'text' ? userMsg.text : "";
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
@@ -528,7 +521,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				email: user?.email || ""
 			});
 			telemetry.logFeedbackEvent(
-				messageId,
+				feedbackQuestionId,
 				sessionId,
 				feedbackMsg,
 				feedbackType,

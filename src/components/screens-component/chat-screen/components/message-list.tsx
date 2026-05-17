@@ -4,6 +4,13 @@ import { MessageChrome } from "./message-chrome";
 import { ChatMessage } from "./bubbles/chat-types";
 import { Bubble } from "./bubbles";
 import { AILoader } from "./ai-loader";
+import {
+	markAnswerRendered,
+	logResponseEvent,
+	startTelemetry,
+	endTelemetry,
+} from "@/lib/telemetry";
+import { useChatStore } from "@/hooks/store/chat";
 
 /* eslint-disable no-unused-vars */
 type MessageListProps = {
@@ -16,6 +23,7 @@ type MessageListProps = {
 
 export function MessageList(props: MessageListProps) {
 	const bottomRef = useRef<HTMLDivElement | null>(null);
+	const loggedResponseQidsRef = useRef<Set<string>>(new Set());
 
 	useEffect(() => {
 		if (props.messages.length > 0) {
@@ -28,36 +36,40 @@ export function MessageList(props: MessageListProps) {
 			}
 		}
 
-		// Performance Tracking
-		const lastMessage = props.messages[props.messages.length - 1];
-		if (
-			lastMessage &&
-			lastMessage.role === "assistant" &&
-			lastMessage.type === "card" &&
-			lastMessage.questionId &&
-			!props.isAssistantTyping // Only log when fully done? Or maybe streams behave differently. 
-            // In original OAN-UI it seemed to log after paint. 
-            // We'll trust that isAssistantTyping false means done.
-		) {
-            // We need to import these functions or pass them down. 
-            // Ideally we'd import them directly since they are singletons/globals basically.
-            import("@/lib/telemetry").then(({ markAnswerRendered, logResponseEvent }) => {
-                // We need the session ID, which isn't in props. 
-                // But the store has it. Or we can just rely on the global state in telemetry if it persists?
-                // Actually `logResponseEvent` needs sessionId. 
-                // Maybe we should pass sessionId to MessageList?
-                // Or we can import the store to get sessionId.
-                import("@/hooks/store/chat").then(({ useChatStore }) => {
-                   const sessionId = useChatStore.getState().sessionId; 
-                   if(sessionId && lastMessage.questionText && lastMessage.body) {
-                       const pipeline = lastMessage.type === "card" && "pipeline" in lastMessage ? lastMessage.pipeline : undefined;
-                       markAnswerRendered(lastMessage.questionId!, () => {
-                           logResponseEvent(lastMessage.questionId!, sessionId, lastMessage.questionText!, lastMessage.body, pipeline);
-                           // endTelemetryWithWait is called in store action
-                       });
-                   }
-                });
-            });
+		// Performance + response telemetry tracking.
+		// Process all completed assistant messages so follow-up Q&A pairs are not skipped.
+		if (props.isAssistantTyping) return;
+
+		const sessionId = useChatStore.getState().sessionId;
+		const userDetails = useChatStore.getState().getUserForTelemetry();
+		if (!sessionId) return;
+
+		for (const msg of props.messages) {
+			if (msg.role !== "assistant" || msg.type !== "card") continue;
+			if (!msg.questionId || !msg.questionText || !msg.body) continue;
+			if (!msg.showListenRow) continue;
+
+			const questionId = msg.questionId;
+			if (loggedResponseQidsRef.current.has(questionId)) continue;
+
+			const pipeline = "pipeline" in msg ? msg.pipeline : undefined;
+			loggedResponseQidsRef.current.add(questionId);
+			markAnswerRendered(questionId, async () => {
+				try {
+					await startTelemetry(sessionId, userDetails);
+					logResponseEvent(
+						questionId,
+						sessionId,
+						msg.questionText!,
+						msg.body,
+						pipeline,
+					);
+					endTelemetry();
+				} catch (error) {
+					console.warn("Telemetry failed (response event)", error);
+					loggedResponseQidsRef.current.delete(questionId);
+				}
+			});
 		}
 	}, [props.messages.length, props.isAssistantTyping, props.messages]);
 
