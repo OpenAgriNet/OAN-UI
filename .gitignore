@@ -27,5 +27,7 @@ dist-ssr
 .env.production
 .env.development
 
+public/jwt_public_key.pem
+
 coverage/
 .sonar/
