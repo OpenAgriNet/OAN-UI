@@ -94,20 +94,40 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									p: ({ node, ...props }) => (
 										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />
 									),
-									
+
 									ol: ({ node, ...props }) => (
 										<ol className="my-1.5 list-decimal pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
 									),
 									ul: ({ node, ...props }) => (
 										<ul className="my-1.5 list-disc pl-6 [&>li]:mb-0.5 [&>li:last-child]:mb-0" {...props} />
 									),
-									
+
 									li: ({ node, ...props }) => (
-										<li className="pl-1" {...props} /> 
+										<li className="pl-1" {...props} />
 									),
-								
+
 									strong: ({ node, ...props }) => (
 										<span className="font-semibold text-foreground/90" {...props} />
+									),
+									table: ({ node, ...props }) => (
+										<div className="my-2 w-full overflow-x-auto rounded-md border border-[#E5E7EB]">
+											<table className="w-full border-collapse text-sm" {...props} />
+										</div>
+									),
+									thead: ({ node, ...props }) => (
+										<thead className="bg-[#F9FAFB]" {...props} />
+									),
+									tbody: ({ node, ...props }) => (
+										<tbody className="bg-white" {...props} />
+									),
+									tr: ({ node, ...props }) => (
+										<tr className="border-b border-[#E5E7EB] last:border-b-0" {...props} />
+									),
+									th: ({ node, ...props }) => (
+										<th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[#111827]" {...props} />
+									),
+									td: ({ node, ...props }) => (
+										<td className="px-3 py-2 align-top text-sm text-[#111827]" {...props} />
 									),
 								}}
 							>

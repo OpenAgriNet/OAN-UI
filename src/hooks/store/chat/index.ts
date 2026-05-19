@@ -124,6 +124,12 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 	};
 }
 
+function normalizeAssistantBodyForDisplay(text: string): string {
+	// Backend guardrail prefixes milk-collection payloads with a success line.
+	// Remove that prefix so the chat starts directly with markdown sections/tables.
+	return text.replace(/^Farmer milk collection details fetched successfully:\s*\n*/i, "");
+}
+
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
 import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
 
@@ -297,17 +303,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					}
 
 					set((state) => {
+						const displayBody = normalizeAssistantBodyForDisplay(streamingText);
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
 								messages: [
 									...state.messages.slice(0, -1),
-									{ ...lastMsg, body: streamingText }
+									{ ...lastMsg, body: displayBody }
 								]
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
+								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed, pipeline: useTranslationPipeline ? 'oss_translate' : 'default' }]
 							};
 						}
 					});
@@ -328,14 +335,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				}
 				return { isAssistantTyping: false };
 			});
-
-			try {
-				const userDetailsResponse = get().getUserForTelemetry();
-				await telemetry.startTelemetry(currentSession, userDetailsResponse);
-				await telemetry.endTelemetryWithWait(questionId);
-			} catch (e) {
-				console.warn("Telemetry failed (response event)", e);
-			}
 
 			// Use inline suggestions from stream if available, fall back to API
 			const parsedInlineSuggestions = Array.isArray(inlineSuggestions) ? inlineSuggestions : [];
@@ -532,7 +531,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const msg = messages.find(m => m.id === messageId);
 		if (!msg) return;
 
-		const userMsg = messages.findLast((m) => m.role === 'user');
+		const feedbackQuestionId = msg.questionId || messageId;
+		const userMsg = messages.findLast((m) => m.role === 'user' && m.questionId === msg.questionId);
 		const questionText = userMsg && userMsg.type === 'text' ? userMsg.text : "";
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
@@ -547,7 +547,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				email: user?.email || ""
 			});
 			telemetry.logFeedbackEvent(
-				messageId,
+				feedbackQuestionId,
 				sessionId,
 				feedbackMsg,
 				feedbackType,

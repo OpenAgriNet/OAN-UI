@@ -2,6 +2,7 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { UAParser } from "ua-parser-js";
 import { env } from "@/config/env";
+import { authState } from "@/hooks/store/auth";
 
 // FingerprintJS initialization
 
@@ -78,10 +79,37 @@ const mapOSCode = (name = "") =>
 const mapDeviceCode = (type = "") =>
   ({ mobile: "MB", tablet: "TB", desktop: "DT" })[type?.toLowerCase()] || "DT";
 
-// Declare V3 Telemetry methods required for this implementation
-// Note: Implementations for all methods are assumed to exist in the global Telemetry object.
+// Declare V3 Telemetry methods required for this implementation.
+// NOTE: Backend telemetry is sent via authenticated fetch (sendTelemetryToBackend).
+// During rollout we ALSO keep the legacy Sunbird telemetry pathway open so the
+// existing collector/dashboards don't go dark while the new Langfuse-via-backend
+// path is validated. Flip LEGACY_TELEMETRY_ENABLED to false to retire it.
 declare let Telemetry: any;
 declare let AuthTokenGenerate: any;
+
+const LEGACY_TELEMETRY_ENABLED = true;
+
+const legacyTelemetryAvailable = (): boolean =>
+  LEGACY_TELEMETRY_ENABLED && typeof Telemetry !== "undefined";
+
+const sendTelemetryLegacy = (payload: Record<string, unknown>) => {
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.response === "function") {
+      Telemetry.response(payload);
+    }
+  } catch {
+    // Best-effort: never let the legacy SDK break the new pathway.
+  }
+};
+
+/**
+ * Emit one telemetry event to BOTH pathways (new backend + legacy Sunbird).
+ * Each sink is independently fault-isolated.
+ */
+const emitTelemetry = (payload: Record<string, unknown>) => {
+  sendTelemetryToBackend(payload);
+  sendTelemetryLegacy(payload);
+};
 
 // Function to get the current host URL
 const getHostUrl = (): string => {
@@ -89,6 +117,31 @@ const getHostUrl = (): string => {
     return window.location.origin;
   }
   return "unknown-host";
+};
+
+const getTelemetryEndpoint = () => `${env.telemetryUrl}/action/data/v3/telemetry`;
+
+const getTelemetryHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const { accessToken } = authState();
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (env.apiKey) {
+    headers.apikey = env.apiKey;
+  }
+  return headers;
+};
+
+const sendTelemetryToBackend = (payload: Record<string, unknown>) => {
+  fetch(getTelemetryEndpoint(), {
+    method: "POST",
+    headers: getTelemetryHeaders(),
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
 };
 
 // inititalize fingerprint and UAparser
@@ -154,27 +207,25 @@ export const startTelemetry = async (
 
   initChatApiPerformanceObserver();
 
-  const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
-  const secret = "gnjhgjugkk";
-  const config = {
-    pdata: {
-      id: "AmulAI",
-      ver: "v0.1",
-      pid: "AmulAI",
-    },
-    channel: "AmulAI-" + getHostUrl(),
-    sid: sessionId,
-    uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
-    did: userDetailsObj["email"] || "DEFAULT-USER",
-    authtoken: "",
-    host: env.telemetryUrl,
-  };
-
-  const startEdata = {};
-  const options = {};
-  const token = AuthTokenGenerate.generate(key, secret);
-  config.authtoken = token;
-  Telemetry.start(config, "content_id", "contetn_ver", startEdata, options);
+  // Legacy Sunbird session start (kept open during rollout).
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.start === "function") {
+      const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
+      const secret = "gnjhgjugkk";
+      const config = {
+        pdata: { id: "AmulAI", ver: "v0.1", pid: "AmulAI" },
+        channel: "AmulAI-" + getHostUrl(),
+        sid: sessionId,
+        uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
+        did: userDetailsObj["email"] || "DEFAULT-USER",
+        authtoken: AuthTokenGenerate.generate(key, secret),
+        host: "/observability-service",
+      };
+      Telemetry.start(config, "content_id", "contetn_ver", {}, {});
+    }
+  } catch {
+    // Best-effort: legacy start must never block the new pathway.
+  }
 };
 
 export const markServerRequestStart = (qid: string) => {
@@ -229,7 +280,7 @@ export const logQuestionEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(questionData);
+  emitTelemetry(questionData);
 };
 
 export const logResponseEvent = (
@@ -281,7 +332,7 @@ export const logResponseEvent = (
     values: [],
   };
 
-  Telemetry.response(responseData);
+  emitTelemetry(responseData);
 };
 
 export const logErrorEvent = (
@@ -311,7 +362,7 @@ export const logErrorEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(errorData);
+  emitTelemetry(errorData);
 };
 
 /** Optional feedback metadata: service that generated the response, pipeline, and 1–5 rating */
@@ -366,7 +417,7 @@ export const logFeedbackEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(feedbackData);
+  emitTelemetry(feedbackData);
 };
 
 /**
@@ -378,9 +429,6 @@ export const logAnonymousTokenIssued = (
   sessionId: string,
   deviceId: string,
 ) => {
-  // Align with existing working telemetry endpoint:
-  // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
-  const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
   const payload = {
     eid: "OE_ANONYMOUS_TOKEN_ISSUED",
     ver: "2.2",
@@ -406,16 +454,18 @@ export const logAnonymousTokenIssued = (
     etags: { partner: [] },
   };
 
-  fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch(() => {});
+  sendTelemetryToBackend(payload);
 };
 
 export const endTelemetry = () => {
-  Telemetry.end({});
+  // New pathway is per-event (no session to close). Close the legacy session.
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.end === "function") {
+      Telemetry.end({});
+    }
+  } catch {
+    // Best-effort.
+  }
 };
 
 // Track when response data is ready for each question
@@ -443,7 +493,6 @@ export const endTelemetryWithWait = async (qid: string, timeout = 3000) => {
   const timer = window.__RESPONSE_TIMERS__?.[qid];
   if (timer?.responseEnd && timer?.paintTime) {
     console.log(`Response data already captured for ${qid}`);
-    Telemetry.end({});
     return;
   }
 
@@ -475,9 +524,6 @@ export const endTelemetryWithWait = async (qid: string, timeout = 3000) => {
   } catch (error) {
     console.warn(`Error waiting for response data: ${error}`);
   }
-
-  // Call telemetry endpoint
-  Telemetry.end({});
 
   // Cleanup
   responseDataReady.delete(qid);
