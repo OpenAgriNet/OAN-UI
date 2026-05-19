@@ -2,6 +2,7 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { UAParser } from "ua-parser-js";
 import { env } from "@/config/env";
+import { authState } from "@/hooks/store/auth";
 
 // FingerprintJS initialization
 
@@ -79,9 +80,7 @@ const mapDeviceCode = (type = "") =>
   ({ mobile: "MB", tablet: "TB", desktop: "DT" })[type?.toLowerCase()] || "DT";
 
 // Declare V3 Telemetry methods required for this implementation
-// Note: Implementations for all methods are assumed to exist in the global Telemetry object.
-declare let Telemetry: any;
-declare let AuthTokenGenerate: any;
+// NOTE: Backend telemetry is sent via authenticated fetch (sendTelemetryToBackend).
 
 // Function to get the current host URL
 const getHostUrl = (): string => {
@@ -89,6 +88,31 @@ const getHostUrl = (): string => {
     return window.location.origin;
   }
   return "unknown-host";
+};
+
+const getTelemetryEndpoint = () => `${env.telemetryUrl}/action/data/v3/telemetry`;
+
+const getTelemetryHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const { accessToken } = authState();
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (env.apiKey) {
+    headers.apikey = env.apiKey;
+  }
+  return headers;
+};
+
+const sendTelemetryToBackend = (payload: Record<string, unknown>) => {
+  fetch(getTelemetryEndpoint(), {
+    method: "POST",
+    headers: getTelemetryHeaders(),
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch(() => {});
 };
 
 // inititalize fingerprint and UAparser
@@ -145,36 +169,16 @@ const initFingerprintContext = async (sessionStartAt: number) => {
 };
 
 export const startTelemetry = async (
-  sessionId: string,
-  userDetailsObj: { preferred_username: string; email: string },
+  _sessionId: string,
+  _userDetailsObj: { preferred_username: string; email: string },
 ) => {
+  void _sessionId;
+  void _userDetailsObj;
   const sessionStartAt = Date.now();
 
   await initFingerprintContext(sessionStartAt);
 
   initChatApiPerformanceObserver();
-
-  const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
-  const secret = "gnjhgjugkk";
-  const config = {
-    pdata: {
-      id: "AmulAI",
-      ver: "v0.1",
-      pid: "AmulAI",
-    },
-    channel: "AmulAI-" + getHostUrl(),
-    sid: sessionId,
-    uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
-    did: userDetailsObj["email"] || "DEFAULT-USER",
-    authtoken: "",
-    host: env.telemetryUrl,
-  };
-
-  const startEdata = {};
-  const options = {};
-  const token = AuthTokenGenerate.generate(key, secret);
-  config.authtoken = token;
-  Telemetry.start(config, "content_id", "contetn_ver", startEdata, options);
 };
 
 export const markServerRequestStart = (qid: string) => {
@@ -229,7 +233,7 @@ export const logQuestionEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(questionData);
+  sendTelemetryToBackend(questionData);
 };
 
 export const logResponseEvent = (
@@ -281,7 +285,7 @@ export const logResponseEvent = (
     values: [],
   };
 
-  Telemetry.response(responseData);
+  sendTelemetryToBackend(responseData);
 };
 
 export const logErrorEvent = (
@@ -311,7 +315,7 @@ export const logErrorEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(errorData);
+  sendTelemetryToBackend(errorData);
 };
 
 /** Optional feedback metadata: service that generated the response, pipeline, and 1–5 rating */
@@ -366,7 +370,7 @@ export const logFeedbackEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  Telemetry.response(feedbackData);
+  sendTelemetryToBackend(feedbackData);
 };
 
 /**
@@ -378,9 +382,6 @@ export const logAnonymousTokenIssued = (
   sessionId: string,
   deviceId: string,
 ) => {
-  // Align with existing working telemetry endpoint:
-  // e.g. https://amulai.in/observability-service/action/data/v3/telemetry
-  const endpoint = `${env.telemetryUrl}/action/data/v3/telemetry`;
   const payload = {
     eid: "OE_ANONYMOUS_TOKEN_ISSUED",
     ver: "2.2",
@@ -406,16 +407,11 @@ export const logAnonymousTokenIssued = (
     etags: { partner: [] },
   };
 
-  fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch(() => {});
+  sendTelemetryToBackend(payload);
 };
 
 export const endTelemetry = () => {
-  Telemetry.end({});
+  // No-op: retained for call-site compatibility.
 };
 
 // Track when response data is ready for each question
@@ -443,7 +439,6 @@ export const endTelemetryWithWait = async (qid: string, timeout = 3000) => {
   const timer = window.__RESPONSE_TIMERS__?.[qid];
   if (timer?.responseEnd && timer?.paintTime) {
     console.log(`Response data already captured for ${qid}`);
-    Telemetry.end({});
     return;
   }
 
@@ -475,9 +470,6 @@ export const endTelemetryWithWait = async (qid: string, timeout = 3000) => {
   } catch (error) {
     console.warn(`Error waiting for response data: ${error}`);
   }
-
-  // Call telemetry endpoint
-  Telemetry.end({});
 
   // Cleanup
   responseDataReady.delete(qid);
