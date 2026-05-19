@@ -30,6 +30,4 @@ dist-ssr
 coverage/
 .sonar/
 *.tsbuildinfo
-
-
 jwt_private_key.pem
