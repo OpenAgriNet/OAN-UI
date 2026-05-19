@@ -381,9 +381,9 @@ class ApiService {
     const uploadResult = await this.uploadImage(imageFile);
     const imageId = uploadResult.image_id;
 
-    // Step 2: Send only the image UUID.
+    // Step 2: Send the image UUID along with a request message.
     // The backend resolves this ID to a localhost image URL internally.
-    const query = imageId;
+    const query = `please do the pest analysis for this image ${imageId}`;
 
     return this.sendUserQuery(query, session, sourceLang, targetLang, onStreamData, onResponseStarted);
   }

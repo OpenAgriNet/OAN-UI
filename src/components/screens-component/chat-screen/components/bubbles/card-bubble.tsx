@@ -13,7 +13,7 @@ import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 
 const markdownComponents: Components = {
-	p: ({ children }) => <p className="m-0 leading-relaxed">{children}</p>,
+	p: ({ children }) => <p className="m-0 leading-relaxed whitespace-pre-line">{children}</p>,
 	a: ({ href, children }) => (
 		<a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
 			{children}
