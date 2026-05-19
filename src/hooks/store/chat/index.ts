@@ -3,7 +3,6 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import { environment } from "@/lib/config/environment";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -127,6 +126,26 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
 import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchSuggestionsWithRetry(
+	sessionId: string,
+	language: string,
+	isStale?: () => boolean,
+) {
+	const retryDelaysMs = [300, 700, 1200, 2000];
+	for (let attempt = 0; attempt < retryDelaysMs.length; attempt++) {
+		if (isStale?.()) return [];
+		const suggestions = await apiService.getSuggestions(sessionId, language);
+		if (suggestions.length > 0) {
+			return suggestions;
+		}
+		await wait(retryDelaysMs[attempt] ?? 0);
+	}
+	if (isStale?.()) return [];
+	return await apiService.getSuggestions(sessionId, language);
+}
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -323,8 +342,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			if (parsedInlineSuggestions.length > 0) {
 				set({ suggestions: parsedInlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
 			} else {
-				const suggestions = await apiService.getSuggestions(currentSession, language);
-				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+				// Abort retries early if a new turn started (bounds the worst-case
+				// retry tail and prevents stale suggestions overwriting a newer turn).
+				const isStale = () =>
+					get().sessionId !== currentSession || get().isAssistantTyping;
+				const suggestions = await fetchSuggestionsWithRetry(currentSession, language, isStale);
+				if (!isStale()) {
+					set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+				}
 			}
 
 			// Show success for text completion if needed, though usually silent is better for chat.
@@ -426,7 +451,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						}
 					];
 
-					let icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+					const icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
 
 					return {
 						id: String(index + 1),
