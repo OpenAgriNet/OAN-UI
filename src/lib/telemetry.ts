@@ -79,8 +79,37 @@ const mapOSCode = (name = "") =>
 const mapDeviceCode = (type = "") =>
   ({ mobile: "MB", tablet: "TB", desktop: "DT" })[type?.toLowerCase()] || "DT";
 
-// Declare V3 Telemetry methods required for this implementation
+// Declare V3 Telemetry methods required for this implementation.
 // NOTE: Backend telemetry is sent via authenticated fetch (sendTelemetryToBackend).
+// During rollout we ALSO keep the legacy Sunbird telemetry pathway open so the
+// existing collector/dashboards don't go dark while the new Langfuse-via-backend
+// path is validated. Flip LEGACY_TELEMETRY_ENABLED to false to retire it.
+declare let Telemetry: any;
+declare let AuthTokenGenerate: any;
+
+const LEGACY_TELEMETRY_ENABLED = true;
+
+const legacyTelemetryAvailable = (): boolean =>
+  LEGACY_TELEMETRY_ENABLED && typeof Telemetry !== "undefined";
+
+const sendTelemetryLegacy = (payload: Record<string, unknown>) => {
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.response === "function") {
+      Telemetry.response(payload);
+    }
+  } catch {
+    // Best-effort: never let the legacy SDK break the new pathway.
+  }
+};
+
+/**
+ * Emit one telemetry event to BOTH pathways (new backend + legacy Sunbird).
+ * Each sink is independently fault-isolated.
+ */
+const emitTelemetry = (payload: Record<string, unknown>) => {
+  sendTelemetryToBackend(payload);
+  sendTelemetryLegacy(payload);
+};
 
 // Function to get the current host URL
 const getHostUrl = (): string => {
@@ -169,16 +198,34 @@ const initFingerprintContext = async (sessionStartAt: number) => {
 };
 
 export const startTelemetry = async (
-  _sessionId: string,
-  _userDetailsObj: { preferred_username: string; email: string },
+  sessionId: string,
+  userDetailsObj: { preferred_username: string; email: string },
 ) => {
-  void _sessionId;
-  void _userDetailsObj;
   const sessionStartAt = Date.now();
 
   await initFingerprintContext(sessionStartAt);
 
   initChatApiPerformanceObserver();
+
+  // Legacy Sunbird session start (kept open during rollout).
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.start === "function") {
+      const key = "gyte5565fdbgbngfnhgmnhmjgm,jm,";
+      const secret = "gnjhgjugkk";
+      const config = {
+        pdata: { id: "AmulAI", ver: "v0.1", pid: "AmulAI" },
+        channel: "AmulAI-" + getHostUrl(),
+        sid: sessionId,
+        uid: userDetailsObj["preferred_username"] || "DEFAULT-USER",
+        did: userDetailsObj["email"] || "DEFAULT-USER",
+        authtoken: AuthTokenGenerate.generate(key, secret),
+        host: "/observability-service",
+      };
+      Telemetry.start(config, "content_id", "contetn_ver", {}, {});
+    }
+  } catch {
+    // Best-effort: legacy start must never block the new pathway.
+  }
 };
 
 export const markServerRequestStart = (qid: string) => {
@@ -233,7 +280,7 @@ export const logQuestionEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  sendTelemetryToBackend(questionData);
+  emitTelemetry(questionData);
 };
 
 export const logResponseEvent = (
@@ -285,7 +332,7 @@ export const logResponseEvent = (
     values: [],
   };
 
-  sendTelemetryToBackend(responseData);
+  emitTelemetry(responseData);
 };
 
 export const logErrorEvent = (
@@ -315,7 +362,7 @@ export const logErrorEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  sendTelemetryToBackend(errorData);
+  emitTelemetry(errorData);
 };
 
 /** Optional feedback metadata: service that generated the response, pipeline, and 1–5 rating */
@@ -370,7 +417,7 @@ export const logFeedbackEvent = (
     channel: "AmulAI-" + getHostUrl(),
   };
 
-  sendTelemetryToBackend(feedbackData);
+  emitTelemetry(feedbackData);
 };
 
 /**
@@ -411,7 +458,14 @@ export const logAnonymousTokenIssued = (
 };
 
 export const endTelemetry = () => {
-  // No-op: retained for call-site compatibility.
+  // New pathway is per-event (no session to close). Close the legacy session.
+  try {
+    if (legacyTelemetryAvailable() && typeof Telemetry?.end === "function") {
+      Telemetry.end({});
+    }
+  } catch {
+    // Best-effort.
+  }
 };
 
 // Track when response data is ready for each question
