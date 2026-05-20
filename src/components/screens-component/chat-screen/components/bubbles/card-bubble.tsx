@@ -129,6 +129,27 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									td: ({ node, ...props }) => (
 										<td className="px-3 py-2 align-top text-sm text-[#111827]" {...props} />
 									),
+									h1: ({ node, ...props }) => (
+										<p className="mb-1.5 mt-2 text-lg font-bold leading-snug first:mt-0" {...props} />
+									),
+									h2: ({ node, ...props }) => (
+										<p className="mb-1.5 mt-2 text-base font-bold leading-snug first:mt-0" {...props} />
+									),
+									h3: ({ node, ...props }) => (
+										<p className="mb-1 mt-2 text-base font-semibold leading-snug first:mt-0" {...props} />
+									),
+									h4: ({ node, ...props }) => (
+										<p className="mb-1 mt-1.5 text-base font-semibold leading-snug first:mt-0" {...props} />
+									),
+									h5: ({ node, ...props }) => (
+										<p className="mb-1 mt-1.5 text-sm font-semibold leading-snug first:mt-0" {...props} />
+									),
+									h6: ({ node, ...props }) => (
+										<p className="mb-1 mt-1.5 text-sm font-semibold leading-snug first:mt-0" {...props} />
+									),
+									hr: ({ node, ...props }) => (
+										<hr className="my-3 border-t border-[#E5E7EB]" {...props} />
+									),
 								}}
 							>
 								{message.body}
