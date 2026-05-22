@@ -10,6 +10,7 @@ import {
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
+import { getVisitorId } from "@/lib/telemetry";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
@@ -17,6 +18,30 @@ import type { ToastType } from "@/components/screens-component/chat-screen/compo
 import { environment } from "@/lib/config/environment";
 
 /* eslint-disable no-unused-vars */
+export type ApiNotification = {
+	notification_id: string;
+	type: string;
+	priority: "HIGH" | "MEDIUM" | "LOW";
+	valid_from: string;
+	valid_to: string;
+	created_at: string;
+	content: { title: string; body: string };
+	location: {
+		subdistrict_name: string;
+		district_name: string;
+		state_name: string;
+		distance_km?: number;
+	} | null;
+	metadata: {
+		source: string;
+		template: string;
+		unique_id_iitm: string;
+		unique_id_pm_kisan: number;
+	};
+};
+
+export const SEEN_NOTIFICATIONS_KEY = "seen_notification_ids";
+
 export type PxDWeatherRecord = {
 	unique_id_pm_kisan: number;
 	unique_id_iitm: number;
@@ -99,6 +124,10 @@ type ChatStore = {
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
 	fetchLocation: () => void;
 	weatherForecastMatches: WeatherForecastMatch[];
+	notifications: ApiNotification[];
+	isFetchingNotifications: boolean;
+	fetchNotifications: () => Promise<void>;
+	markNotificationRead: (id: string) => void;
 };
 /* eslint-enable no-unused-vars */
 
@@ -165,6 +194,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
 	weatherForecastMatches: [],
+	notifications: [],
+	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
@@ -211,91 +242,68 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
 		const FALLBACK_NEAREST_K = 8;
 
-		navigator.geolocation.getCurrentPosition(
-			async (position) => {
-				const latitude = position.coords.latitude;
-				const longitude = position.coords.longitude;
-				console.log("=== User Location ===");
-				console.log("Latitude:", latitude);
-				console.log("Longitude:", longitude);
-				console.log("Accuracy:", position.coords.accuracy, "meters");
-				console.log("====================");
-				
-				try {
-					// Load the weather JSON file
-					const response = await fetch('/assets/PxD_Weather.json');
-					if (!response.ok) {
-						throw new Error(`Failed to load weather data: ${response.statusText}`);
-					}
-					
-					const weatherData = (await response.json()) as PxDWeatherRecord[];
-					console.log("Weather data loaded, total entries:", weatherData.length);
-
-					const withDist: WeatherForecastMatch[] = weatherData.map((location) => ({
-						...location,
-						distanceKm: calculateDistance(latitude, longitude, location.Lat, location.Lon),
-						isWithinSearchRadius: false
-					}));
-					withDist.sort((a, b) => a.distanceKm - b.distanceKm);
-
-					if (withDist.length === 0) {
-						set({ weatherForecastMatches: [] });
-						console.log("No matching location found in weather data.");
-						return;
-					}
-
-					const within = dedupeByPmKisan(
-						withDist.filter((x) => x.distanceKm <= WITHIN_RADIUS_KM)
-					).slice(0, MAX_LOCAL_MATCHES);
-
-					let matches: WeatherForecastMatch[];
-					if (within.length > 0) {
-						matches = within.map((m) => ({ ...m, isWithinSearchRadius: true }));
-						console.log(
-							`Weather: ${matches.length} row(s) within ${WITHIN_RADIUS_KM} km (ST_DWithin-style).`
-						);
-					} else {
-						const nearest = dedupeByPmKisan(withDist).slice(0, FALLBACK_NEAREST_K);
-						matches = nearest.map((m) => ({ ...m, isWithinSearchRadius: false }));
-						const d0 = matches[0]?.distanceKm.toFixed(1) ?? "?";
-						console.warn(
-							`Weather: no PxD cells within ${WITHIN_RADIUS_KM} km of user. This JSON covers roughly lat 17.2°N–32.7°N; your point is outside that band. ` +
-								`Showing ${matches.length} nearest cells (KNN), closest ~${d0} km away.`
-						);
-					}
-
-					set({ weatherForecastMatches: matches });
-					console.log(matches);
-					
-				} catch (error) {
-					console.error("Error loading or processing weather data:", error);
-					set({ weatherForecastMatches: [] });
-				}
-			},
-			(error) => {
-				console.error("Error getting location:", error.message);
-				set({ weatherForecastMatches: [] });
-				switch (error.code) {
-					case error.PERMISSION_DENIED:
-						console.error("User denied the request for Geolocation.");
-						break;
-					case error.POSITION_UNAVAILABLE:
-						console.error("Location information is unavailable.");
-						break;
-					case error.TIMEOUT:
-						console.error("The request to get user location timed out.");
-						break;
-					default:
-						console.error("An unknown error occurred.");
-						break;
-				}
-			},
-			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-				maximumAge: 0
-			}
+		// TODO: remove hardcoded test coordinates and restore geolocation
+		const latitude = 31.319416;
+		const longitude = 76.616630;
+		console.log("=== User Location (TEST HARDCODED) ===");
+		console.log("Latitude:", latitude);
+		console.log("Longitude:", longitude);
+		console.log("=======================================");
+		localStorage.setItem(
+			"user_location",
+			JSON.stringify({ latitude, longitude, timestamp: Date.now() })
 		);
+		get().fetchNotifications();
+	},
+
+	fetchNotifications: async () => {
+		if (get().isFetchingNotifications) return;
+		const locationRaw = localStorage.getItem("user_location");
+		if (!locationRaw) return;
+
+		set({ isFetchingNotifications: true });
+
+		let latitude: number, longitude: number;
+		try {
+			({ latitude, longitude } = JSON.parse(locationRaw));
+		} catch { return; }
+
+		let visitor_id = "unknown";
+		try {
+			visitor_id = await getVisitorId();
+		} catch { /* use fallback */ }
+
+		const lang = localStorage.getItem("app_language") || "en";
+
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+
+		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
+		if (seen_message_ids.length > 0) body.seen_message_ids = seen_message_ids;
+
+		try {
+			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+			if (!res.ok) return;
+			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
+			if (data.success && Array.isArray(data.notifications)) {
+				set({ notifications: data.notifications });
+			}
+		} catch { /* network error — keep previous notifications */ }
+		finally {
+			set({ isFetchingNotifications: false });
+		}
+	},
+
+	markNotificationRead: (id: string) => {
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+		if (!seen.includes(id)) {
+			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify([...seen, id]));
+		}
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),

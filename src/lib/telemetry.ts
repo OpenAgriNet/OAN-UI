@@ -180,6 +180,25 @@ const initFingerprintContext = async (sessionStartAt: number) => {
   window.__FINGERPRINT_CONTEXT__ = context;
 };
 
+export const getVisitorId = async (): Promise<string> => {
+  // 1. In-memory context (set after startTelemetry)
+  if (window.__FINGERPRINT_CONTEXT__?.ready && window.__FINGERPRINT_CONTEXT__?.data?.device_id) {
+    return window.__FINGERPRINT_CONTEXT__.data.device_id;
+  }
+  // 2. localStorage cache
+  try {
+    const cached = localStorage.getItem("fingerprint_context");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed?.data?.device_id) return parsed.data.device_id;
+    }
+  } catch { /* fall through */ }
+  // 3. Load FingerprintJS directly as last resort
+  const fp = await FingerprintJS.load();
+  const result = await fp.get();
+  return result.visitorId;
+};
+
 export const startTelemetry = async (
   sessionId: string,
   userDetailsObj: { preferred_username: string; email: string },

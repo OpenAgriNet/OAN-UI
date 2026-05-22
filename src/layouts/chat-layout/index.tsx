@@ -7,6 +7,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
+import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -28,10 +29,30 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
-	// Request location permission when component mounts
 	useEffect(() => {
-		fetchLocation();
+		navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+			if (result.state === "granted") {
+				const cached = localStorage.getItem("user_location");
+				if (cached) {
+					try {
+						const { timestamp } = JSON.parse(cached) as { timestamp: number };
+						const ONE_DAY = 24 * 60 * 60 * 1000;
+						if (Date.now() - timestamp < ONE_DAY) {
+							fetchLocation();
+							return;
+						}
+					} catch { /* malformed cache — fall through */ }
+				}
+				fetchLocation();
+			} else if (result.state === "prompt") {
+				setShowLocationPrompt(true);
+			}
+			// "denied" — skip silently
+		}).catch(() => {
+			setShowLocationPrompt(true);
+		});
 	}, [fetchLocation]);
 
 	const handleCloseToast = useCallback(() => {
@@ -92,10 +113,20 @@ function ChatLayout() {
 				/>
 			</div>
 
-			<SettingsDrawer 
-				open={settingsOpen} 
-				onOpenChange={setSettingsOpen} 
+			<SettingsDrawer
+				open={settingsOpen}
+				onOpenChange={setSettingsOpen}
 			/>
+
+			{showLocationPrompt && (
+				<LocationPermissionDialog
+					onAllow={() => {
+						setShowLocationPrompt(false);
+						fetchLocation();
+					}}
+					onDismiss={() => setShowLocationPrompt(false)}
+				/>
+			)}
 
 		</div>
 	);
