@@ -2,12 +2,10 @@ import { MapPin, CloudRain, Sprout, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
 
-/* eslint-disable no-unused-vars */
 type LocationPermissionDialogProps = {
 	onAllow: () => void;
 	onDismiss: () => void;
 };
-/* eslint-enable no-unused-vars */
 
 export function LocationPermissionDialog({ onAllow, onDismiss }: LocationPermissionDialogProps) {
 	const { t } = useLanguage();

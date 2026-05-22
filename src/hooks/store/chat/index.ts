@@ -17,7 +17,6 @@ import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 
-/* eslint-disable no-unused-vars */
 export type ApiNotification = {
 	notification_id: string;
 	type: string;
@@ -320,36 +319,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			console.error("Geolocation is not supported by this browser.");
 			return;
 		}
-
-		// Helper function to calculate distance between two coordinates using Haversine formula
-		const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-			const R = 6371; // Radius of the Earth in kilometers
-			const dLat = (lat2 - lat1) * Math.PI / 180;
-			const dLon = (lon2 - lon1) * Math.PI / 180;
-			const a = 
-				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-				Math.sin(dLon / 2) * Math.sin(dLon / 2);
-			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-			return R * c; // Distance in kilometers
-		};
-
-		const dedupeByPmKisan = (rows: WeatherForecastMatch[]): WeatherForecastMatch[] => {
-			const seen = new Set<number>();
-			const out: WeatherForecastMatch[] = [];
-			for (const x of rows) {
-				if (seen.has(x.unique_id_pm_kisan)) continue;
-				seen.add(x.unique_id_pm_kisan);
-				out.push(x);
-			}
-			return out;
-		};
-
-		/** PostGIS ST_DWithin-style: only points inside this radius count as “local”. */
-		const WITHIN_RADIUS_KM = 75;
-		const MAX_LOCAL_MATCHES = 10;
-		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
-		const FALLBACK_NEAREST_K = 8;
 
 		// TODO: remove hardcoded test coordinates and restore geolocation
 		const latitude = 31.319416;
