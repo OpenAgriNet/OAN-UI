@@ -10,11 +10,59 @@ import {
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
+import { getVisitorId } from "@/lib/telemetry";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
+
+/* eslint-disable no-unused-vars */
+export type ApiNotification = {
+	notification_id: string;
+	type: string;
+	priority: "HIGH" | "MEDIUM" | "LOW";
+	valid_from: string;
+	valid_to: string;
+	created_at: string;
+	content: { title: string; body: string };
+	location: {
+		subdistrict_name: string;
+		district_name: string;
+		state_name: string;
+		distance_km?: number;
+	} | null;
+	metadata: {
+		source: string;
+		template: string;
+		unique_id_iitm: string;
+		unique_id_pm_kisan: number;
+	};
+};
+
+export const SEEN_NOTIFICATIONS_KEY = "seen_notification_ids";
+
+export type PxDWeatherRecord = {
+	unique_id_pm_kisan: number;
+	unique_id_iitm: number;
+	subdistrict_code: number;
+	subdistrict_name: string;
+	district_code: number;
+	district_name: string;
+	state_code: number;
+	state_name: string;
+	lang_abb: string;
+	forecast_message: string;
+	template_abbreviation: string;
+	Lat: number;
+	Lon: number;
+};
+
+export type WeatherForecastMatch = PxDWeatherRecord & {
+	distanceKm: number;
+	/** True local matches (ST_DWithin-style). False = KNN fallback when user is outside covered lat/lon extent. */
+	isWithinSearchRadius: boolean;
+};
 
 export type QuickAction = {
 	id: string;
@@ -77,7 +125,12 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: (t?: any) => void;
+	fetchLocation: () => void;
+	weatherForecastMatches: WeatherForecastMatch[];
+	notifications: ApiNotification[];
+	isFetchingNotifications: boolean;
+	fetchNotifications: () => Promise<void>;
+	markNotificationRead: (id: string) => void;
 };
 const quickActionSeeds: QuickAction[] = [
 	{
@@ -249,6 +302,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
+	weatherForecastMatches: [],
+	notifications: [],
+	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
@@ -259,47 +315,104 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: (t) => {
-		if (typeof window === "undefined" || !navigator.geolocation) {
-			set({
-				toast: {
-					message: t ? String(t("toast.locationNotSupported.description")) : "Your browser does not support geolocation.",
-					type: "error"
-				}
-			});
+	fetchLocation: async () => {
+		if (!navigator.geolocation) {
+			console.error("Geolocation is not supported by this browser.");
 			return;
 		}
 
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				apiService.setLocationData({
-					latitude: position.coords.latitude,
-					longitude: position.coords.longitude,
-				});
-			},
-			(error) => {
-				const key =
-					error.code === error.PERMISSION_DENIED
-						? "toast.locationPermissionDenied.description"
-						: error.code === error.TIMEOUT
-							? "toast.locationTimeout.description"
-							: error.code === error.POSITION_UNAVAILABLE
-								? "toast.locationUnavailable.description"
-								: "toast.locationError.description";
+		// Helper function to calculate distance between two coordinates using Haversine formula
+		const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+			const R = 6371; // Radius of the Earth in kilometers
+			const dLat = (lat2 - lat1) * Math.PI / 180;
+			const dLon = (lon2 - lon1) * Math.PI / 180;
+			const a = 
+				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+				Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			return R * c; // Distance in kilometers
+		};
 
-				set({
-					toast: {
-						message: t ? String(t(key)) : "Could not get your location.",
-						type: "error"
-					}
-				});
-			},
-			{
-				enableHighAccuracy: false,
-				timeout: 10000,
-				maximumAge: 300000,
+		const dedupeByPmKisan = (rows: WeatherForecastMatch[]): WeatherForecastMatch[] => {
+			const seen = new Set<number>();
+			const out: WeatherForecastMatch[] = [];
+			for (const x of rows) {
+				if (seen.has(x.unique_id_pm_kisan)) continue;
+				seen.add(x.unique_id_pm_kisan);
+				out.push(x);
 			}
+			return out;
+		};
+
+		/** PostGIS ST_DWithin-style: only points inside this radius count as “local”. */
+		const WITHIN_RADIUS_KM = 75;
+		const MAX_LOCAL_MATCHES = 10;
+		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
+		const FALLBACK_NEAREST_K = 8;
+
+		// TODO: remove hardcoded test coordinates and restore geolocation
+		const latitude = 31.319416;
+		const longitude = 76.616630;
+		console.log("=== User Location (TEST HARDCODED) ===");
+		console.log("Latitude:", latitude);
+		console.log("Longitude:", longitude);
+		console.log("=======================================");
+		localStorage.setItem(
+			"user_location",
+			JSON.stringify({ latitude, longitude, timestamp: Date.now() })
 		);
+		get().fetchNotifications();
+	},
+
+	fetchNotifications: async () => {
+		if (get().isFetchingNotifications) return;
+		const locationRaw = localStorage.getItem("user_location");
+		if (!locationRaw) return;
+
+		set({ isFetchingNotifications: true });
+
+		let latitude: number, longitude: number;
+		try {
+			({ latitude, longitude } = JSON.parse(locationRaw));
+		} catch { return; }
+
+		let visitor_id = "unknown";
+		try {
+			visitor_id = await getVisitorId();
+		} catch { /* use fallback */ }
+
+		const lang = localStorage.getItem("app_language") || "en";
+
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+
+		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
+		if (seen_message_ids.length > 0) body.seen_message_ids = seen_message_ids;
+
+		try {
+			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+			if (!res.ok) return;
+			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
+			if (data.success && Array.isArray(data.notifications)) {
+				set({ notifications: data.notifications });
+			}
+		} catch { /* network error — keep previous notifications */ }
+		finally {
+			set({ isFetchingNotifications: false });
+		}
+	},
+
+	markNotificationRead: (id: string) => {
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+		if (!seen.includes(id)) {
+			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify([...seen, id]));
+		}
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),
