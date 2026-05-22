@@ -35,7 +35,7 @@ export function ChatShell() {
 
 	if (isAuthLoading) {
 		return (
-			<div className="flex h-full w-full items-center justify-center bg-white">
+			<div className="flex h-full w-full items-center justify-center bg-background">
 				<Loader />
 			</div>
 		);
@@ -65,14 +65,14 @@ export function ChatShell() {
 								className="w-full"
 							>
 								<div
-									style={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
+									style={{ backgroundColor: "rgba(128, 128, 128, 0.08)" }}
 									className="flex w-full flex-col items-center space-y-6 p-10 text-center"
 								>
 									<img src={lockImg} alt="Locked" className="h-16 w-16" />
 
 									<div className="space-y-2">
-										<h1 className="text-2xl font-bold text-white">{t("auth.loginRequired")}</h1>
-										<p className="text-sm font-normal leading-relaxed text-gray-300 px-2">
+										<h1 className="text-2xl font-bold text-foreground">{t("auth.loginRequired")}</h1>
+										<p className="text-sm font-normal leading-relaxed text-muted-foreground px-2">
 											{t("auth.loginPrompt")}
 										</p>
 									</div>

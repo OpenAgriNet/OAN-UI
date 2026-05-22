@@ -3,12 +3,10 @@ import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
 import { QuickAction } from "@/hooks/store/chat";
 
-/* eslint-disable no-unused-vars */
 type WelcomePanelProps = {
 	onAction: (id: string) => void;
 	actions: QuickAction[];
 };
-/* eslint-enable no-unused-vars */
 
 import { useLanguage } from "@/components/LanguageProvider";
 

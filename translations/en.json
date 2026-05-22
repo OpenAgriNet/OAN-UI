@@ -271,11 +271,12 @@
     }
   },
   "limitMessage": "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.",
+  "chatErrorMessage": "Sorry, there was an error processing your request. Please try again.",
   "auth": {
     "loginRequired": "Login required",
     "loginPrompt": "Please log in to continue and access this page."
   },
-  "locationPermission": {
+    "locationPermission": {
     "title": "Please Allow Location Access",
     "subtitle": "Are you interested in receiving agricultural information for your location? If yes, please share your current location so we can send you relevant updates, such as:",
     "benefit1": "When the continuous rainy season may arrive",
@@ -283,5 +284,24 @@
     "benefit3": "Crop-specific farming advice",
     "allowBtn": "Allow Location Access",
     "skipBtn": "Not now"
+  },
+  "imageUpload": {
+    "captureImage": "Capture Image",
+    "selectFromGallery": "Select from Gallery",
+    "analyzingImage": "Analyzing your crop image...",
+    "imageTooLarge": "Image too large. Max 10 MB.",
+    "invalidFormat": "Invalid image format. Use JPEG or PNG.",
+    "imageFormatHint": "Only JPEG and PNG images are supported. The image will be optimized before upload.",
+    "processingFailed": "Could not process the image. Please try another photo."
+  },
+  "pestApi": {
+    "trigger": "Pest & Disease Detection",
+    "title": "Pest & Disease Detection",
+    "description": "Upload a crop image to identify pests or diseases affecting your crop.",
+    "note": "Use a clear photo of the affected crop, leaf, stem, fruit, or visible pest for best results.",
+    "photoLabel": "Plant/Pest Image",
+    "continue": "Continue",
+    "submit": "Analyze & Submit",
+    "cancel": "Cancel"
   }
 }

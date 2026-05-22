@@ -16,9 +16,10 @@ function ChatLayout() {
 	const setDraft = useChatStore((s) => s.setDraft);
 	const sendText = useChatStore((s) => s.sendText);
 	const sendAudio = useChatStore((s) => s.sendAudio);
+	const sendImage = useChatStore((s) => s.sendImage);
 	const isListening = useChatStore((s) => s.isListening);
 	const isTranscribing = useChatStore((s) => s.isTranscribing);
-	const isAssistantTyping = useChatStore((s) => s.isAssistantTyping);
+	const isInputLocked = useChatStore((s) => s.isInputLocked);
 	const startListening = useChatStore((s) => s.startListening);
 	const stopListening = useChatStore((s) => s.stopListening);
 	const suggestions = useChatStore((s) => s.suggestions);
@@ -86,12 +87,22 @@ function ChatLayout() {
 			</main>
 			<div className="relative z-20">
 				<ChatInput
+					disabled={isInputLocked}
 					placeholder={t("inputPlaceholder") as string}
 					value={draft}
 					onValueChange={setDraft}
 					onSend={async (payload: ChatInputPayload) => {
-						const { text, voice } = payload;
-						if (text.trim()) {
+						const { text, voice, files, mode } = payload;
+						if (files && files.length > 0) {
+							const imageFile = files[0];
+							if (!imageFile) return;
+							try {
+								void mode;
+								await sendImage(imageFile, language, t);
+							} catch (error) {
+								console.error(error);
+							}
+						} else if (text.trim()) {
 							sendText(text, language, t);
 						} else if (voice) {
 							try {
@@ -105,7 +116,6 @@ function ChatLayout() {
 					onVoiceStop={stopListening}
 					isListening={isListening}
 					isTranscribing={isTranscribing}
-					isAssistantTyping={isAssistantTyping}
 					suggestions={suggestions}
 					onSuggestionClick={(text: string) => sendText(text, language, t)}
 					micHint={messages.length > 0 ? undefined : (t("chatMicHint") as string)}

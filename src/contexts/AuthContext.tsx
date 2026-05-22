@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
-import { jwtVerify, importSPKI, JWTPayload } from 'jose';
+import { importSPKI, jwtVerify, type JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
 import { getBrowserInfo } from '@/lib/utils';
 import { setTelemetryUserData } from '../lib/telemetry';
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [publicKey, setPublicKey] = useState<CryptoKey | null>(null);
 
-  // JWT validation public key
+  // Keep this in sync with bharat-oan-api/jwt_public_key.pem.
   const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiAT5pkWCk7KgBXDFO6C
 FHo1fmVMUHOCDXJ1EcAb11REiSHgxlP9TPLCs8qPSe5eeJAHGn9sqB0p0jC8cWzh
@@ -86,13 +86,13 @@ a37S+srKe59wFypSMOU+ZMvgFA2oK0zA1WEC93000n5HEQMJU8r7pCgKhq7oD8QJ
 hwIDAQAB
 -----END PUBLIC KEY-----`;
 
-  // Fetch new JWT token from /chat/auth and store it
+  // Fetch new JWT token from /api/token and store it
   const fetchAndStoreNewToken = useCallback(async (importedPublicKey: CryptoKey | null) => {
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
       
-      // Call /chat/auth to get JWT token
+      // Call /api/token to get JWT token
       const newToken = await apiService.fetchAuthToken(browserInfo);
       
       // Validate and store the new token
@@ -102,7 +102,7 @@ hwIDAQAB
           storeJWT(newToken);
           createUserFromPayload(result.payload);
         } else {
-          console.error('Received invalid token from /chat/auth');
+          console.error('Received invalid token from /api/token');
         }
       } else {
         // If public key is not available, store token anyway
@@ -121,7 +121,7 @@ hwIDAQAB
         setTelemetryUserData({});
       }
     } catch (error) {
-      console.error('Failed to fetch auth token from /chat/auth:', error);
+      console.error('Failed to fetch auth token from /api/token:', error);
     }
   }, []);
 
