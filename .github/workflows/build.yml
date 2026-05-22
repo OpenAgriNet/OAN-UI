@@ -29,7 +29,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          rm -rf node_modules
+          rm -rf node_modules package-lock.json
           npm install --legacy-peer-deps --include=optional --force
 
       - name: Build project
