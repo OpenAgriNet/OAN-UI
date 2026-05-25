@@ -9,10 +9,8 @@ import {
 	type Suggestion
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import * as telemetry from "@/lib/telemetry";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
-import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 
@@ -200,31 +198,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const questionId = uuidv4();
 
-		// Telemetry: Log Question
-		const user = useAuthStore.getState().user;
-		const userDetails = {
-			preferred_username: user?.username || "guest",
-			email: user?.email || ""
-		};
-
-		try {
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
-			telemetry.endTelemetry();
-		} catch (e) {
-			console.warn("Telemetry question log failed", e);
-		}
-
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
 
-			// Mark request start for telemetry
-			telemetry.markServerRequestStart(questionId);
-
-			const response = await apiService.sendUserQuery(
+			await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
+				questionId,
 				language, // source
 				language, // target
 				(chunk) => {
@@ -255,15 +236,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return { isAssistantTyping: false };
 			});
 
-			// Telemetry: Log Response
-			await telemetry.startTelemetry(currentSession, userDetails);
-
-			telemetry.markAnswerRendered(questionId, () => {
-				telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
-			});
-
-			await telemetry.endTelemetryWithWait(questionId);
-
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
 				set({
@@ -291,10 +263,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
 				}));
 
-				// Telemetry: Log Error (Rate Limit)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
-				telemetry.endTelemetry();
+				await apiService.submitTelemetryError({
+					qid: questionId,
+					session_id: currentSession,
+					error_text: "Rate limit error (429)",
+					question_text: trimmed
+				}).catch((telemetryError) => console.warn("Backend telemetry error relay failed", telemetryError));
 			} else {
 				set({
 					toast: {
@@ -303,10 +277,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					}
 				});
 
-				// Telemetry: Log Error (Generic)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
-				telemetry.endTelemetry();
+				await apiService.submitTelemetryError({
+					qid: questionId,
+					session_id: currentSession,
+					error_text: String(error),
+					question_text: trimmed
+				}).catch((telemetryError) => console.warn("Backend telemetry error relay failed", telemetryError));
 			}
 		}
 	},
@@ -598,23 +574,15 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			: feedback || reason || "Negative feedback";
 
 		try {
-			// Telemetry-only flow as per user request
-			const user = useAuthStore.getState().user;
-			await telemetry.startTelemetry(sessionId, {
-				preferred_username: user?.user_metadata?.name || user?.email || "guest",
-				email: user?.email || ""
+			await apiService.submitTelemetryFeedback({
+				qid: messageId,
+				session_id: sessionId,
+				message_id: messageId,
+				feedback_type: feedbackType,
+				feedback_text: feedbackMsg,
+				question_text: questionText,
+				answer_text: responseText
 			});
-
-			telemetry.logFeedbackEvent(
-				messageId,
-				sessionId,
-				feedbackMsg,
-				feedbackType,
-				questionText,
-				responseText
-			);
-
-			telemetry.endTelemetry();
 
 			// Logic from user code: show success toast
 			// if (isPositive) {

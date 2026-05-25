@@ -2,7 +2,7 @@ import { createContext, useContext, ReactNode, useState, useEffect, useCallback 
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
 import { getBrowserInfo } from '@/lib/utils';
-import { setTelemetryUserData } from '../lib/telemetry';
+import { getFingerprintId, setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -91,9 +91,10 @@ hwIDAQAB
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
+      const fingerprintId = await getFingerprintId();
       
       // Call /chat/auth to get JWT token
-      const newToken = await apiService.fetchAuthToken(browserInfo);
+      const newToken = await apiService.fetchAuthToken(browserInfo, fingerprintId);
       
       // Validate and store the new token
       if (importedPublicKey) {
@@ -399,4 +400,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}
