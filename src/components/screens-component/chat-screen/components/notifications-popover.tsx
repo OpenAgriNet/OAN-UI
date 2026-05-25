@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useChatStore, type ApiNotification, SEEN_NOTIFICATIONS_KEY } from "@/hooks/store/chat";
 import { cn } from "@/lib/utils/index";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const bellIcon = "/assets/bell.svg";
 
@@ -24,6 +25,8 @@ function getSeenIds(): Set<string> {
 export function NotificationsPopover() {
 	const notifications = useChatStore((s) => s.notifications);
 	const markNotificationRead = useChatStore((s) => s.markNotificationRead);
+
+	const { t } = useLanguage();
 
 	const [popoverOpen, setPopoverOpen] = useState(false);
 	const [detailOpen, setDetailOpen] = useState(false);
@@ -80,7 +83,7 @@ export function NotificationsPopover() {
 					{showTooltip && (
 						<div className="absolute top-full right-0 mt-3 z-[70] pointer-events-none select-none animate-[float_3s_ease-in-out_infinite]">
 							<div className="relative w-[160px] rounded-lg bg-[var(--secondary)] px-3 py-2 text-sm font-medium text-[var(--primary)] shadow-sm">
-								Tap here to see your latest notifications
+								{t("notifications.tooltip") as string}
 								<div className="absolute -top-1.5 right-4 h-3 w-3 rotate-45 bg-[var(--secondary)]" aria-hidden />
 							</div>
 						</div>
@@ -115,7 +118,7 @@ export function NotificationsPopover() {
 					<div className="flex items-center gap-2 border-b border-gray-200 px-3 py-2 dark:border-[var(--border-dark)]">
 						<img src={bellIcon} alt="" className="h-4 w-4 shrink-0" aria-hidden />
 						<h2 className="text-sm font-bold text-gray-900 dark:text-[var(--headerText-dark)]">
-							Notifications
+							{t("notifications.title") as string}
 						</h2>
 						{unreadCount > 0 && (
 							<span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold leading-none text-white">
@@ -181,8 +184,8 @@ export function NotificationsPopover() {
 												{n.location && n.location.distance_km != null && (
 													<p className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
 														{n.location.distance_km === 0
-															? "Your area"
-															: `~${n.location.distance_km.toFixed(1)} km away`}
+															? t("notifications.yourArea") as string
+															: (t("notifications.kmAway") as string).replace("[km]", n.location.distance_km.toFixed(1))}
 													</p>
 												)}
 											</div>
@@ -196,19 +199,19 @@ export function NotificationsPopover() {
 								{localStorage.getItem("user_location") ? (
 									<>
 										<p className="mt-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-											No notifications available
+											{t("notifications.noNotificationsTitle") as string}
 										</p>
 										<p className="mt-1 px-2 text-[10px] leading-snug text-gray-400 dark:text-gray-500">
-											You're all caught up. Check back later for updates.
+											{t("notifications.noNotificationsBody") as string}
 										</p>
 									</>
 								) : (
 									<>
 										<p className="mt-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
-											No weather notifications yet
+											{t("notifications.noLocationTitle") as string}
 										</p>
 										<p className="mt-1 px-2 text-[10px] leading-snug text-gray-400 dark:text-gray-500">
-											Allow location access to load weather alerts for your area.
+											{t("notifications.noLocationBody") as string}
 										</p>
 									</>
 								)}
@@ -225,7 +228,7 @@ export function NotificationsPopover() {
 								onClick={markAllRead}
 							>
 								<CheckCheck className="mr-1.5 h-3 w-3" />
-								Mark all as read
+								{t("notifications.markAllRead") as string}
 							</Button>
 						</div>
 					)}
@@ -311,7 +314,7 @@ export function NotificationsPopover() {
 											{noteItems.length > 0 && (
 												<div className="rounded-xl bg-amber-50 px-4 py-3 ring-1 ring-amber-100 dark:bg-amber-950/30 dark:ring-amber-900/40">
 													<p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-														Please note
+														{t("notifications.pleaseNote") as string}
 													</p>
 													<div className="space-y-2">
 														{noteItems.map((note, i) => (
@@ -336,14 +339,14 @@ export function NotificationsPopover() {
 										</span>
 										<p className="text-sm font-medium text-gray-500 dark:text-gray-400">
 											{feedbackMap[selected.notification_id] === "liked"
-												? "Thanks for your feedback!"
-												: "Thanks, we'll improve!"}
+												? t("notifications.feedbackLiked") as string
+												: t("notifications.feedbackDisliked") as string}
 										</p>
 									</div>
 								) : (
 									<div className="flex items-center justify-between gap-4">
 										<p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
-											Was this helpful?
+											{t("notifications.wasHelpful") as string}
 										</p>
 										<div className="flex items-center gap-2">
 											<button

@@ -9,39 +9,149 @@
   "selectLanguage": "ভাষা বাছনি কৰক",
   "disclaimerText": "AI-উৎপন্ন তথ্য। প্ৰয়োজন হ'লে স্থানীয়ভাৱে পৰীক্ষা কৰক।",
   "questions": [
-    { "key": "schemes.info.pm_kisan", "text": "পিএম-কিষাণ আঁচনি কি আৰু মই কেনেকৈ আবেদন কৰিব পাৰোঁ?" },
-    { "key": "schemes.info.kisan_credit_card", "text": "মোক কিষাণ ক্ৰেডিট কাৰ্ড আঁচনিৰ বিষয়ে কওক" },
-    { "key": "schemes.info.fasal_bima", "text": "মই প্ৰধানমন্ত্ৰী ফচল বীমা যোজনাৰ বিষয়ে জানিব বিচাৰোঁ" },
-    { "key": "schemes.benefits.soil_health_card", "text": "মাটি স্বাস্থ্য কাৰ্ড আঁচনিৰ সুবিধাসমূহ কি?" },
-    { "key": "schemes.info.pmksy", "text": "আপুনি মোক পিএমকেএছৱাই আঁচনি বুজাই দিব পাৰিবনে?" },
-    { "key": "schemes.general.available", "text": "কৃষকসকলৰ বাবে কি কি চৰকাৰী আঁচনি উপলব্ধ?" },
-    { "key": "schemes.info.seed_authentication", "text": "মোক বীজ প্ৰমাণীকৰণ আঁচনিৰ বিষয়ে তথ্য লাগে" },
-    { "key": "schemes.info.agriculture_fund", "text": "কৃষি আন্তঃগাঁথনি পুঁজিৰ বিষয়ে কওক" },
-    { "key": "soil.health.check_online", "text": "মই মোৰ মাটি স্বাস্থ্য কাৰ্ড অনলাইনত কেনেকৈ পৰীক্ষা কৰিব পাৰোঁ?" },
-    { "key": "soil.health.test_report_meaning", "text": "মোৰ মাটি পৰীক্ষাৰ প্ৰতিবেদনৰ অৰ্থ কি?" },
-    { "key": "soil.health.suitable_crops", "text": "মোৰ মাটি স্বাস্থ্য কাৰ্ডৰ ভিত্তিত মোৰ মাটিৰ বাবে কোন শস্য উপযুক্ত?" },
-    { "key": "loan.credit.failed_crop", "text": "মোৰ আগৰ শস্য বিফল হ'লে আৰু মই ঋণ পৰিশোধ কৰিব নোৱাৰিলে মই ঋণ পাব পাৰোঁনে?" },
-    { "key": "loan.credit.default_impact", "text": "ঋণ পৰিশোধ নকৰিলে চৰকাৰী আঁচনিৰ বাবে মোৰ যোগ্যতা প্ৰভাৱিত হ'বনে?" },
-    { "key": "loan.credit.kcc_documents", "text": "কিষাণ ক্ৰেডিট কাৰ্ডৰ বাবে আবেদন কৰিবলৈ মোক কি কি নথিপত্ৰ লাগে?" },
-    { "key": "schemes.insurance.coverage", "text": "পঞ্জাৱত মোৰ ঘেঁহুৰ শস্যৰ বাবে মই কিমান বীমা সুৰক্ষা পাম?" },
-    { "key": "mandi.price.today", "text": "আজি [district] মণ্ডীত [crop]ৰ দাম কিমান?", "vars": ["crop", "district"] },
-    { "key": "mandi.price.nearest", "text": "[district] মণ্ডীত [crop]ৰ শেহতীয়া দৰ কিমান?", "vars": ["crop", "district"] },
-    { "key": "mandi.price.crop", "text": "[district] মণ্ডীত [crop]ৰ বৰ্তমান বজাৰ দৰ কিমান?", "vars": ["crop", "district"] },
-    { "key": "weather.forecast.today", "text": "[district]ত আজিৰ বতৰৰ পূৰ্বাভাস কি?", "vars": ["district"] },
-    { "key": "weather.forecast.week", "text": "এই সপ্তাহত [district]ত বৰষুণ হ'বনে?", "vars": ["district"] }
+    {
+      "key": "schemes.info.pm_kisan",
+      "text": "পিএম-কিষাণ আঁচনি কি আৰু মই কেনেকৈ আবেদন কৰিব পাৰোঁ?"
+    },
+    {
+      "key": "schemes.info.kisan_credit_card",
+      "text": "মোক কিষাণ ক্ৰেডিট কাৰ্ড আঁচনিৰ বিষয়ে কওক"
+    },
+    {
+      "key": "schemes.info.fasal_bima",
+      "text": "মই প্ৰধানমন্ত্ৰী ফচল বীমা যোজনাৰ বিষয়ে জানিব বিচাৰোঁ"
+    },
+    {
+      "key": "schemes.benefits.soil_health_card",
+      "text": "মাটি স্বাস্থ্য কাৰ্ড আঁচনিৰ সুবিধাসমূহ কি?"
+    },
+    {
+      "key": "schemes.info.pmksy",
+      "text": "আপুনি মোক পিএমকেএছৱাই আঁচনি বুজাই দিব পাৰিবনে?"
+    },
+    {
+      "key": "schemes.general.available",
+      "text": "কৃষকসকলৰ বাবে কি কি চৰকাৰী আঁচনি উপলব্ধ?"
+    },
+    {
+      "key": "schemes.info.seed_authentication",
+      "text": "মোক বীজ প্ৰমাণীকৰণ আঁচনিৰ বিষয়ে তথ্য লাগে"
+    },
+    {
+      "key": "schemes.info.agriculture_fund",
+      "text": "কৃষি আন্তঃগাঁথনি পুঁজিৰ বিষয়ে কওক"
+    },
+    {
+      "key": "soil.health.check_online",
+      "text": "মই মোৰ মাটি স্বাস্থ্য কাৰ্ড অনলাইনত কেনেকৈ পৰীক্ষা কৰিব পাৰোঁ?"
+    },
+    {
+      "key": "soil.health.test_report_meaning",
+      "text": "মোৰ মাটি পৰীক্ষাৰ প্ৰতিবেদনৰ অৰ্থ কি?"
+    },
+    {
+      "key": "soil.health.suitable_crops",
+      "text": "মোৰ মাটি স্বাস্থ্য কাৰ্ডৰ ভিত্তিত মোৰ মাটিৰ বাবে কোন শস্য উপযুক্ত?"
+    },
+    {
+      "key": "loan.credit.failed_crop",
+      "text": "মোৰ আগৰ শস্য বিফল হ'লে আৰু মই ঋণ পৰিশোধ কৰিব নোৱাৰিলে মই ঋণ পাব পাৰোঁনে?"
+    },
+    {
+      "key": "loan.credit.default_impact",
+      "text": "ঋণ পৰিশোধ নকৰিলে চৰকাৰী আঁচনিৰ বাবে মোৰ যোগ্যতা প্ৰভাৱিত হ'বনে?"
+    },
+    {
+      "key": "loan.credit.kcc_documents",
+      "text": "কিষাণ ক্ৰেডিট কাৰ্ডৰ বাবে আবেদন কৰিবলৈ মোক কি কি নথিপত্ৰ লাগে?"
+    },
+    {
+      "key": "schemes.insurance.coverage",
+      "text": "পঞ্জাৱত মোৰ ঘেঁহুৰ শস্যৰ বাবে মই কিমান বীমা সুৰক্ষা পাম?"
+    },
+    {
+      "key": "mandi.price.today",
+      "text": "আজি [district] মণ্ডীত [crop]ৰ দাম কিমান?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "mandi.price.nearest",
+      "text": "[district] মণ্ডীত [crop]ৰ শেহতীয়া দৰ কিমান?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "mandi.price.crop",
+      "text": "[district] মণ্ডীত [crop]ৰ বৰ্তমান বজাৰ দৰ কিমান?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "weather.forecast.today",
+      "text": "[district]ত আজিৰ বতৰৰ পূৰ্বাভাস কি?",
+      "vars": [
+        "district"
+      ]
+    },
+    {
+      "key": "weather.forecast.week",
+      "text": "এই সপ্তাহত [district]ত বৰষুণ হ'বনে?",
+      "vars": [
+        "district"
+      ]
+    }
   ],
   "variables": {
     "crop": [
-      "ঘেঁহু", "ধান", "মাকৈ", "সৰিয়হ", "কপাহ",
-      "কুঁহিয়াৰ", "সৰিয়হ", "বাদাম", "পিয়াজ", "আলু",
-      "বিলাহী", "জলকীয়া", "বুট", "জোৱাৰ", "বাজৰা",
-      "হালধি", "নহৰু", "কল", "আম", "কমলা"
+      "ঘেঁহু",
+      "ধান",
+      "মাকৈ",
+      "সৰিয়হ",
+      "কপাহ",
+      "কুঁহিয়াৰ",
+      "সৰিয়হ",
+      "বাদাম",
+      "পিয়াজ",
+      "আলু",
+      "বিলাহী",
+      "জলকীয়া",
+      "বুট",
+      "জোৱাৰ",
+      "বাজৰা",
+      "হালধি",
+      "নহৰু",
+      "কল",
+      "আম",
+      "কমলা"
     ],
     "district": [
-      "গুৱাহাটী", "যোৰহাট", "ডিব্ৰুগড়", "তেজপুৰ", "নগাঁও",
-      "শিলচৰ", "বৰপেটা", "নলবাৰী", "গোলাঘাট", "কৰিমগঞ্জ",
-      "লখিমপুৰ", "তিনিচুকীয়া", "ধুবুৰী", "বঙাইগাঁও", "কোকৰাঝাৰ",
-      "মঙ্গলদৈ", "হাফলং", "দিফু", "নাহৰকটীয়া", "শিৱসাগৰ"
+      "গুৱাহাটী",
+      "যোৰহাট",
+      "ডিব্ৰুগড়",
+      "তেজপুৰ",
+      "নগাঁও",
+      "শিলচৰ",
+      "বৰপেটা",
+      "নলবাৰী",
+      "গোলাঘাট",
+      "কৰিমগঞ্জ",
+      "লখিমপুৰ",
+      "তিনিচুকীয়া",
+      "ধুবুৰী",
+      "বঙাইগাঁও",
+      "কোকৰাঝাৰ",
+      "মঙ্গলদৈ",
+      "হাফলং",
+      "দিফু",
+      "নাহৰকটীয়া",
+      "শিৱসাগৰ"
     ]
   },
   "recordingListening": "[botName]এ শুনি আছে, কথা কওক",
@@ -165,5 +275,22 @@
   "auth": {
     "loginRequired": "লগইন প্ৰয়োজন",
     "loginPrompt": "অনুগ্ৰহ কৰি অব্যাহত ৰাখিবলৈ আৰু এই পৃষ্ঠাত প্ৰৱেশ কৰিবলৈ লগইন কৰক।"
+  },
+  "notifications": {
+    "title": "জাননী",
+    "noNotificationsTitle": "কোনো জাননী উপলব্ধ নহয়",
+    "noNotificationsBody": "আপুনি সকলো চাইছে। পাছত আপডেটৰ বাবে পুনৰ পৰীক্ষা কৰক।",
+    "noLocationTitle": "এতিয়াও কোনো বতৰৰ জাননী নাই",
+    "noLocationBody": "আপোনাৰ অঞ্চলৰ বতৰৰ সতৰ্কবাৰ্তা লোড কৰিবলৈ অৱস্থান অনুমতি দিয়ক।",
+    "tooltip": "আপোনাৰ শেহতীয়া জাননীসমূহ চাবলৈ ইয়াত টেপ কৰক",
+    "markAllRead": "সকলো পঢ়া বুলি চিহ্নিত কৰক",
+    "wasHelpful": "এইটো সহায়কাৰী আছিল নেকি?",
+    "feedbackLiked": "আপোনাৰ মতামতৰ বাবে ধন্যবাদ!",
+    "feedbackDisliked": "ধন্যবাদ, আমি উন্নত কৰিম!",
+    "yes": "হয়",
+    "no": "নহয়",
+    "yourArea": "আপোনাৰ অঞ্চল",
+    "kmAway": "~[km] কি.মি. দূৰত",
+    "pleaseNote": "অনুগ্ৰহ কৰি মন কৰক"
   }
 }
