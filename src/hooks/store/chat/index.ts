@@ -314,24 +314,49 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: async () => {
+	fetchLocation: () => {
 		if (!navigator.geolocation) {
 			console.error("Geolocation is not supported by this browser.");
 			return;
 		}
 
-		// TODO: remove hardcoded test coordinates and restore geolocation
-		const latitude = 31.319416;
-		const longitude = 76.616630;
-		console.log("=== User Location (TEST HARDCODED) ===");
-		console.log("Latitude:", latitude);
-		console.log("Longitude:", longitude);
-		console.log("=======================================");
-		localStorage.setItem(
-			"user_location",
-			JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+		navigator.geolocation.getCurrentPosition(
+			(position) => {
+				const latitude = position.coords.latitude;
+				const longitude = position.coords.longitude;
+				console.log("Latitude:", latitude);
+				console.log("Longitude:", longitude);
+				console.log("Accuracy:", position.coords.accuracy, "meters");
+
+				localStorage.setItem(
+					"user_location",
+					JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+				);
+				get().fetchNotifications();
+			},
+			(error) => {
+				console.error("Error getting location:", error.message);
+				switch (error.code) {
+					case error.PERMISSION_DENIED:
+						console.error("User denied the request for Geolocation.");
+						break;
+					case error.POSITION_UNAVAILABLE:
+						console.error("Location information is unavailable.");
+						break;
+					case error.TIMEOUT:
+						console.error("The request to get user location timed out.");
+						break;
+					default:
+						console.error("An unknown error occurred.");
+						break;
+				}
+			},
+			{
+				enableHighAccuracy: true,
+				timeout: 10000,
+				maximumAge: 0,
+			}
 		);
-		get().fetchNotifications();
 	},
 
 	fetchNotifications: async () => {
