@@ -124,7 +124,7 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: () => void;
+	fetchLocation: (t?: any) => Promise<void>;
 	weatherForecastMatches: WeatherForecastMatch[];
 	notifications: ApiNotification[];
 	isFetchingNotifications: boolean;
@@ -287,6 +287,9 @@ function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
 
 import { playTTS as playTTSHelper, pauseAudio, resumeAudio, stopAudio } from "@/lib/audio-utils";
 
+let locationFetchPromise: Promise<void> | null = null;
+let hasResolvedLocationAttempt = false;
+
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
 	quickActions: quickActionSeeds,
@@ -314,49 +317,72 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: () => {
-		if (!navigator.geolocation) {
-			console.error("Geolocation is not supported by this browser.");
-			return;
+	fetchLocation: (t) => {
+		if (typeof window === "undefined" || !navigator.geolocation) {
+			set({
+				toast: {
+					message: t ? String(t("toast.locationNotSupported.description")) : "Your browser does not support geolocation.",
+					type: "error"
+				}
+			});
+			return Promise.resolve();
 		}
 
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				const latitude = position.coords.latitude;
-				const longitude = position.coords.longitude;
-				console.log("Latitude:", latitude);
-				console.log("Longitude:", longitude);
-				console.log("Accuracy:", position.coords.accuracy, "meters");
+		if (apiService.getLocationData() || hasResolvedLocationAttempt) {
+			return Promise.resolve();
+		}
 
-				localStorage.setItem(
-					"user_location",
-					JSON.stringify({ latitude, longitude, timestamp: Date.now() })
-				);
-				get().fetchNotifications();
-			},
-			(error) => {
-				console.error("Error getting location:", error.message);
-				switch (error.code) {
-					case error.PERMISSION_DENIED:
-						console.error("User denied the request for Geolocation.");
-						break;
-					case error.POSITION_UNAVAILABLE:
-						console.error("Location information is unavailable.");
-						break;
-					case error.TIMEOUT:
-						console.error("The request to get user location timed out.");
-						break;
-					default:
-						console.error("An unknown error occurred.");
-						break;
+		if (locationFetchPromise) {
+			return locationFetchPromise;
+		}
+
+		locationFetchPromise = new Promise<void>((resolve) => {
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const latitude = position.coords.latitude;
+					const longitude = position.coords.longitude;
+					apiService.setLocationData({
+						latitude,
+						longitude,
+					});
+					localStorage.setItem(
+						"user_location",
+						JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+					);
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					void get().fetchNotifications();
+					resolve();
+				},
+				(error) => {
+					const key =
+						error.code === error.PERMISSION_DENIED
+							? "toast.locationPermissionDenied.description"
+							: error.code === error.TIMEOUT
+								? "toast.locationTimeout.description"
+								: error.code === error.POSITION_UNAVAILABLE
+									? "toast.locationUnavailable.description"
+									: "toast.locationError.description";
+
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					set({
+						toast: {
+							message: t ? String(t(key)) : "Could not get your location.",
+							type: "error"
+						}
+					});
+					resolve();
+				},
+				{
+					enableHighAccuracy: false,
+					timeout: 10000,
+					maximumAge: 300000,
 				}
-			},
-			{
-				enableHighAccuracy: true,
-				timeout: 10000,
-				maximumAge: 0,
-			}
-		);
+			);
+		});
+
+		return locationFetchPromise;
 	},
 
 	fetchNotifications: async () => {
@@ -366,23 +392,30 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		set({ isFetchingNotifications: true });
 
-		let latitude: number, longitude: number;
+		let latitude: number;
+		let longitude: number;
 		try {
 			({ latitude, longitude } = JSON.parse(locationRaw));
-		} catch { return; }
+		} catch {
+			set({ isFetchingNotifications: false });
+			return;
+		}
 
 		let visitor_id = "unknown";
 		try {
 			visitor_id = await getVisitorId();
-		} catch { /* use fallback */ }
+		} catch {
+			// Keep fallback visitor id.
+		}
 
 		const lang = localStorage.getItem("app_language") || "en";
-
 		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
 		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
 
 		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
-		if (seen_message_ids.length > 0) body.seen_message_ids = seen_message_ids;
+		if (seen_message_ids.length > 0) {
+			body.seen_message_ids = seen_message_ids;
+		}
 
 		try {
 			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
@@ -395,8 +428,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			if (data.success && Array.isArray(data.notifications)) {
 				set({ notifications: data.notifications });
 			}
-		} catch { /* network error — keep previous notifications */ }
-		finally {
+		} catch {
+			// Keep previous notifications on request failure.
+		} finally {
 			set({ isFetchingNotifications: false });
 		}
 	},
@@ -436,6 +470,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		if (!trimmed) return;
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		const userMessage = makeUserMessage(trimmed);
 		set((state) => ({
@@ -605,6 +640,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		let uploadFile = imageFile;
 		try {
