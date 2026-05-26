@@ -180,6 +180,16 @@ const initFingerprintContext = async (sessionStartAt: number) => {
   window.__FINGERPRINT_CONTEXT__ = context;
 };
 
+export const getVisitorId = async (): Promise<string> => {
+  const existingVisitorId = window.__FINGERPRINT_CONTEXT__?.data?.device_id;
+  if (existingVisitorId) {
+    return existingVisitorId;
+  }
+
+  await initFingerprintContext(Date.now());
+  return window.__FINGERPRINT_CONTEXT__?.data?.device_id || "unknown";
+};
+
 export const startTelemetry = async (
   sessionId: string,
   userDetailsObj: { preferred_username: string; email: string },
