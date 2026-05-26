@@ -77,7 +77,7 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: (t?: any) => void;
+	fetchLocation: (t?: any) => Promise<void>;
 };
 const quickActionSeeds: QuickAction[] = [
 	{
@@ -235,6 +235,9 @@ function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
 
 import { playTTS as playTTSHelper, pauseAudio, resumeAudio, stopAudio } from "@/lib/audio-utils";
 
+let locationFetchPromise: Promise<void> | null = null;
+let hasResolvedLocationAttempt = false;
+
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
 	quickActions: quickActionSeeds,
@@ -267,39 +270,57 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					type: "error"
 				}
 			});
-			return;
+			return Promise.resolve();
 		}
 
-		navigator.geolocation.getCurrentPosition(
-			(position) => {
-				apiService.setLocationData({
-					latitude: position.coords.latitude,
-					longitude: position.coords.longitude,
-				});
-			},
-			(error) => {
-				const key =
-					error.code === error.PERMISSION_DENIED
-						? "toast.locationPermissionDenied.description"
-						: error.code === error.TIMEOUT
-							? "toast.locationTimeout.description"
-							: error.code === error.POSITION_UNAVAILABLE
-								? "toast.locationUnavailable.description"
-								: "toast.locationError.description";
+		if (apiService.getLocationData() || hasResolvedLocationAttempt) {
+			return Promise.resolve();
+		}
 
-				set({
-					toast: {
-						message: t ? String(t(key)) : "Could not get your location.",
-						type: "error"
-					}
-				});
-			},
-			{
-				enableHighAccuracy: false,
-				timeout: 10000,
-				maximumAge: 300000,
-			}
-		);
+		if (locationFetchPromise) {
+			return locationFetchPromise;
+		}
+
+		locationFetchPromise = new Promise<void>((resolve) => {
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					apiService.setLocationData({
+						latitude: position.coords.latitude,
+						longitude: position.coords.longitude,
+					});
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					resolve();
+				},
+				(error) => {
+					const key =
+						error.code === error.PERMISSION_DENIED
+							? "toast.locationPermissionDenied.description"
+							: error.code === error.TIMEOUT
+								? "toast.locationTimeout.description"
+								: error.code === error.POSITION_UNAVAILABLE
+									? "toast.locationUnavailable.description"
+									: "toast.locationError.description";
+
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					set({
+						toast: {
+							message: t ? String(t(key)) : "Could not get your location.",
+							type: "error"
+						}
+					});
+					resolve();
+				},
+				{
+					enableHighAccuracy: false,
+					timeout: 10000,
+					maximumAge: 300000,
+				}
+			);
+		});
+
+		return locationFetchPromise;
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),
@@ -329,6 +350,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		if (!trimmed) return;
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		const userMessage = makeUserMessage(trimmed);
 		set((state) => ({
@@ -498,6 +520,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		let uploadFile = imageFile;
 		try {

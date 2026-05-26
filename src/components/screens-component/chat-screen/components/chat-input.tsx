@@ -529,11 +529,16 @@ export function ChatInput({
   )}
 >
   {isLoading && (
-    <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start bg-white dark:bg-[var(--inputBg-dark)] rounded-[16px]">
+    <div className="absolute inset-0 z-10 flex items-center ml-4 justify-start rounded-[16px] bg-white pointer-events-none dark:bg-[var(--inputBg-dark)]">
       <div className="flex items-center gap-1">
-        <div className="h-8 w-8">
+        <div className="h-8 w-8 overflow-hidden">
 			{isTranscribing && (
-				<Lottie animationData={loadingAnim} loop={true} />
+				<Lottie
+					animationData={loadingAnim}
+					loop={true}
+					autoplay={true}
+					style={{ width: "100%", height: "100%" }}
+				/>
 			)}
         </div>
         <span className="text-base text-gray-500">
