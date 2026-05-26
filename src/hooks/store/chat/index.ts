@@ -59,6 +59,7 @@ export type PxDWeatherRecord = {
 
 export type WeatherForecastMatch = PxDWeatherRecord & {
 	distanceKm: number;
+	/** True local matches (ST_DWithin-style). False = KNN fallback when user is outside covered lat/lon extent. */
 	isWithinSearchRadius: boolean;
 };
 

@@ -276,6 +276,15 @@
     "loginRequired": "Login required",
     "loginPrompt": "Please log in to continue and access this page."
   },
+  "locationPermission": {
+    "title": "Please Allow Location Access",
+    "subtitle": "Are you interested in receiving agricultural information for your location? If yes, please share your current location so we can send you relevant updates, such as:",
+    "benefit1": "When the continuous rainy season may arrive",
+    "benefit2": "Other weather information to help with your farming activities",
+    "benefit3": "Crop-specific farming advice",
+    "allowBtn": "Allow Location Access",
+    "skipBtn": "Not now"
+  },
   "imageUpload": {
     "captureImage": "Capture Image",
     "selectFromGallery": "Select from Gallery",
@@ -294,5 +303,22 @@
     "continue": "Continue",
     "submit": "Analyze & Submit",
     "cancel": "Cancel"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "noNotificationsTitle": "No notifications available",
+    "noNotificationsBody": "You're all caught up. Check back later for updates.",
+    "noLocationTitle": "No weather notifications yet",
+    "noLocationBody": "Allow location access to load weather alerts for your area.",
+    "tooltip": "Tap here to see your latest notifications",
+    "markAllRead": "Mark all as read",
+    "wasHelpful": "Was this helpful?",
+    "feedbackLiked": "Thanks for your feedback!",
+    "feedbackDisliked": "Thanks, we'll improve!",
+    "yes": "Yes",
+    "no": "No",
+    "yourArea": "Your area",
+    "kmAway": "~[km] km away",
+    "pleaseNote": "Please note"
   }
 }

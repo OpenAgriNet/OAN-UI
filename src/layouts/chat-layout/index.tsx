@@ -4,9 +4,10 @@ import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
+import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -29,43 +30,31 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 	useEffect(() => {
-		if (typeof window === "undefined" || !navigator.geolocation) {
-			return;
-		}
-
-		let cancelled = false;
-
-		const requestLocation = () => {
-			if (!cancelled) fetchLocation(t);
-		};
-
-		// If the Permissions API is available, check the current state first.
-		// - "granted"  → fetch silently (no prompt shown to user)
-		// - "prompt"   → actively request so the browser shows the permission dialog
-		// - "denied"   → skip (user has blocked it; don't bother)
-		if (navigator.permissions?.query) {
-			void navigator.permissions
-				.query({ name: "geolocation" as PermissionName })
-				.then((status) => {
-					if (status.state === "granted" || status.state === "prompt") {
-						requestLocation();
-					}
-				})
-				.catch(() => {
-					// Fallback: just try — the browser will show its own prompt.
-					requestLocation();
-				});
-		} else {
-			// Permissions API not available — request directly.
-			requestLocation();
-		}
-
-		return () => {
-			cancelled = true;
-		};
-	}, [fetchLocation, t]);
+		navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+			if (result.state === "granted") {
+				const cached = localStorage.getItem("user_location");
+				if (cached) {
+					try {
+						const { timestamp } = JSON.parse(cached) as { timestamp: number };
+						const ONE_DAY = 24 * 60 * 60 * 1000;
+						if (Date.now() - timestamp < ONE_DAY) {
+							fetchLocation();
+							return;
+						}
+					} catch { /* malformed cache — fall through */ }
+				}
+				fetchLocation();
+			} else if (result.state === "prompt") {
+				setShowLocationPrompt(true);
+			}
+			// "denied" — skip silently
+		}).catch(() => {
+			setShowLocationPrompt(true);
+		});
+	}, [fetchLocation]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
@@ -134,10 +123,21 @@ function ChatLayout() {
 				/>
 			</div>
 
-			<SettingsDrawer 
-				open={settingsOpen} 
-				onOpenChange={setSettingsOpen} 
+			<SettingsDrawer
+				open={settingsOpen}
+				onOpenChange={setSettingsOpen}
 			/>
+
+			{showLocationPrompt && (
+				<LocationPermissionDialog
+					onAllow={() => {
+						setShowLocationPrompt(false);
+						fetchLocation();
+					}}
+					onDismiss={() => setShowLocationPrompt(false)}
+				/>
+			)}
+
 		</div>
 	);
 }

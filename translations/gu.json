@@ -16,30 +16,140 @@
     "જવાબ તૈયાર કરવામાં આવી રહ્યો છે..."
   ],
   "questions": [
-    { "key": "schemes.info.pm_kisan", "text": "PM-KISAN યોજના શું છે અને હું તેના માટે કેવી રીતે અરજી કરી શકું?" },
-    { "key": "schemes.info.kisan_credit_card", "text": "મને કિસાન ક્રેડિટ કાર્ડ યોજના વિશે જણાવો" },
-    { "key": "schemes.info.fasal_bima", "text": "મારે પ્રધાનમંત્રી ફસલ બીમા યોજના વિશે જાણવું છે" },
-    { "key": "schemes.benefits.soil_health_card", "text": "સોઇલ હેલ્થ કાર્ડ યોજનાના શું ફાયદા છે?" },
-    { "key": "schemes.info.pmksy", "text": "શું તમે મને PMKSY યોજના સમજાવી શકો?" },
-    { "key": "schemes.general.available", "text": "ખેડૂતો માટે કઈ સરકારી યોજનાઓ ઉપલબ્ધ છે?" },
-    { "key": "schemes.info.seed_authentication", "text": "મને બીજ પ્રમાણીકરણ યોજના વિશે માહિતી જોઈએ છે" },
-    { "key": "schemes.info.agriculture_fund", "text": "કૃષિ ઈન્ફ્રાસ્ટ્રક્ચર ફંડ વિશે જણાવો" },
-    { "key": "soil.health.check_online", "text": "હું મારું સોઇલ હેલ્થ કાર્ડ ઓનલાઈન કેવી રીતે તપાસી શકું?" },
-    { "key": "soil.health.test_report_meaning", "text": "મારી માટી પરીક્ષણ રિપોર્ટનો શું અર્થ છે?" },
-    { "key": "soil.health.suitable_crops", "text": "મારા સોઇલ હેલ્થ કાર્ડ પ્રમાણે મારી માટી માટે કયા પાક યોગ્ય છે?" },
-    { "key": "loan.credit.failed_crop", "text": "જો મારો અગાઉનો પાક નિષ્ફળ ગયો હોય અને હું ચુકવણી ન કરી શક્યો હોઉં તો શું મને લોન મળી શકે?" },
-    { "key": "loan.credit.default_impact", "text": "શું લોન ચૂકવવામાં નિષ્ફળ જવાથી સરકારી યોજનાઓ માટેની મારી પાત્રતા પર અસર થશે?" },
-    { "key": "loan.credit.kcc_documents", "text": "કિસાન ક્રેડિટ કાર્ડ માટે અરજી કરવા મારે કયા દસ્તાવેજોની જરૂર છે?" },
-    { "key": "schemes.insurance.coverage", "text": "મારા ઘઉંના પાક માટે મને કેટલું વીમા કવરેજ મળશે?" },
-    { "key": "mandi.price.today", "text": "[district] માં આજે [crop] ની મંડી કિંમત શું છે?", "vars": ["crop", "district"] },
-    { "key": "mandi.price.nearest", "text": "[district] મંડીમાં [crop] ના નવીનતમ ભાવ શું છે?", "vars": ["crop", "district"] },
-    { "key": "mandi.price.crop", "text": "[district] મંડીમાં [crop] ની હાલની બજાર કિંમત શું છે?", "vars": ["crop", "district"] },
-    { "key": "weather.forecast.today", "text": "[district] માટે આજનું હવામાન પૂર્વાનુમાન શું છે?", "vars": ["district"] },
-    { "key": "weather.forecast.week", "text": "આ અઠવાડિયે [district] માં વરસાદ પડશે?", "vars": ["district"] }
+    {
+      "key": "schemes.info.pm_kisan",
+      "text": "PM-KISAN યોજના શું છે અને હું તેના માટે કેવી રીતે અરજી કરી શકું?"
+    },
+    {
+      "key": "schemes.info.kisan_credit_card",
+      "text": "મને કિસાન ક્રેડિટ કાર્ડ યોજના વિશે જણાવો"
+    },
+    {
+      "key": "schemes.info.fasal_bima",
+      "text": "મારે પ્રધાનમંત્રી ફસલ બીમા યોજના વિશે જાણવું છે"
+    },
+    {
+      "key": "schemes.benefits.soil_health_card",
+      "text": "સોઇલ હેલ્થ કાર્ડ યોજનાના શું ફાયદા છે?"
+    },
+    {
+      "key": "schemes.info.pmksy",
+      "text": "શું તમે મને PMKSY યોજના સમજાવી શકો?"
+    },
+    {
+      "key": "schemes.general.available",
+      "text": "ખેડૂતો માટે કઈ સરકારી યોજનાઓ ઉપલબ્ધ છે?"
+    },
+    {
+      "key": "schemes.info.seed_authentication",
+      "text": "મને બીજ પ્રમાણીકરણ યોજના વિશે માહિતી જોઈએ છે"
+    },
+    {
+      "key": "schemes.info.agriculture_fund",
+      "text": "કૃષિ ઈન્ફ્રાસ્ટ્રક્ચર ફંડ વિશે જણાવો"
+    },
+    {
+      "key": "soil.health.check_online",
+      "text": "હું મારું સોઇલ હેલ્થ કાર્ડ ઓનલાઈન કેવી રીતે તપાસી શકું?"
+    },
+    {
+      "key": "soil.health.test_report_meaning",
+      "text": "મારી માટી પરીક્ષણ રિપોર્ટનો શું અર્થ છે?"
+    },
+    {
+      "key": "soil.health.suitable_crops",
+      "text": "મારા સોઇલ હેલ્થ કાર્ડ પ્રમાણે મારી માટી માટે કયા પાક યોગ્ય છે?"
+    },
+    {
+      "key": "loan.credit.failed_crop",
+      "text": "જો મારો અગાઉનો પાક નિષ્ફળ ગયો હોય અને હું ચુકવણી ન કરી શક્યો હોઉં તો શું મને લોન મળી શકે?"
+    },
+    {
+      "key": "loan.credit.default_impact",
+      "text": "શું લોન ચૂકવવામાં નિષ્ફળ જવાથી સરકારી યોજનાઓ માટેની મારી પાત્રતા પર અસર થશે?"
+    },
+    {
+      "key": "loan.credit.kcc_documents",
+      "text": "કિસાન ક્રેડિટ કાર્ડ માટે અરજી કરવા મારે કયા દસ્તાવેજોની જરૂર છે?"
+    },
+    {
+      "key": "schemes.insurance.coverage",
+      "text": "મારા ઘઉંના પાક માટે મને કેટલું વીમા કવરેજ મળશે?"
+    },
+    {
+      "key": "mandi.price.today",
+      "text": "[district] માં આજે [crop] ની મંડી કિંમત શું છે?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "mandi.price.nearest",
+      "text": "[district] મંડીમાં [crop] ના નવીનતમ ભાવ શું છે?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "mandi.price.crop",
+      "text": "[district] મંડીમાં [crop] ની હાલની બજાર કિંમત શું છે?",
+      "vars": [
+        "crop",
+        "district"
+      ]
+    },
+    {
+      "key": "weather.forecast.today",
+      "text": "[district] માટે આજનું હવામાન પૂર્વાનુમાન શું છે?",
+      "vars": [
+        "district"
+      ]
+    },
+    {
+      "key": "weather.forecast.week",
+      "text": "આ અઠવાડિયે [district] માં વરસાદ પડશે?",
+      "vars": [
+        "district"
+      ]
+    }
   ],
   "variables": {
-    "crop": ["ઘઉં", "ચોખા", "મકાઈ", "સોયાબીન", "કપાસ", "શેરડી", "રાઈ", "મગફળી", "ડુંગળી", "બટાટા", "ટામેટા", "મરચું", "ચણા", "જુવાર", "બાજરી", "હળદર", "લસણ", "કેળા", "કેરી", "સંતરા"],
-    "district": ["અમદાવાદ", "રાજકોટ", "સુરત", "વડોદરા", "ભાવનગર", "જૂનાગઢ", "ગાંધીનગર", "મહેસાણા", "આણંદ", "ખેડા"]
+    "crop": [
+      "ઘઉં",
+      "ચોખા",
+      "મકાઈ",
+      "સોયાબીન",
+      "કપાસ",
+      "શેરડી",
+      "રાઈ",
+      "મગફળી",
+      "ડુંગળી",
+      "બટાટા",
+      "ટામેટા",
+      "મરચું",
+      "ચણા",
+      "જુવાર",
+      "બાજરી",
+      "હળદર",
+      "લસણ",
+      "કેળા",
+      "કેરી",
+      "સંતરા"
+    ],
+    "district": [
+      "અમદાવાદ",
+      "રાજકોટ",
+      "સુરત",
+      "વડોદરા",
+      "ભાવનગર",
+      "જૂનાગઢ",
+      "ગાંધીનગર",
+      "મહેસાણા",
+      "આણંદ",
+      "ખેડા"
+    ]
   },
   "recordingListening": "[botName] સાંભળી રહ્યું છે, બોલવાનું શરૂ કરો.",
   "feedback": {
@@ -89,5 +199,31 @@
     "continue": "આગળ વધો",
     "submit": "વિશ્લેષણ કરો અને મોકલો",
     "cancel": "રદ કરો"
+  },
+  "locationPermission": {
+    "title": "કૃપા કરીને સ્થાન પરવાનગી આપો",
+    "subtitle": "શું તમે તમારા સ્થાન માટે કૃષિ માહિતી મેળવવામાં રસ ધરાવો છો? જો હા, તો કૃપા કરીને તમારું વર્તમાન સ્થાન શેર કરો જેથી અમે તમને સંબંધિત અપડેટ મોકલી શકીએ, જેમ કે:",
+    "benefit1": "સતત વરસાદી મોસમ ક્યારે શરૂ થઈ શકે છે",
+    "benefit2": "તમારી ખેતી પ્રવૃત્તિઓમાં સહાય માટે અન્ય હવામાન માહિતી",
+    "benefit3": "પાક-વિશિષ્ટ ખેતી સલાહ",
+    "allowBtn": "સ્થાન પરવાનગી આપો",
+    "skipBtn": "હમણાં નહીં"
+  },
+  "notifications": {
+    "title": "સૂચનાઓ",
+    "noNotificationsTitle": "કોઈ સૂચના ઉપલબ્ધ નથી",
+    "noNotificationsBody": "તમે બધું જોઈ લીધું છે. પછી અપડેટ્સ માટે ફરી તપાસો.",
+    "noLocationTitle": "હજી સુધી કોઈ હવામાન સૂચना નથી",
+    "noLocationBody": "તમારા વિસ્તાર માટે હવામાન ચેતવણીઓ લોડ કરવા માટે સ્થાન પરવાનગી આપો.",
+    "tooltip": "તમારી નવીનતમ સૂચनाઓ જોવા માટે અહીં ટૅप કરો",
+    "markAllRead": "બધાને વાંચેલ ગણો",
+    "wasHelpful": "શું આ ઉપયોગી હતું?",
+    "feedbackLiked": "તમારા અભિપ્રાય માટે આભાર!",
+    "feedbackDisliked": "આભાર, અમે સુધારો કરીશું!",
+    "yes": "હા",
+    "no": "ના",
+    "yourArea": "તમારો વિસ્તાર",
+    "kmAway": "~[km] કિ.મી. દૂર",
+    "pleaseNote": "કૃપया ध्यान दें"
   }
 }

@@ -186,8 +186,24 @@ export const getVisitorId = async (): Promise<string> => {
     return existingVisitorId;
   }
 
+  try {
+    const cached = localStorage.getItem("fingerprint_context");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed?.data?.device_id) return parsed.data.device_id;
+    }
+  } catch {
+    // Fall through to initialization.
+  }
+
   await initFingerprintContext(Date.now());
-  return window.__FINGERPRINT_CONTEXT__?.data?.device_id || "unknown";
+  if (window.__FINGERPRINT_CONTEXT__?.data?.device_id) {
+    return window.__FINGERPRINT_CONTEXT__.data.device_id;
+  }
+
+  const fp = await FingerprintJS.load();
+  const result = await fp.get();
+  return result.visitorId;
 };
 
 export const startTelemetry = async (
