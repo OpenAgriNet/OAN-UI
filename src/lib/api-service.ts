@@ -1,7 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
-import { getBrowserInfo } from '@/lib/utils';
-import { getFingerprintId } from '@/lib/telemetry';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 export interface LocationData {
   latitude: number;

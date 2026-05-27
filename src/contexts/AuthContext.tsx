@@ -1,8 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
-import { getBrowserInfo } from '@/lib/utils';
-import { getFingerprintId, setTelemetryUserData } from '../lib/telemetry';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -119,7 +118,6 @@ eQIDAQAB
           authenticated: true,
           is_guest_user: true,
         });
-        setTelemetryUserData({});
       }
     } catch (error) {
       console.error('Failed to fetch auth token from /chat/auth:', error);
@@ -206,7 +204,6 @@ eQIDAQAB
       setUser(null);
       setLocations([]);
       // Clear telemetry data when user is not available
-      setTelemetryUserData({});
       return;
     }
     
@@ -228,11 +225,6 @@ eQIDAQAB
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
-    // Extract additional user fields
-    const role = (payload as any)?.role as string || '';
-    const farmer_id = (payload as any)?.farmer_id as string || '';
-    const unique_id = (payload as any)?.unique_id as string | number | undefined;
-    
     setUser({
       authenticated: true,
       username: name,
@@ -266,16 +258,6 @@ eQIDAQAB
     
     setLocations(validatedLocations);
 
-    // Set comprehensive telemetry data with all location types
-    setTelemetryUserData({
-      mobile: mobile,
-      username: name,
-      email: email,
-      role: role,
-      farmer_id: farmer_id,
-      unique_id: unique_id,
-      locations: validatedLocations
-    });
   };
 
   // Store JWT in localStorage with expiration
@@ -383,7 +365,6 @@ eQIDAQAB
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
     // Clear all telemetry data on logout
-    setTelemetryUserData({});
   };
 
   return (

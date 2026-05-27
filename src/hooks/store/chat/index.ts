@@ -112,11 +112,17 @@ function makeUserMessage(text: string): TextMessage {
 	};
 }
 
-function makeAssistantMessage(text: string, isError?: boolean, showListenRow = false): ChatMessage {
+function makeAssistantMessage(
+	text: string,
+	isError?: boolean,
+	showListenRow = false,
+	qid?: string
+): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: "assistant",
 		type: "card",
+		qid,
 		body: text,
 		createdAt: new Date().toISOString(),
 		showListenRow,
@@ -218,7 +224,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText)]
+								messages: [
+									...state.messages,
+									makeAssistantMessage(streamingText, false, false, questionId)
+								]
 							};
 						}
 					});
@@ -260,15 +269,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
 				}));
 
-				await apiService.submitTelemetryError({
-					qid: questionId,
-					session_id: currentSession,
-					error_text: "Rate limit error (429)",
-					question_text: trimmed
-				}).catch((telemetryError) => console.warn("Backend telemetry error relay failed", telemetryError));
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: "Rate limit error (429)",
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			} else {
 				set({
 					toast: {
@@ -277,12 +290,16 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					}
 				});
 
-				await apiService.submitTelemetryError({
-					qid: questionId,
-					session_id: currentSession,
-					error_text: String(error),
-					question_text: trimmed
-				}).catch((telemetryError) => console.warn("Backend telemetry error relay failed", telemetryError));
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: String(error),
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			}
 		}
 	},
@@ -568,6 +585,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const userMsg = messages.findLast((m) => m.role === "user");
 		const questionText = userMsg && userMsg.type === "text" ? userMsg.text : "";
 		const responseText = msg && msg.type === "card" ? msg.body : "";
+		const qid = msg.type === "card" ? msg.qid || messageId : messageId;
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive
 			? "Liked the response"
@@ -575,7 +593,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		try {
 			await apiService.submitTelemetryFeedback({
-				qid: messageId,
+				qid,
 				session_id: sessionId,
 				message_id: messageId,
 				feedback_type: feedbackType,

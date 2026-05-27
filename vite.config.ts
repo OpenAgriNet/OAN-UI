@@ -19,6 +19,9 @@ const virtualRouteFileChangeReloadPlugin: PluginOption = {
 };
 // https://vite.dev/config/
 export default defineConfig({
+	build: {
+		target: "esnext"
+	},
 	resolve: {
 		alias: {
 			"@": path.resolve(__dirname, "src"),
