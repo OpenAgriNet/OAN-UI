@@ -9,8 +9,13 @@ import { useLanguage } from "@/components/LanguageProvider";
 
 const bellIcon = "/assets/bell.svg";
 
+function unescapeNewlines(text: string): string {
+	return text.replace(/\\n/g, "\n");
+}
+
 function bodyPreview(text: string, maxLen = 110): string {
-	const line = text.split(/\r?\n/).find((l) => l.trim().length > 0) ?? text;
+	const normalized = unescapeNewlines(text);
+	const line = normalized.split(/\r?\n/).find((l) => l.trim().length > 0) ?? normalized;
 	const trimmed = line.trim();
 	return trimmed.length <= maxLen ? trimmed : `${trimmed.slice(0, maxLen - 1)}…`;
 }
@@ -288,7 +293,7 @@ export function NotificationsPopover() {
 							{/* ── Forecast body ── */}
 							<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
 								{(() => {
-									const paras = selected.content.body.split(/\n\n+/).map(p => p.trim()).filter(Boolean);
+									const paras = unescapeNewlines(selected.content.body).split(/\n\n+/).map(p => p.trim()).filter(Boolean);
 									const mainParas = paras.filter(p => !p.toLowerCase().startsWith("please note") && !p.startsWith("("));
 									const infoLine = paras.find(p => p.startsWith("("));
 									const noteParas = paras.filter(p => p.toLowerCase().startsWith("please note"));
