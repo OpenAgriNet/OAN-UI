@@ -4,25 +4,6 @@ import path from "path";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 
-const legacyTelemetryScripts = [
-	"js/jquery.min.js",
-	"js/auth-token-generator.min.js",
-	"js/telemetry.min.js"
-];
-
-const legacyTelemetryScriptsPlugin: PluginOption = {
-	name: "inject-legacy-telemetry-scripts",
-	transformIndexHtml() {
-		return legacyTelemetryScripts.map((script) => ({
-			tag: "script",
-			attrs: {
-				src: script
-			},
-			injectTo: "head" as const
-		}));
-	}
-};
-
 const virtualRouteFileChangeReloadPlugin: PluginOption = {
 	name: "watch-config-restart",
 	configureServer(server) {
@@ -57,10 +38,10 @@ export default defineConfig({
 			generatedRouteTree: "./src/routeTree.gen.ts"
 		}),
 		react(),
-		legacyTelemetryScriptsPlugin,
 		virtualRouteFileChangeReloadPlugin
 	],
 	build: {
+		target: "esnext",
 		rollupOptions: {
 			output: {
 				manualChunks(id) {

@@ -1,8 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { importSPKI, jwtVerify, type JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
-import { getBrowserInfo } from '@/lib/utils';
-import { setTelemetryUserData } from '../lib/telemetry';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -77,13 +76,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Keep this in sync with bharat-oan-api/jwt_public_key.pem.
   const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiAT5pkWCk7KgBXDFO6C
-FHo1fmVMUHOCDXJ1EcAb11REiSHgxlP9TPLCs8qPSe5eeJAHGn9sqB0p0jC8cWzh
-RvnrCqRhNXhmOyqrCTudBT8ePnMYU7H/dpoqF1zpYctDVkaYOf0l/H+uWk55f+Zy
-zZVcpQAi2lTwNQP2teIHqt4YNsOKmX9J2BvczRj4wdCpp84+UkFJ+lVftHbEoxYM
-OnCObibmuJDPvwrkHtACJZFy1Dc371evaaTN3dGE/P7MLXRA+XtInY5lYfsB23/Q
-a37S+srKe59wFypSMOU+ZMvgFA2oK0zA1WEC93000n5HEQMJU8r7pCgKhq7oD8QJ
-hwIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApF0nCLVyuIKXItmdnKN/
+7w+Te+1koxkR2f/y9GXPD2K9aITyZxBabOvCP4q3OLx0g9hobuD1uzTpxWKS4e5J
+tTSruENEw9aFDysmSf2078ptRx82Wo6+u3ku0nxAPO2Ur4aYub0EzOmr2KA3icuj
+/Z7heBn9WVIXSMwJ/O9v+122ej15mmmgvC6AtZr7Ka1XUiAldrztJMAhDxyyzG50
+dlZX36FouqvGEEa/D1x2qSeTk45Av9nWoUe17K0lsh6+7D808FcDESw4JU+eMkb5
+sZEJlNKKlknGd1CzgpR7ZMaa7L4K6nMtLn2etW+q31ap/cF8tIx34IMoSTQcOb1+
+eQIDAQAB
 -----END PUBLIC KEY-----`;
 
   // Fetch new JWT token from /api/token and store it
@@ -91,9 +90,10 @@ hwIDAQAB
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
+      const fingerprintId = await getFingerprintId();
       
       // Call /api/token to get JWT token
-      const newToken = await apiService.fetchAuthToken(browserInfo);
+      const newToken = await apiService.fetchAuthToken(browserInfo, fingerprintId);
       
       // Validate and store the new token
       if (importedPublicKey) {
@@ -118,7 +118,6 @@ hwIDAQAB
           authenticated: true,
           is_guest_user: true,
         });
-        setTelemetryUserData({});
       }
     } catch (error) {
       console.error('Failed to fetch auth token from /api/token:', error);
@@ -205,7 +204,6 @@ hwIDAQAB
       setUser(null);
       setLocations([]);
       // Clear telemetry data when user is not available
-      setTelemetryUserData({});
       return;
     }
     
@@ -227,11 +225,6 @@ hwIDAQAB
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
-    // Extract additional user fields
-    const role = (payload as any)?.role as string || '';
-    const farmer_id = (payload as any)?.farmer_id as string || '';
-    const unique_id = (payload as any)?.unique_id as string | number | undefined;
-    
     setUser({
       authenticated: true,
       username: name,
@@ -265,16 +258,6 @@ hwIDAQAB
     
     setLocations(validatedLocations);
 
-    // Set comprehensive telemetry data with all location types
-    setTelemetryUserData({
-      mobile: mobile,
-      username: name,
-      email: email,
-      role: role,
-      farmer_id: farmer_id,
-      unique_id: unique_id,
-      locations: validatedLocations
-    });
   };
 
   // Store JWT in localStorage with expiration
@@ -382,7 +365,6 @@ hwIDAQAB
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
     // Clear all telemetry data on logout
-    setTelemetryUserData({});
   };
 
   return (
@@ -399,4 +381,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

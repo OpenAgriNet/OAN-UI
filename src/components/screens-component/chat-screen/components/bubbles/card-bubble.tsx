@@ -281,4 +281,3 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 		</>
 	);
 }
-

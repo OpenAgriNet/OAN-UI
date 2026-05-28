@@ -3,7 +3,7 @@
 
 Opinionated React starter using **Vite**, **TanStack Router (File Routes)**, **TanStack Query**, **shadcn/ui**, **Tailwind CSS v4**, **Zustand**, and **Bun**.
 
-This project is designed for **large, scalable admin dashboards** with strict structure, routing discipline, and reusable screen patterns. 
+This project is designed for **large, scalable admin dashboards** with strict structure, routing discipline, and reusable screen patterns.
 ---
 
 ## Prerequisites

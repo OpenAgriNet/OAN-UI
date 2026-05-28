@@ -2,6 +2,20 @@ name: Build and Push to GCP Artifact Registry
 
 on:
   workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Branch/environment name to use for image tags and GitHub environment
+        required: true
+        default: bh-dev
+        type: choice
+        options:
+          - bh-dev
+          - bh-main
+      push_image:
+        description: Push the built Docker image to Artifact Registry
+        required: true
+        default: true
+        type: boolean
   push:
     branches:
       - bh-main
@@ -17,7 +31,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || github.base_ref || github.ref_name }}
     
     steps:
       - name: Checkout repository
@@ -48,8 +62,8 @@ jobs:
   docker-push:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push'
-    environment: ${{ github.ref_name }}
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.push_image)
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.target_environment || github.base_ref || github.ref_name }}
     
     permissions:
       contents: read
@@ -65,12 +79,19 @@ jobs:
       - name: Set image name and tags based on branch
         id: set-tags
         run: |
-          BRANCH="${{ github.ref_name }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BRANCH="${{ inputs.target_environment }}"
+          else
+            BRANCH="${{ github.ref_name }}"
+          fi
+
           ENV_PREFIX=$(echo "$BRANCH" | cut -d'-' -f1)
           BUILD_TYPE=$(echo "$BRANCH" | cut -d'-' -f2)
+          BRANCH_TAG=$(echo "$BRANCH" | sed 's/\//-/g')
           
           echo "IMAGE_NAME=${{ env.BASE_IMAGE_NAME }}" >> $GITHUB_OUTPUT
           echo "BUILD_TAG=${BUILD_TYPE}" >> $GITHUB_OUTPUT
+          echo "BRANCH_TAG=${BRANCH_TAG}" >> $GITHUB_OUTPUT
           echo "LATEST_TAG=${BUILD_TYPE}-latest" >> $GITHUB_OUTPUT
 
       - name: Download build artifacts
@@ -103,6 +124,7 @@ jobs:
             ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/${{ steps.set-tags.outputs.IMAGE_NAME }}:${{ steps.set-tags.outputs.LATEST_TAG }}
             ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/${{ steps.set-tags.outputs.IMAGE_NAME }}:${{ steps.package-version.outputs.VERSION }}-${{ steps.set-tags.outputs.BUILD_TAG }}
             ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/${{ steps.set-tags.outputs.IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/${{ steps.set-tags.outputs.IMAGE_NAME }}:${{ steps.set-tags.outputs.BRANCH_TAG }}
             ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.GCP_ARTIFACT_REPO }}/${{ steps.set-tags.outputs.IMAGE_NAME }}:${{ steps.set-tags.outputs.BUILD_TAG }}
           platforms: linux/amd64
           no-cache: true

@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
-import { getBrowserInfo } from '@/lib/utils';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 export interface LocationData {
   latitude: number;
@@ -30,6 +30,24 @@ interface TTSResponse {
 
 interface AuthResponse {
   token: string;
+}
+
+interface TelemetryFeedbackPayload {
+  qid: string;
+  session_id: string;
+  message_id?: string;
+  feedback_type: string;
+  feedback_text: string;
+  question_text: string;
+  answer_text: string;
+}
+
+interface TelemetryErrorPayload {
+  qid: string;
+  session_id: string;
+  error_text: string;
+  question_text?: string;
+  message_id?: string;
 }
 
 interface ImageUploadResponse {
@@ -150,7 +168,8 @@ class ApiService {
     this.refreshTokenPromise = (async () => {
       try {
         const metadata = getBrowserInfo();
-        const newToken = await this.fetchAuthToken(metadata);
+        const fingerprintId = await getFingerprintId();
+        const newToken = await this.fetchAuthToken(metadata, fingerprintId);
         const expiry = getTokenExpiryFromExp(newToken);
         if (!expiry) {
           throw new Error('JWT exp claim missing; refusing to store token with synthetic expiry');
@@ -219,6 +238,7 @@ class ApiService {
   async sendUserQuery(
     msg: string,
     session: string,
+    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -232,6 +252,7 @@ class ApiService {
       
       const params = {
         session_id: session,
+        qid,
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
@@ -372,6 +393,7 @@ class ApiService {
   async sendImageQuery(
     imageFile: File,
     session: string,
+    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -385,7 +407,7 @@ class ApiService {
     // The backend resolves this ID to a localhost image URL internally.
     const query = `please do the pest analysis for this image ${imageId}`;
 
-    return this.sendUserQuery(query, session, sourceLang, targetLang, onStreamData, onResponseStarted);
+    return this.sendUserQuery(query, session, qid, sourceLang, targetLang, onStreamData, onResponseStarted);
   }
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
@@ -466,16 +488,14 @@ class ApiService {
 
   async submitPositiveFeedback(messageId: string): Promise<void> {
     try {
-      await this.refreshAuthTokenIfExpiredOrMissing();
-      if (!this.validateAuth()) return;
-      
-      const payload = {
+      await this.submitTelemetryFeedback({
+        qid: messageId,
+        session_id: this.currentSessionId || "",
         message_id: messageId,
-        feedback: "positive"
-      };
-
-      await this.axiosInstance.post('/api/feedback/positive/', payload, {
-        headers: this.getAuthHeaders()
+        feedback_type: "like",
+        feedback_text: "Liked the response",
+        question_text: "",
+        answer_text: ""
       });
     } catch (error) {
       console.error('Error submitting positive feedback:', error);
@@ -485,17 +505,14 @@ class ApiService {
 
   async submitNegativeFeedback(messageId: string, reason: string, feedback: string): Promise<void> {
     try {
-      await this.refreshAuthTokenIfExpiredOrMissing();
-      if (!this.validateAuth()) return;
-      
-      const payload = {
+      await this.submitTelemetryFeedback({
+        qid: messageId,
+        session_id: this.currentSessionId || "",
         message_id: messageId,
-        reason: reason,
-        feedback: feedback
-      };
-
-      await this.axiosInstance.post('/api/feedback/negative/', payload, {
-        headers: this.getAuthHeaders()
+        feedback_type: "dislike",
+        feedback_text: feedback || reason || "Negative feedback",
+        question_text: "",
+        answer_text: ""
       });
     } catch (error) {
       console.error('Error submitting negative feedback:', error);
@@ -541,13 +558,32 @@ class ApiService {
     return this.currentSessionId;
   }
 
-  async fetchAuthToken(metadata: string): Promise<string> {
+  async submitTelemetryFeedback(payload: TelemetryFeedbackPayload): Promise<void> {
+    await this.refreshAuthTokenIfExpiredOrMissing();
+    if (!this.validateAuth()) return;
+
+    await this.axiosInstance.post('/api/telemetry/feedback', payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  async submitTelemetryError(payload: TelemetryErrorPayload): Promise<void> {
+    await this.refreshAuthTokenIfExpiredOrMissing();
+    if (!this.validateAuth()) return;
+
+    await this.axiosInstance.post('/api/telemetry/error', payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  async fetchAuthToken(metadata: string, fingerprintId?: string | null): Promise<string> {
     try {
       // Don't use authentication headers for this call as we're getting the token
       const response = await axios.post<AuthResponse>(
         `${this.apiUrl}/api/token`,
         {
           metadata,
+          ...(fingerprintId && { fingerprint_id: fingerprintId }),
         },
         {
           headers: {

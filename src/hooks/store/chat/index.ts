@@ -9,11 +9,9 @@ import {
 	type Suggestion
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import * as telemetry from "@/lib/telemetry";
-import { getVisitorId } from "@/lib/telemetry";
+import { getFingerprintId } from "@/lib/utils";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
-import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 
@@ -258,6 +256,7 @@ function makeAssistantMessage(
 	text: string,
 	isError?: boolean,
 	showListenRow = false,
+	qid?: string,
 	failedUserText?: string,
 	failedLanguage?: string
 ): ChatMessage {
@@ -265,6 +264,7 @@ function makeAssistantMessage(
 		id: crypto.randomUUID(),
 		role: "assistant",
 		type: "card",
+		qid,
 		body: text,
 		createdAt: new Date().toISOString(),
 		showListenRow,
@@ -403,7 +403,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		let visitor_id = "unknown";
 		try {
-			visitor_id = await getVisitorId();
+			visitor_id = (await getFingerprintId()) || "unknown";
 		} catch {
 			// Keep fallback visitor id.
 		}
@@ -490,31 +490,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const questionId = uuidv4();
 
-		// Telemetry: Log Question
-		const user = useAuthStore.getState().user;
-		const userDetails = {
-			preferred_username: user?.username || "guest",
-			email: user?.email || ""
-		};
-
-		try {
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
-			telemetry.endTelemetry();
-		} catch (e) {
-			console.warn("Telemetry question log failed", e);
-		}
-
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
 
-			// Mark request start for telemetry
-			telemetry.markServerRequestStart(questionId);
-
-			const response = await apiService.sendUserQuery(
+			await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
+				questionId,
 				language, // source
 				language, // target
 				(chunk) => {
@@ -528,7 +511,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								messages: [
+									...state.messages,
+									makeAssistantMessage(streamingText, false, true, questionId)
+								],
 								isAssistantTyping: false
 							};
 						}
@@ -538,15 +524,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			);
 
 			set({ isAssistantTyping: false, isInputLocked: false });
-
-			// Telemetry: Log Response
-			await telemetry.startTelemetry(currentSession, userDetails);
-
-			telemetry.markAnswerRendered(questionId, () => {
-				telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
-			});
-
-			await telemetry.endTelemetryWithWait(questionId);
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -572,13 +549,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
 				}));
 
-				// Telemetry: Log Error (Rate Limit)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
-				telemetry.endTelemetry();
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: "Rate limit error (429)",
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			} else {
 				// Show error as an in-chat message with retry capability
 				const errorMessage = t
@@ -591,16 +574,23 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							errorMessage as string,
 							true,
 							false,
+							questionId,
 							trimmed,
 							language
 						)
 					]
 				}));
 
-				// Telemetry: Log Error (Generic)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
-				telemetry.endTelemetry();
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: String(error),
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			}
 		}
 	},
@@ -684,28 +674,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const questionId = uuidv4();
 
-		const user = useAuthStore.getState().user;
-		const userDetails = {
-			preferred_username: user?.username || "guest",
-			email: user?.email || ""
-		};
-
-		try {
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, `[Image] ${uploadFile.name}`);
-			telemetry.endTelemetry();
-		} catch (e) {
-			console.warn("Telemetry question log failed", e);
-		}
-
 		try {
 			let streamingText = "";
 
-			telemetry.markServerRequestStart(questionId);
-
-			const response = await apiService.sendImageQuery(
+			await apiService.sendImageQuery(
 				uploadFile,
 				currentSession,
+				questionId,
 				language,
 				language,
 				(chunk) => {
@@ -719,7 +694,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								messages: [
+									...state.messages,
+									makeAssistantMessage(streamingText, false, true, questionId)
+								],
 								isAssistantTyping: false
 							};
 						}
@@ -729,12 +707,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			);
 
 			set({ isAssistantTyping: false, isInputLocked: false });
-
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.markAnswerRendered(questionId, () => {
-				telemetry.logResponseEvent(questionId, currentSession, `[Image] ${uploadFile.name}`, response.response);
-			});
-			await telemetry.endTelemetryWithWait(questionId);
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -760,21 +732,47 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
 				}));
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
-				telemetry.endTelemetry();
+
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: "Rate limit error (429)",
+						question_text: `[Image] ${uploadFile.name}`
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			} else {
-				set({
-					toast: {
-						message: "Sorry, there was an error analyzing your image. Please try again.",
-						type: "error"
-					}
-				});
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
-				telemetry.endTelemetry();
+				const errorMessage = t
+					? t("imageUpload.analysisFailed") || "Sorry, there was an error analyzing your image. Please try again."
+					: "Sorry, there was an error analyzing your image. Please try again.";
+				set((state) => ({
+					messages: [
+						...state.messages,
+						makeAssistantMessage(
+							errorMessage as string,
+							true,
+							false,
+							questionId,
+							`[Image] ${uploadFile.name}`,
+							language
+						)
+					]
+				}));
+
+				await apiService
+					.submitTelemetryError({
+						qid: questionId,
+						session_id: currentSession,
+						error_text: String(error),
+						question_text: `[Image] ${uploadFile.name}`
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			}
 		}
 	},
@@ -1082,29 +1080,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const userMsg = messages.findLast((m) => m.role === "user");
 		const questionText = userMsg && userMsg.type === "text" ? userMsg.text : "";
 		const responseText = msg && msg.type === "card" ? msg.body : "";
+		const qid = msg.type === "card" ? msg.qid || messageId : messageId;
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive
 			? "Liked the response"
 			: feedback || reason || "Negative feedback";
 
 		try {
-			// Telemetry-only flow as per user request
-			const user = useAuthStore.getState().user;
-			await telemetry.startTelemetry(sessionId, {
-				preferred_username: user?.user_metadata?.name || user?.email || "guest",
-				email: user?.email || ""
+			await apiService.submitTelemetryFeedback({
+				qid,
+				session_id: sessionId,
+				message_id: messageId,
+				feedback_type: feedbackType,
+				feedback_text: feedbackMsg,
+				question_text: questionText,
+				answer_text: responseText
 			});
-
-			telemetry.logFeedbackEvent(
-				messageId,
-				sessionId,
-				feedbackMsg,
-				feedbackType,
-				questionText,
-				responseText
-			);
-
-			telemetry.endTelemetry();
 
 			// Logic from user code: show success toast
 			// if (isPositive) {
