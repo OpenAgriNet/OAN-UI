@@ -1,7 +1,7 @@
 # Stage 1: Build
 FROM node:22-alpine AS build
 WORKDIR /usr/local/app
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN rm -f package-lock.json && npm install --legacy-peer-deps --include=optional --force
 COPY ./ ./
 RUN npm run build
