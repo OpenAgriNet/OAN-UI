@@ -5,9 +5,7 @@ import { SystemBubble } from "./system-bubble";
 import { TextBubble } from "./text-bubble";
 import { MessageChrome } from "../message-chrome";
 
-/* eslint-disable no-unused-vars */
 type BubbleProps = { message: ChatMessage; onQuickReply?: (payload: string) => void };
-/* eslint-enable no-unused-vars */
 
 export function Bubble({ message }: BubbleProps) {
 
@@ -43,6 +41,21 @@ export function Bubble({ message }: BubbleProps) {
                          Let's derive isMine from role.
                      */}
 					<AudioBubble message={message} isMine={message.role === "user"} />
+				</MessageChrome>
+			);
+		case "image":
+			return (
+				<MessageChrome role={message.role}>
+					<div className="max-w-xs sm:max-w-sm">
+						<img
+							src={message.imageUrl}
+							alt={message.caption || "Uploaded image"}
+							className="rounded-lg object-cover max-h-64 w-full"
+						/>
+						{message.caption && (
+							<p className="mt-1 text-sm text-muted-foreground">{message.caption}</p>
+						)}
+					</div>
 				</MessageChrome>
 			);
 		default:

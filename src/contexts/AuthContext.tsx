@@ -1,5 +1,5 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
-import { jwtVerify, importSPKI, JWTPayload } from 'jose';
+import { importSPKI, jwtVerify, type JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
 import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [publicKey, setPublicKey] = useState<CryptoKey | null>(null);
 
-  // JWT validation public key
+  // Keep this in sync with bharat-oan-api/jwt_public_key.pem.
   const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApF0nCLVyuIKXItmdnKN/
 7w+Te+1koxkR2f/y9GXPD2K9aITyZxBabOvCP4q3OLx0g9hobuD1uzTpxWKS4e5J
@@ -85,14 +85,14 @@ sZEJlNKKlknGd1CzgpR7ZMaa7L4K6nMtLn2etW+q31ap/cF8tIx34IMoSTQcOb1+
 eQIDAQAB
 -----END PUBLIC KEY-----`;
 
-  // Fetch new JWT token from /chat/auth and store it
+  // Fetch new JWT token from /api/token and store it
   const fetchAndStoreNewToken = useCallback(async (importedPublicKey: CryptoKey | null) => {
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
       const fingerprintId = await getFingerprintId();
       
-      // Call /chat/auth to get JWT token
+      // Call /api/token to get JWT token
       const newToken = await apiService.fetchAuthToken(browserInfo, fingerprintId);
       
       // Validate and store the new token
@@ -102,7 +102,7 @@ eQIDAQAB
           storeJWT(newToken);
           createUserFromPayload(result.payload);
         } else {
-          console.error('Received invalid token from /chat/auth');
+          console.error('Received invalid token from /api/token');
         }
       } else {
         // If public key is not available, store token anyway
@@ -120,7 +120,7 @@ eQIDAQAB
         });
       }
     } catch (error) {
-      console.error('Failed to fetch auth token from /chat/auth:', error);
+      console.error('Failed to fetch auth token from /api/token:', error);
     }
   }, []);
 

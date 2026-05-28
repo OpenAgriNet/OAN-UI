@@ -42,7 +42,7 @@ const router = createRouter({
 	routeTree,
 	context: { queryClient },
 	defaultPendingComponent: () => (
-		<div className="bg-bunker-800 flex h-screen w-screen items-center justify-center">
+		<div className="bg-background flex h-screen w-screen items-center justify-center">
 			<Loader />
 		</div>
 	),

@@ -24,6 +24,8 @@ export type CardMessage = MessageBase & {
 	actions?: { id: string; label: string }[];
 	showListenRow?: boolean;
 	isError?: boolean;
+	failedUserText?: string;
+	failedLanguage?: string;
 };
 
 export type QuickRepliesMessage = MessageBase & {
@@ -43,4 +45,10 @@ export type AudioMessage = MessageBase & {
 	duration: number;
 };
 
-export type ChatMessage = TextMessage | CardMessage | QuickRepliesMessage | SystemMessage | AudioMessage;
+export type ImageMessage = MessageBase & {
+	type: "image";
+	imageUrl: string;
+	caption?: string;
+};
+
+export type ChatMessage = TextMessage | CardMessage | QuickRepliesMessage | SystemMessage | AudioMessage | ImageMessage;

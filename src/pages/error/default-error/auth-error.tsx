@@ -2,42 +2,37 @@ const lockImg = "/assets/lockImg.svg";
 
 export default function AuthError() {
   return (
-    <div 
-      style={{ backgroundColor: '#212C28' }} 
-      className="flex min-h-screen w-full items-center justify-center p-4"
-    >
-      {/* 24px rounded gradient border wrapper */}
-      <div 
+    <div className="flex min-h-screen w-full items-center justify-center bg-background p-4">
+      {/* Gradient border wrapper */}
+      <div
         style={{
-          padding: '1px',
-          background: '#019444',
-          borderRadius: '24px',
-          width: '100%',
-          maxWidth: '350px'
+          padding: "1px",
+          background: "var(--primary)",
+          borderRadius: "24px",
+          width: "100%",
+          maxWidth: "350px"
         }}
       >
-        {/* Card content with inner background and radius */}
-        <div 
+        {/* Card content */}
+        <div
+          className="w-full bg-card"
           style={{
-            background: '#212C28',
-            borderRadius: '23px',
-            overflow: 'hidden',
-            position: 'relative'
+            borderRadius: "23px",
+            overflow: "hidden",
+            position: "relative"
           }}
-          className="w-full"
         >
-          {/* #FFFFFF1A Overlay */}
-          <div 
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
-            className="w-full p-10 flex flex-col items-center text-center space-y-6"
+          <div
+            style={{ backgroundColor: "rgba(128, 128, 128, 0.08)" }}
+            className="flex w-full flex-col items-center space-y-6 p-10 text-center"
           >
             <img src={lockImg} alt="Locked" className="h-16 w-16" />
-            
+
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-foreground">
                 Login required
               </h1>
-              <p className="text-gray-300 font-normal text-sm leading-relaxed px-2">
+              <p className="text-sm font-normal leading-relaxed text-muted-foreground px-2">
                 Please log in to continue and access this page.
               </p>
             </div>

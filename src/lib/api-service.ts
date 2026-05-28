@@ -50,6 +50,10 @@ interface TelemetryErrorPayload {
   message_id?: string;
 }
 
+interface ImageUploadResponse {
+  image_id: string;
+}
+
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
 
@@ -237,7 +241,8 @@ class ApiService {
     qid: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (_data: string) => void
+    onStreamData?: (_data: string) => void,
+    onResponseStarted?: () => void
   ): Promise<ChatResponse> {
     try {
       await this.refreshAuthTokenIfExpiredOrMissing();
@@ -292,6 +297,8 @@ class ApiService {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
+        onResponseStarted?.();
+
         const reader = response.body?.getReader();
         if (!reader) {
           throw new Error('Response body is not readable');
@@ -317,12 +324,90 @@ class ApiService {
           headers: this.getAuthHeaders()
         };
         const response = await this.axiosInstance.get('/api/chat/', config);
+        onResponseStarted?.();
         return response.data;
       }
     } catch (error) {
       console.error('Error sending user query:', error);
       throw error;
     }
+  }
+
+  private parseImageUploadResponse(payload: unknown): ImageUploadResponse {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('Upload response is not a valid object');
+    }
+
+    const imageId = (payload as { image_id?: unknown }).image_id;
+    if (typeof imageId !== 'string' || !imageId.trim()) {
+      throw new Error('Upload response missing image_id');
+    }
+
+    return { image_id: imageId.trim() };
+  }
+
+  async uploadImage(imageFile: File): Promise<ImageUploadResponse> {
+    try {
+      await this.refreshAuthTokenIfExpiredOrMissing();
+      if (!this.validateAuth()) {
+        throw new Error("Authentication error");
+      }
+
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      const headers = this.getAuthHeaders();
+      const response = await fetch(`${this.apiUrl}/api/image/upload`, {
+        method: 'POST',
+        headers: headers,
+        body: formData
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          const refreshedToken = await this.performTokenRefresh();
+          if (refreshedToken) {
+            const retryResponse = await fetch(`${this.apiUrl}/api/image/upload`, {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${refreshedToken}` },
+              body: formData
+            });
+            if (!retryResponse.ok) {
+              throw new Error(`Upload failed: ${retryResponse.status}`);
+            }
+            const retryPayload = await retryResponse.json();
+            return this.parseImageUploadResponse(retryPayload);
+          }
+        }
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const payload = await response.json();
+      return this.parseImageUploadResponse(payload);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
+  }
+
+  async sendImageQuery(
+    imageFile: File,
+    session: string,
+    qid: string,
+    sourceLang: string,
+    targetLang: string,
+    onStreamData?: (_data: string) => void,
+    onResponseStarted?: () => void
+  ): Promise<ChatResponse> {
+    // Step 1: Upload image to get image ID
+    const uploadResult = await this.uploadImage(imageFile);
+    const imageId = uploadResult.image_id;
+
+    // Step 2: Send the image UUID along with a request message.
+    // The backend resolves this ID to a localhost image URL internally.
+    const query = `please do the pest analysis for this image ${imageId}`;
+
+    return this.sendUserQuery(query, session, qid, sourceLang, targetLang, onStreamData, onResponseStarted);
   }
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
