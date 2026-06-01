@@ -6,6 +6,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { useChatStore, type ApiNotification, SEEN_NOTIFICATIONS_KEY } from "@/hooks/store/chat";
 import { cn } from "@/lib/utils/index";
 import { useLanguage } from "@/components/LanguageProvider";
+import apiService from "@/lib/api-service";
+import { NotificationFeedbackModal } from "./notification-feedback-modal";
+import type { FeedbackReason } from "./feedback-modal";
 
 const bellIcon = "/assets/bell.svg";
 
@@ -38,6 +41,7 @@ export function NotificationsPopover() {
 	const [selected, setSelected] = useState<ApiNotification | null>(null);
 	const [seenIds, setSeenIds] = useState<Set<string>>(getSeenIds);
 	const [feedbackMap, setFeedbackMap] = useState<Record<string, "liked" | "disliked">>({});
+	const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
 	const [showTooltip, setShowTooltip] = useState(
 		() => localStorage.getItem("notifications_tooltip_seen") !== "true"
 	);
@@ -54,6 +58,13 @@ export function NotificationsPopover() {
 
 	const openDetail = useCallback(
 		(n: ApiNotification) => {
+			apiService.trackUiTelemetryEvent({
+				event_name: "notification_clicked",
+				category: "notification",
+				metadata: {
+					notification_id: n.notification_id
+				}
+			});
 			markNotificationRead(n.notification_id);
 			setSeenIds((prev) => new Set(prev).add(n.notification_id));
 			setSelected(n);
@@ -64,6 +75,11 @@ export function NotificationsPopover() {
 	);
 
 	const markAllRead = useCallback(() => {
+		apiService.trackUiTelemetryEvent({
+			event_name: "notification_mark_all_read_clicked",
+			category: "notification",
+			metadata: {}
+		});
 		const allIds = notifications.map((n) => n.notification_id);
 		const existing: string[] = (() => {
 			try { return JSON.parse(localStorage.getItem(SEEN_NOTIFICATIONS_KEY) || "[]"); }
@@ -80,7 +96,14 @@ export function NotificationsPopover() {
 				open={popoverOpen}
 				onOpenChange={(open) => {
 					setPopoverOpen(open);
-					if (open) dismissTooltip();
+					if (open) {
+						apiService.trackUiTelemetryEvent({
+							event_name: "notification_bell_clicked",
+							category: "notification",
+							metadata: {}
+						});
+						dismissTooltip();
+					}
 				}}
 			>
 				<div className="relative">
@@ -356,7 +379,16 @@ export function NotificationsPopover() {
 										<div className="flex items-center gap-2">
 											<button
 												type="button"
-												onClick={() => setFeedbackMap((p) => ({ ...p, [selected.notification_id]: "liked" }))}
+												onClick={() => {
+													apiService.trackUiTelemetryEvent({
+														event_name: "notification_feedback_yes_clicked",
+														category: "notification_feedback",
+														metadata: {
+															notification_id: selected.notification_id
+														}
+													});
+													setFeedbackMap((p) => ({ ...p, [selected.notification_id]: "liked" }));
+												}}
 												className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 shadow-sm transition-all hover:border-green-400 hover:bg-green-50 hover:text-green-600 hover:shadow-none active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-green-700 dark:hover:bg-green-950/50 dark:hover:text-green-400"
 												aria-label="Helpful"
 											>
@@ -365,7 +397,16 @@ export function NotificationsPopover() {
 											</button>
 											<button
 												type="button"
-												onClick={() => setFeedbackMap((p) => ({ ...p, [selected.notification_id]: "disliked" }))}
+												onClick={() => {
+													apiService.trackUiTelemetryEvent({
+														event_name: "notification_feedback_no_clicked",
+														category: "notification_feedback",
+														metadata: {
+															notification_id: selected.notification_id
+														}
+													});
+													setFeedbackModalOpen(true);
+												}}
 												className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 shadow-sm transition-all hover:border-red-400 hover:bg-red-50 hover:text-red-500 hover:shadow-none active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-700 dark:hover:bg-red-950/50 dark:hover:text-red-400"
 												aria-label="Not helpful"
 											>
@@ -380,6 +421,24 @@ export function NotificationsPopover() {
 					)}
 				</SheetContent>
 			</Sheet>
+			<NotificationFeedbackModal
+				open={feedbackModalOpen}
+				onClose={() => setFeedbackModalOpen(false)}
+				onSubmit={(reason: FeedbackReason, message: string) => {
+					if (!selected) return;
+					apiService.trackUiTelemetryEvent({
+						event_name: "notification_feedback_dislike_submitted",
+						category: "notification_feedback",
+						metadata: {
+							notification_id: selected.notification_id,
+							reason,
+							feedback: message
+						}
+					});
+					setFeedbackMap((previous) => ({ ...previous, [selected.notification_id]: "disliked" }));
+					setFeedbackModalOpen(false);
+				}}
+			/>
 		</>
 	);
 }

@@ -4,7 +4,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 
 type LocationPermissionDialogProps = {
 	onAllow: () => void;
-	onDismiss: () => void;
+	onDismiss: (reason: "button_click" | "modal_closed") => void;
 };
 
 export function LocationPermissionDialog({ onAllow, onDismiss }: LocationPermissionDialogProps) {
@@ -21,7 +21,7 @@ export function LocationPermissionDialog({ onAllow, onDismiss }: LocationPermiss
 			{/* Backdrop */}
 			<div
 				className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-				onClick={onDismiss}
+				onClick={() => onDismiss("modal_closed")}
 				aria-hidden
 			/>
 
@@ -31,7 +31,7 @@ export function LocationPermissionDialog({ onAllow, onDismiss }: LocationPermiss
 				{/* Dismiss button */}
 				<button
 					type="button"
-					onClick={onDismiss}
+					onClick={() => onDismiss("modal_closed")}
 					aria-label="Dismiss"
 					className="absolute top-4 right-4 z-10 h-8 w-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
 				>
@@ -83,7 +83,7 @@ export function LocationPermissionDialog({ onAllow, onDismiss }: LocationPermiss
 
 					<button
 						type="button"
-						onClick={onDismiss}
+						onClick={() => onDismiss("button_click")}
 						className="mt-3 w-full py-2 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
 					>
 						{t("locationPermission.skipBtn") as string}

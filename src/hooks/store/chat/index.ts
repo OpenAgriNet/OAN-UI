@@ -349,6 +349,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						"user_location",
 						JSON.stringify({ latitude, longitude, timestamp: Date.now() })
 					);
+					apiService.trackUiTelemetryEvent({
+						event_name: "location_allowed",
+						category: "location",
+						metadata: { action: "allow" }
+					});
 					hasResolvedLocationAttempt = true;
 					locationFetchPromise = null;
 					void get().fetchNotifications();
@@ -422,6 +427,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(body),
+			});
+			apiService.trackUiTelemetryEvent({
+				event_name: "notification_api_response",
+				category: "notification",
+				metadata: {
+					status_code: res.status,
+					success: res.ok
+				}
 			});
 			if (!res.ok) return;
 			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };

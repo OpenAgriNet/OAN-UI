@@ -8,6 +8,7 @@ import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
+import apiService from "@/lib/api-service";
 
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
@@ -134,7 +135,17 @@ function ChatLayout() {
 						setShowLocationPrompt(false);
 						fetchLocation();
 					}}
-					onDismiss={() => setShowLocationPrompt(false)}
+					onDismiss={(reason) => {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_denied",
+							category: "location",
+							metadata: {
+								action: "deny",
+								reason
+							}
+						});
+						setShowLocationPrompt(false);
+					}}
 				/>
 			)}
 
