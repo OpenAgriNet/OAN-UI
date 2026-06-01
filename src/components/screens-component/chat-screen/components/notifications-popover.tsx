@@ -7,8 +7,10 @@ import { useChatStore, type ApiNotification, SEEN_NOTIFICATIONS_KEY } from "@/ho
 import { cn } from "@/lib/utils/index";
 import { useLanguage } from "@/components/LanguageProvider";
 import apiService from "@/lib/api-service";
-import { NotificationFeedbackModal } from "./notification-feedback-modal";
-import type { FeedbackReason } from "./feedback-modal";
+import {
+	NotificationFeedbackModal,
+	type NotificationFeedbackReason
+} from "./notification-feedback-modal";
 
 const bellIcon = "/assets/bell.svg";
 
@@ -39,6 +41,7 @@ export function NotificationsPopover() {
 	const [popoverOpen, setPopoverOpen] = useState(false);
 	const [detailOpen, setDetailOpen] = useState(false);
 	const [selected, setSelected] = useState<ApiNotification | null>(null);
+	const [feedbackTarget, setFeedbackTarget] = useState<ApiNotification | null>(null);
 	const [seenIds, setSeenIds] = useState<Set<string>>(getSeenIds);
 	const [feedbackMap, setFeedbackMap] = useState<Record<string, "liked" | "disliked">>({});
 	const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
@@ -268,7 +271,7 @@ export function NotificationsPopover() {
 				open={detailOpen}
 				onOpenChange={(open) => {
 					setDetailOpen(open);
-					if (!open) setSelected(null);
+					if (!open && !feedbackModalOpen) setSelected(null);
 				}}
 			>
 				<SheetContent
@@ -405,6 +408,8 @@ export function NotificationsPopover() {
 															notification_id: selected.notification_id
 														}
 													});
+													setFeedbackTarget(selected);
+													setDetailOpen(false);
 													setFeedbackModalOpen(true);
 												}}
 												className="flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 shadow-sm transition-all hover:border-red-400 hover:bg-red-50 hover:text-red-500 hover:shadow-none active:scale-95 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-red-700 dark:hover:bg-red-950/50 dark:hover:text-red-400"
@@ -423,20 +428,26 @@ export function NotificationsPopover() {
 			</Sheet>
 			<NotificationFeedbackModal
 				open={feedbackModalOpen}
-				onClose={() => setFeedbackModalOpen(false)}
-				onSubmit={(reason: FeedbackReason, message: string) => {
-					if (!selected) return;
+				onClose={() => {
+					setFeedbackModalOpen(false);
+					setFeedbackTarget(null);
+					setSelected(null);
+				}}
+				onSubmit={(reason: NotificationFeedbackReason, message: string) => {
+					if (!feedbackTarget) return;
 					apiService.trackUiTelemetryEvent({
 						event_name: "notification_feedback_dislike_submitted",
 						category: "notification_feedback",
 						metadata: {
-							notification_id: selected.notification_id,
+							notification_id: feedbackTarget.notification_id,
 							reason,
 							feedback: message
 						}
 					});
-					setFeedbackMap((previous) => ({ ...previous, [selected.notification_id]: "disliked" }));
+					setFeedbackMap((previous) => ({ ...previous, [feedbackTarget.notification_id]: "disliked" }));
 					setFeedbackModalOpen(false);
+					setFeedbackTarget(null);
+					setSelected(null);
 				}}
 			/>
 		</>
