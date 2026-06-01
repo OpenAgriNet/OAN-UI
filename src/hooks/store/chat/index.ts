@@ -428,16 +428,29 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(body),
 			});
+
+			let responseBody: unknown = null;
+			try {
+				responseBody = await res.clone().json();
+			} catch {
+				try {
+					responseBody = await res.clone().text();
+				} catch {
+					responseBody = null;
+				}
+			}
+
 			apiService.trackUiTelemetryEvent({
 				event_name: "notification_api_response",
 				category: "notification",
 				metadata: {
 					status_code: res.status,
-					success: res.ok
+					success: res.ok,
+					response: responseBody
 				}
 			});
 			if (!res.ok) return;
-			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
+			const data = responseBody as { success: boolean; notifications: ApiNotification[] };
 			if (data.success && Array.isArray(data.notifications)) {
 				set({ notifications: data.notifications });
 			}
