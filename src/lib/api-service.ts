@@ -50,6 +50,13 @@ interface TelemetryErrorPayload {
   message_id?: string;
 }
 
+type UiTelemetryEvent = {
+  event_name: string;
+  category: string;
+  time: string;
+  metadata: Record<string, unknown>;
+};
+
 interface ImageUploadResponse {
   image_id: string;
 }
@@ -574,6 +581,30 @@ class ApiService {
     await this.axiosInstance.post('/api/telemetry/error', payload, {
       headers: this.getAuthHeaders()
     });
+  }
+
+  trackUiTelemetryEvent(event: Omit<UiTelemetryEvent, "time"> & { time?: string }): void {
+    void this.submitUiTelemetryEvent(event);
+  }
+
+  private async submitUiTelemetryEvent(event: Omit<UiTelemetryEvent, "time"> & { time?: string }): Promise<void> {
+    try {
+      await this.refreshAuthTokenIfExpiredOrMissing();
+      if (!this.validateAuth()) return;
+
+      const payload: UiTelemetryEvent[] = [{
+        event_name: event.event_name,
+        category: event.category,
+        time: event.time || new Date().toISOString(),
+        metadata: event.metadata || {}
+      }];
+
+      await this.axiosInstance.post('/api/telemetry/events', payload, {
+        headers: this.getAuthHeaders()
+      });
+    } catch {
+      // UI telemetry must never block or surface errors to users.
+    }
   }
 
   async fetchAuthToken(metadata: string, fingerprintId?: string | null): Promise<string> {
