@@ -16,6 +16,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
+import { DEFAULT_LANGUAGE } from "@/components/screens-component/chat-screen/config";
 
 /* eslint-disable no-unused-vars */
 export type ApiNotification = {
@@ -129,7 +130,7 @@ type ChatStore = {
 	weatherForecastMatches: WeatherForecastMatch[];
 	notifications: ApiNotification[];
 	isFetchingNotifications: boolean;
-	fetchNotifications: () => Promise<void>;
+	fetchNotifications: (language?: string) => Promise<void>;
 	markNotificationRead: (id: string) => void;
 };
 const quickActionSeeds: QuickAction[] = [
@@ -351,21 +352,30 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
 		const FALLBACK_NEAREST_K = 8;
 
-		// TODO: remove hardcoded test coordinates and restore geolocation
-		const latitude = 31.319416;
-		const longitude = 76.616630;
-		console.log("=== User Location (TEST HARDCODED) ===");
-		console.log("Latitude:", latitude);
-		console.log("Longitude:", longitude);
-		console.log("=======================================");
-		localStorage.setItem(
-			"user_location",
-			JSON.stringify({ latitude, longitude, timestamp: Date.now() })
-		);
-		get().fetchNotifications();
+		try {
+			const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+				navigator.geolocation.getCurrentPosition(resolve, reject, {
+					enableHighAccuracy: true,
+					maximumAge: 0,
+					timeout: 10000
+				});
+			});
+			const { latitude, longitude } = position.coords;
+			console.log("=== User Location ===");
+			console.log("Latitude:", latitude);
+			console.log("Longitude:", longitude);
+			console.log("=====================");
+			localStorage.setItem(
+				"user_location",
+				JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+			);
+			get().fetchNotifications();
+		} catch (error) {
+			console.error("Failed to fetch location:", error);
+		}
 	},
 
-	fetchNotifications: async () => {
+	fetchNotifications: async (language) => {
 		if (get().isFetchingNotifications) return;
 		const locationRaw = localStorage.getItem("user_location");
 		if (!locationRaw) return;
@@ -382,7 +392,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			visitor_id = await getVisitorId();
 		} catch { /* use fallback */ }
 
-		const lang = localStorage.getItem("app_language") || "en";
+		const lang = language || localStorage.getItem("app_language") || DEFAULT_LANGUAGE;
 
 		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
 		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
