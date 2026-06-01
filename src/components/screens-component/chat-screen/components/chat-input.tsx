@@ -574,21 +574,21 @@ export function ChatInput({
 							{charCount}/{maxLength}
 						</span>
 					)}
-					<div className="flex shrink-0 items-center pr-2">
-    <Button
-      type="button"
-      disabled={disabled || isLoading || isUnauthenticated}
-      onClick={() => setIsPestDialogOpen(true)}
-      className={cn(
-        "h-12 w-12 rounded-full border border-transparent bg-transparent text-amber-700 hover:bg-amber-50 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100 shadow-none p-0",
-        disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-      )}
-      aria-label={t("pestApi.trigger") as string}
-      title={t("pestApi.trigger") as string}
-    >
-      <Camera className="size-5" />
-    </Button>
-  </div>
+					{/* <div className="flex shrink-0 items-center pr-2">
+						<Button
+							type="button"
+							disabled={disabled || isLoading || isUnauthenticated}
+							onClick={() => setIsPestDialogOpen(true)}
+							className={cn(
+								"h-12 w-12 rounded-full border border-transparent bg-transparent text-amber-700 hover:bg-amber-50 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100 shadow-none p-0",
+								disabled || isLoading || isUnauthenticated ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+							)}
+							aria-label={t("pestApi.trigger") as string}
+							title={t("pestApi.trigger") as string}
+						>
+							<Camera className="size-5" />
+						</Button>
+					</div> */}
 
   {/* Grey/Green area around send button */}
   <div

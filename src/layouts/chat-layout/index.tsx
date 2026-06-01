@@ -9,6 +9,20 @@ import { Toast } from "@/components/screens-component/chat-screen/components/toa
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
 
+const LOCATION_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function hasFreshCachedLocation() {
+	const cached = localStorage.getItem("user_location");
+	if (!cached) return false;
+
+	try {
+		const { timestamp } = JSON.parse(cached) as { timestamp?: number };
+		return typeof timestamp === "number" && Date.now() - timestamp < LOCATION_CACHE_TTL_MS;
+	} catch {
+		return false;
+	}
+}
+
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
 	const clearChat = useChatStore((s) => s.clearChat);
@@ -27,34 +41,48 @@ function ChatLayout() {
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
+	const fetchNotifications = useChatStore((s) => s.fetchNotifications);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 	useEffect(() => {
-		navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+		const hasCachedLocation = hasFreshCachedLocation();
+
+		if (!navigator.geolocation) {
+			if (hasCachedLocation) {
+				void fetchNotifications(language);
+			}
+			return;
+		}
+
+		if (!navigator.permissions?.query) {
+			if (hasCachedLocation) {
+				void fetchNotifications(language);
+				return;
+			}
+			setShowLocationPrompt(true);
+			return;
+		}
+
+		navigator.permissions.query({ name: "geolocation" }).then((result) => {
 			if (result.state === "granted") {
-				const cached = localStorage.getItem("user_location");
-				if (cached) {
-					try {
-						const { timestamp } = JSON.parse(cached) as { timestamp: number };
-						const ONE_DAY = 24 * 60 * 60 * 1000;
-						if (Date.now() - timestamp < ONE_DAY) {
-							fetchLocation();
-							return;
-						}
-					} catch { /* malformed cache — fall through */ }
-				}
 				fetchLocation();
+			} else if (hasCachedLocation) {
+				void fetchNotifications(language);
 			} else if (result.state === "prompt") {
 				setShowLocationPrompt(true);
 			}
-			// "denied" — skip silently
+			// "denied" — skip silently unless cached location is available
 		}).catch(() => {
+			if (hasCachedLocation) {
+				void fetchNotifications(language);
+				return;
+			}
 			setShowLocationPrompt(true);
 		});
-	}, [fetchLocation]);
+	}, [fetchLocation, fetchNotifications, language]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
