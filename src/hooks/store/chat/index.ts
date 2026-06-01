@@ -12,7 +12,6 @@ import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
 import { getVisitorId } from "@/lib/telemetry";
 import { shuffle, randomPick } from "@/lib/qa-utils";
-import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
@@ -308,7 +307,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
-		const sid = uuidv4();
+		const sid = crypto.randomUUID();
 		set({ sessionId: sid });
 		apiService.setSessionId(sid);
 	},
@@ -453,13 +452,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}));
 
 		const { sessionId } = get();
-		const currentSession = sessionId || uuidv4();
+		const currentSession = sessionId || crypto.randomUUID();
 		if (!sessionId) {
 			set({ sessionId: currentSession });
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = uuidv4();
+		const questionId = crypto.randomUUID();
 
 		// Telemetry: Log Question
 		const user = useAuthStore.getState().user;
@@ -523,7 +522,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				const suggestions = await apiService.getSuggestions(currentSession, language);
 				set({
 					suggestions: suggestions.map((s) => ({
-						id: uuidv4(),
+						id: crypto.randomUUID(),
 						text: s.question,
 						label: s.question
 					}))
@@ -646,13 +645,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}));
 
 		const { sessionId } = get();
-		const currentSession = sessionId || uuidv4();
+		const currentSession = sessionId || crypto.randomUUID();
 		if (!sessionId) {
 			set({ sessionId: currentSession });
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = uuidv4();
+		const questionId = crypto.randomUUID();
 
 		const user = useAuthStore.getState().user;
 		const userDetails = {
@@ -710,7 +709,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				const suggestions = await apiService.getSuggestions(currentSession, language);
 				set({
 					suggestions: suggestions.map((s) => ({
-						id: uuidv4(),
+						id: crypto.randomUUID(),
 						text: s.question,
 						label: s.question
 					}))
