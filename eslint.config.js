@@ -102,7 +102,7 @@ export default tseslint.config(
 			],
 
 			// Disable the base ESLint rule as @typescript-eslint/no-unused-vars handles it better
-			"no-unused-vars": "warn",
+			"no-unused-vars": "off",
 
 			// Prevent unused imports (catches imports that are never used)
 			"no-unused-private-class-members": "error"

@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
-import topLevelAwait from "vite-plugin-top-level-await";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 const virtualRouteFileChangeReloadPlugin: PluginOption = {
 	name: "watch-config-restart",
@@ -35,7 +34,6 @@ export default defineConfig({
 			virtualRouteConfig: "./src/routes.ts",
 			generatedRouteTree: "./src/routeTree.gen.ts"
 		}),
-		topLevelAwait(),
 		react(),
 		virtualRouteFileChangeReloadPlugin
 	],

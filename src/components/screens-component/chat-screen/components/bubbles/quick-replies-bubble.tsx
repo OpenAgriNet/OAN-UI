@@ -1,12 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { QuickRepliesMessage } from "./chat-types";
 
-/* eslint-disable no-unused-vars */
 type QuickRepliesBubbleProps = {
 	message: QuickRepliesMessage;
 	onQuickReply?: (payload: string) => void;
 };
-/* eslint-enable no-unused-vars */
 
 export function QuickRepliesBubble(props: QuickRepliesBubbleProps) {
 	const { message, onQuickReply } = props;

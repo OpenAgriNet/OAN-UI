@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/LanguageProvider";
 import { LANGUAGES } from "@/components/screens-component/chat-screen/config";
 import { LanguageSelectionDropdown } from "@/components/screens-component/chat-screen/components/language-selection-dialog";
+import { NotificationsPopover } from "@/components/screens-component/chat-screen/components/notifications-popover";
 const logo = "/maha-logo.svg";
 const settingsIcon = "/assets/settings.svg";
 const langIcon = "/assets/langIcon.svg";
@@ -19,10 +20,7 @@ export type ChatHeaderProps = {
 };
 
 export function ChatHeader(props: ChatHeaderProps) {
-	const {
-		title,
-		onOpenSettings
-	} = props;
+	const { title, onOpenSettings } = props;
 
 	const { language } = useLanguage();
 	const currentLanguage = (LANGUAGES as any)[language] || LANGUAGES.en;
@@ -39,8 +37,10 @@ export function ChatHeader(props: ChatHeaderProps) {
 					/>
 				</div>
 
-				{/* Right: Language + Settings */}
+				{/* Right: Notification + Language + Settings */}
 				<div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+					<NotificationsPopover />
+
 					{/* Language Dropdown */}
 					<LanguageSelectionDropdown>
 						{/* Desktop Language Button */}

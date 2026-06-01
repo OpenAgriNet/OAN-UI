@@ -10,6 +10,7 @@ import {
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
 import * as telemetry from "@/lib/telemetry";
+import { getVisitorId } from "@/lib/telemetry";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import { useAuthStore } from "@/hooks/store/auth";
@@ -17,6 +18,52 @@ import type { ToastType } from "@/components/screens-component/chat-screen/compo
 import { environment } from "@/lib/config/environment";
 
 /* eslint-disable no-unused-vars */
+export type ApiNotification = {
+	notification_id: string;
+	type: string;
+	priority: "HIGH" | "MEDIUM" | "LOW";
+	valid_from: string;
+	valid_to: string;
+	created_at: string;
+	content: { title: string; body: string };
+	location: {
+		subdistrict_name: string;
+		district_name: string;
+		state_name: string;
+		distance_km?: number;
+	} | null;
+	metadata: {
+		source: string;
+		template: string;
+		unique_id_iitm: string;
+		unique_id_pm_kisan: number;
+	};
+};
+
+export const SEEN_NOTIFICATIONS_KEY = "seen_notification_ids";
+
+export type PxDWeatherRecord = {
+	unique_id_pm_kisan: number;
+	unique_id_iitm: number;
+	subdistrict_code: number;
+	subdistrict_name: string;
+	district_code: number;
+	district_name: string;
+	state_code: number;
+	state_name: string;
+	lang_abb: string;
+	forecast_message: string;
+	template_abbreviation: string;
+	Lat: number;
+	Lon: number;
+};
+
+export type WeatherForecastMatch = PxDWeatherRecord & {
+	distanceKm: number;
+	/** True local matches (ST_DWithin-style). False = KNN fallback when user is outside covered lat/lon extent. */
+	isWithinSearchRadius: boolean;
+};
+
 export type QuickAction = {
 	id: string;
 	title: string;
@@ -43,6 +90,7 @@ type ChatStore = {
 	draft: string;
 	suggestions: Suggestion[];
 	isAssistantTyping: boolean;
+	isInputLocked: boolean;
 	isListening: boolean;
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
@@ -50,8 +98,10 @@ type ChatStore = {
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
+	sendImage: (imageFile: File, language: string, t?: any) => Promise<void>;
 	sendQuickAction: (id: string, language: string, t?: any) => void;
 	sendQuickReply: (payload: string, language: string, t?: any) => void;
+	retryLastMessage: (language: string, t?: any) => void;
 	setDraft: (value: string) => void;
 	startListening: () => void;
 	stopListening: () => void;
@@ -75,10 +125,13 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: () => void; // Disabled - location not being used
+	fetchLocation: () => void;
+	weatherForecastMatches: WeatherForecastMatch[];
+	notifications: ApiNotification[];
+	isFetchingNotifications: boolean;
+	fetchNotifications: () => Promise<void>;
+	markNotificationRead: (id: string) => void;
 };
-/* eslint-enable no-unused-vars */
-
 const quickActionSeeds: QuickAction[] = [
 	{
 		id: "1",
@@ -103,6 +156,94 @@ const quickActionSeeds: QuickAction[] = [
 	}
 ];
 
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
+const SUPPORTED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/jpg"]);
+const NORMALIZED_IMAGE_MIME = "image/jpeg";
+const NORMALIZED_IMAGE_EXTENSION = ".jpg";
+const MAX_IMAGE_DIMENSION = 1600;
+const JPEG_QUALITY = 0.82;
+
+function isSupportedImageType(file: File): boolean {
+	const fileType = file.type.toLowerCase();
+	if (SUPPORTED_IMAGE_TYPES.has(fileType)) return true;
+
+	const fileName = file.name.toLowerCase();
+	return fileName.endsWith(".jpg") || fileName.endsWith(".jpeg") || fileName.endsWith(".png");
+}
+
+function replaceFileExtension(fileName: string, extension: string): string {
+	const trimmedName = fileName.trim();
+	if (!trimmedName) {
+		return `crop-image${extension}`;
+	}
+
+	const dotIndex = trimmedName.lastIndexOf(".");
+	if (dotIndex <= 0) {
+		return `${trimmedName}${extension}`;
+	}
+
+	return `${trimmedName.slice(0, dotIndex)}${extension}`;
+}
+
+function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+	return new Promise((resolve, reject) => {
+		const imageUrl = URL.createObjectURL(file);
+		const image = new Image();
+
+		image.onload = () => {
+			URL.revokeObjectURL(imageUrl);
+			resolve(image);
+		};
+
+		image.onerror = () => {
+			URL.revokeObjectURL(imageUrl);
+			reject(new Error("Failed to load image for normalization."));
+		};
+
+		image.src = imageUrl;
+	});
+}
+
+async function normalizeImageForUpload(file: File): Promise<File> {
+	const image = await loadImageFromFile(file);
+	const width = image.naturalWidth || image.width;
+	const height = image.naturalHeight || image.height;
+	if (!width || !height) {
+		throw new Error("Invalid image dimensions.");
+	}
+
+	const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(width, height));
+	const targetWidth = Math.max(1, Math.round(width * scale));
+	const targetHeight = Math.max(1, Math.round(height * scale));
+
+	const canvas = document.createElement("canvas");
+	canvas.width = targetWidth;
+	canvas.height = targetHeight;
+
+	const context = canvas.getContext("2d");
+	if (!context) {
+		throw new Error("Canvas is unavailable for image normalization.");
+	}
+
+	context.drawImage(image, 0, 0, targetWidth, targetHeight);
+
+	const blob = await new Promise<Blob>((resolve, reject) => {
+		canvas.toBlob((result) => {
+			if (result) {
+				resolve(result);
+				return;
+			}
+
+			reject(new Error("Failed to normalize image for upload."));
+		}, NORMALIZED_IMAGE_MIME, JPEG_QUALITY);
+	});
+
+	return new File([blob], replaceFileExtension(file.name, NORMALIZED_IMAGE_EXTENSION), {
+		type: NORMALIZED_IMAGE_MIME,
+		lastModified: Date.now()
+	});
+}
+
 function makeUserMessage(text: string): TextMessage {
 	return {
 		id: crypto.randomUUID(),
@@ -114,7 +255,13 @@ function makeUserMessage(text: string): TextMessage {
 	};
 }
 
-function makeAssistantMessage(text: string, isError?: boolean, showListenRow = false): ChatMessage {
+function makeAssistantMessage(
+	text: string,
+	isError?: boolean,
+	showListenRow = false,
+	failedUserText?: string,
+	failedLanguage?: string
+): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
 		role: "assistant",
@@ -122,7 +269,20 @@ function makeAssistantMessage(text: string, isError?: boolean, showListenRow = f
 		body: text,
 		createdAt: new Date().toISOString(),
 		showListenRow,
-		isError
+		isError,
+		failedUserText,
+		failedLanguage
+	};
+}
+
+function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
+	return {
+		id: crypto.randomUUID(),
+		role: "user",
+		type: "image",
+		imageUrl,
+		caption,
+		createdAt: new Date().toISOString()
 	};
 }
 
@@ -134,6 +294,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	draft: "",
 	suggestions: [],
 	isAssistantTyping: false,
+	isInputLocked: false,
 	isListening: false,
 	isTranscribing: false,
 	isFetchingSuggestions: false,
@@ -141,6 +302,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
+	weatherForecastMatches: [],
+	notifications: [],
+	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
 	initializeSession: async (_user) => {
@@ -151,9 +315,104 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	// fetchLocation disabled as location is not being used
-	fetchLocation: () => {
-		// Geolocation permission request disabled
+	fetchLocation: async () => {
+		if (!navigator.geolocation) {
+			console.error("Geolocation is not supported by this browser.");
+			return;
+		}
+
+		// Helper function to calculate distance between two coordinates using Haversine formula
+		const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
+			const R = 6371; // Radius of the Earth in kilometers
+			const dLat = (lat2 - lat1) * Math.PI / 180;
+			const dLon = (lon2 - lon1) * Math.PI / 180;
+			const a = 
+				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+				Math.sin(dLon / 2) * Math.sin(dLon / 2);
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			return R * c; // Distance in kilometers
+		};
+
+		const dedupeByPmKisan = (rows: WeatherForecastMatch[]): WeatherForecastMatch[] => {
+			const seen = new Set<number>();
+			const out: WeatherForecastMatch[] = [];
+			for (const x of rows) {
+				if (seen.has(x.unique_id_pm_kisan)) continue;
+				seen.add(x.unique_id_pm_kisan);
+				out.push(x);
+			}
+			return out;
+		};
+
+		/** PostGIS ST_DWithin-style: only points inside this radius count as “local”. */
+		const WITHIN_RADIUS_KM = 75;
+		const MAX_LOCAL_MATCHES = 10;
+		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
+		const FALLBACK_NEAREST_K = 8;
+
+		// TODO: remove hardcoded test coordinates and restore geolocation
+		const latitude = 31.319416;
+		const longitude = 76.616630;
+		console.log("=== User Location (TEST HARDCODED) ===");
+		console.log("Latitude:", latitude);
+		console.log("Longitude:", longitude);
+		console.log("=======================================");
+		localStorage.setItem(
+			"user_location",
+			JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+		);
+		get().fetchNotifications();
+	},
+
+	fetchNotifications: async () => {
+		if (get().isFetchingNotifications) return;
+		const locationRaw = localStorage.getItem("user_location");
+		if (!locationRaw) return;
+
+		set({ isFetchingNotifications: true });
+
+		let latitude: number, longitude: number;
+		try {
+			({ latitude, longitude } = JSON.parse(locationRaw));
+		} catch { return; }
+
+		let visitor_id = "unknown";
+		try {
+			visitor_id = await getVisitorId();
+		} catch { /* use fallback */ }
+
+		const lang = localStorage.getItem("app_language") || "en";
+
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+
+		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
+		if (seen_message_ids.length > 0) body.seen_message_ids = seen_message_ids;
+
+		try {
+			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(body),
+			});
+			if (!res.ok) return;
+			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
+			if (data.success && Array.isArray(data.notifications)) {
+				set({ notifications: data.notifications });
+			}
+		} catch { /* network error — keep previous notifications */ }
+		finally {
+			set({ isFetchingNotifications: false });
+		}
+	},
+
+	markNotificationRead: (id: string) => {
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen: string[] = seenRaw ? JSON.parse(seenRaw) : [];
+		if (!seen.includes(id)) {
+			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify([...seen, id]));
+		}
 	},
 
 	setIsTranscribing: (value) => set(() => ({ isTranscribing: value })),
@@ -172,6 +431,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			draft: "",
 			suggestions: [],
 			isAssistantTyping: false,
+			isInputLocked: false,
 			isListening: false,
 			isTranscribing: false,
 			isFetchingSuggestions: false
@@ -188,7 +448,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			messages: [...state.messages, userMessage],
 			draft: "",
 			suggestions: [],
-			isAssistantTyping: true
+			isAssistantTyping: true,
+			isInputLocked: true
 		}));
 
 		const { sessionId } = get();
@@ -233,27 +494,21 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText }]
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								isAssistantTyping: false
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText)]
+								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								isAssistantTyping: false
 							};
 						}
 					});
 				}
+				// Note: input stays locked until sendUserQuery fully resolves (after all stream chunks)
 			);
 
-			set((state) => {
-				const lastMsg = state.messages[state.messages.length - 1];
-				if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
-					return {
-						messages: [...state.messages.slice(0, -1), { ...lastMsg, showListenRow: true }],
-						isAssistantTyping: false
-					};
-				}
-				return { isAssistantTyping: false };
-			});
+			set({ isAssistantTyping: false, isInputLocked: false });
 
 			// Telemetry: Log Response
 			await telemetry.startTelemetry(currentSession, userDetails);
@@ -276,7 +531,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 		} catch (error: any) {
 			console.error("Error sending text:", error);
-			set({ isAssistantTyping: false });
+			set({ isAssistantTyping: false, isInputLocked: false });
 
 			const isRateLimitError =
 				error?.status === 429 ||
@@ -296,12 +551,22 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
 				telemetry.endTelemetry();
 			} else {
-				set({
-					toast: {
-						message: "Sorry, there was an error processing your request. Please try again.",
-						type: "error"
-					}
-				});
+				// Show error as an in-chat message with retry capability
+				const errorMessage = t
+					? t("chatErrorMessage") || "Sorry, there was an error processing your request. Please try again."
+					: "Sorry, there was an error processing your request. Please try again.";
+				set((state) => ({
+					messages: [
+						...state.messages,
+						makeAssistantMessage(
+							errorMessage as string,
+							true,
+							false,
+							trimmed,
+							language
+						)
+					]
+				}));
 
 				// Telemetry: Log Error (Generic)
 				await telemetry.startTelemetry(currentSession, userDetails);
@@ -320,6 +585,167 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			console.error("Error fetching suggestions:", error);
 			set({ isFetchingSuggestions: false });
 			// set({ toast: { message: "Failed to load suggestions.", type: "error" } });
+		}
+	},
+
+	sendImage: async (imageFile, language, t) => {
+		if (!imageFile) return;
+		if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.imageTooLarge")) : "Image too large. Max 10 MB.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		if (!isSupportedImageType(imageFile)) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.invalidFormat")) : "Invalid image format. Use JPEG or PNG.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		get().stopTTS();
+
+		let uploadFile = imageFile;
+		try {
+			uploadFile = await normalizeImageForUpload(imageFile);
+		} catch (error) {
+			console.error("Error normalizing image:", error);
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.processingFailed")) : "Could not process the image. Please try another photo.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		if (uploadFile.size > MAX_IMAGE_SIZE_BYTES) {
+			set({
+				toast: {
+					message: t ? String(t("imageUpload.imageTooLarge")) : "Image too large. Max 10 MB.",
+					type: "error"
+				}
+			});
+			return;
+		}
+
+		const imageUrl = URL.createObjectURL(uploadFile);
+		const imageMessage = makeImageMessage(imageUrl, uploadFile.name);
+		set((state) => ({
+			messages: [...state.messages, imageMessage],
+			suggestions: [],
+			isAssistantTyping: true,
+			isInputLocked: true
+		}));
+
+		const { sessionId } = get();
+		const currentSession = sessionId || uuidv4();
+		if (!sessionId) {
+			set({ sessionId: currentSession });
+			apiService.setSessionId(currentSession);
+		}
+
+		const questionId = uuidv4();
+
+		const user = useAuthStore.getState().user;
+		const userDetails = {
+			preferred_username: user?.username || "guest",
+			email: user?.email || ""
+		};
+
+		try {
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.logQuestionEvent(questionId, currentSession, `[Image] ${uploadFile.name}`);
+			telemetry.endTelemetry();
+		} catch (e) {
+			console.warn("Telemetry question log failed", e);
+		}
+
+		try {
+			let streamingText = "";
+
+			telemetry.markServerRequestStart(questionId);
+
+			const response = await apiService.sendImageQuery(
+				uploadFile,
+				currentSession,
+				language,
+				language,
+				(chunk) => {
+					streamingText += chunk;
+					set((state) => {
+						const lastMsg = state.messages[state.messages.length - 1];
+						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
+							return {
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								isAssistantTyping: false
+							};
+						} else {
+							return {
+								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								isAssistantTyping: false
+							};
+						}
+					});
+				}
+				// Note: input stays locked until sendImageQuery fully resolves (after all stream chunks)
+			);
+
+			set({ isAssistantTyping: false, isInputLocked: false });
+
+			await telemetry.startTelemetry(currentSession, userDetails);
+			telemetry.markAnswerRendered(questionId, () => {
+				telemetry.logResponseEvent(questionId, currentSession, `[Image] ${uploadFile.name}`, response.response);
+			});
+			await telemetry.endTelemetryWithWait(questionId);
+
+			if (!environment.suggestionsDisabled) {
+				const suggestions = await apiService.getSuggestions(currentSession, language);
+				set({
+					suggestions: suggestions.map((s) => ({
+						id: uuidv4(),
+						text: s.question,
+						label: s.question
+					}))
+				});
+			}
+		} catch (error: any) {
+			console.error("Error sending image:", error);
+			set({ isAssistantTyping: false, isInputLocked: false });
+
+			const isRateLimitError =
+				error?.status === 429 ||
+				error?.response?.status === 429 ||
+				(error instanceof Error && error.message.includes("Rate limit"));
+
+			if (isRateLimitError) {
+				const limitMessage = t
+					? t("limitMessage")
+					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
+				set((state) => ({
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+				}));
+				await telemetry.startTelemetry(currentSession, userDetails);
+				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
+				telemetry.endTelemetry();
+			} else {
+				set({
+					toast: {
+						message: "Sorry, there was an error analyzing your image. Please try again.",
+						type: "error"
+					}
+				});
+				await telemetry.startTelemetry(currentSession, userDetails);
+				telemetry.logErrorEvent(questionId, currentSession, String(error));
+				telemetry.endTelemetry();
+			}
 		}
 	},
 
@@ -422,6 +848,40 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendQuickReply: (payload, language, t) => {
 		get().sendText(payload, language, t);
+	},
+
+	retryLastMessage: (language, t) => {
+		const { messages } = get();
+		// Find the last error message with retry info
+		const lastErrorIdx = messages.findLastIndex(
+			(m) => m.type === "card" && m.isError && (m as any).failedUserText
+		);
+		if (lastErrorIdx === -1) return;
+
+		const errorMsg = messages[lastErrorIdx] as any;
+		const textToRetry = errorMsg.failedUserText;
+		const langToUse = errorMsg.failedLanguage || language;
+
+		// Remove the error message from the list
+		set((state) => ({
+			messages: state.messages.filter((_, i) => i !== lastErrorIdx)
+		}));
+
+		// Also remove the corresponding user message (the one right before the error)
+		set((state) => {
+			const msgs = [...state.messages];
+			// Find the last user message before where the error was
+			for (let i = msgs.length - 1; i >= 0; i--) {
+				if (msgs[i]!.role === "user" && msgs[i]!.type === "text" && (msgs[i] as any).text === textToRetry) {
+					msgs.splice(i, 1);
+					break;
+				}
+			}
+			return { messages: msgs };
+		});
+
+		// Re-send the message
+		get().sendText(textToRetry, langToUse, t);
 	},
 
 	generateQuickActions: (t) => {

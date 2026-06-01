@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-/* eslint-disable no-unused-vars */
 export type MicButtonProps = {
 	disabled?: boolean;
 	isActive?: boolean;
@@ -12,7 +11,6 @@ export type MicButtonProps = {
 	onStart?: () => void;
 	onStop?: () => void;
 };
-/* eslint-enable no-unused-vars */
 
 export function MicButton({ disabled, isActive, onRecorded, onStart, onStop }: MicButtonProps) {
 	const [isRecording, setIsRecording] = useState(false);

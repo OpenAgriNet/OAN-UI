@@ -5,14 +5,12 @@ import { ChatMessage } from "./bubbles/chat-types";
 import { Bubble } from "./bubbles";
 import { AILoader } from "./ai-loader";
 
-/* eslint-disable no-unused-vars */
 type MessageListProps = {
 	messages: ChatMessage[];
 	isAssistantTyping?: boolean;
 	welcome?: React.ReactNode;
 	onQuickReply?: (payload: string) => void;
 };
-/* eslint-enable no-unused-vars */
 
 export function MessageList(props: MessageListProps) {
 	const lastMessageRef = useRef<HTMLDivElement | null>(null);
