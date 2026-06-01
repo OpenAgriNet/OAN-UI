@@ -8,6 +8,8 @@ import {
 import { LANGUAGES } from "../config";
 import { useLanguage } from "@/components/LanguageProvider";
 
+const DROPDOWN_LANGUAGE_CODES = ["hi", "en"] as const;
+
 type LanguageSelectionDropdownProps = {
 	children: React.ReactNode;
 };
@@ -34,7 +36,8 @@ export function LanguageSelectionDropdown({
 				sideOffset={8}
 			>
 				<div className="bg-white dark:bg-[#5D5D5D] flex flex-col">
-					{Object.values(LANGUAGES).map((language) => {
+					{DROPDOWN_LANGUAGE_CODES.map((code) => {
+						const language = LANGUAGES[code];
 						const isActive = selectedLanguage === language.code;
 						return (
 							<button
