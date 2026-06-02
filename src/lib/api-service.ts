@@ -592,11 +592,16 @@ class ApiService {
       await this.refreshAuthTokenIfExpiredOrMissing();
       if (!this.validateAuth()) return;
 
+      const metadata = {
+        ...(event.metadata || {}),
+        ...(this.currentSessionId && !event.metadata?.sid ? { sid: this.currentSessionId } : {})
+      };
+
       const payload: UiTelemetryEvent[] = [{
         event_name: event.event_name,
         category: event.category,
         time: event.time || new Date().toISOString(),
-        metadata: event.metadata || {}
+        metadata
       }];
 
       await this.axiosInstance.post('/api/telemetry/events', payload, {
