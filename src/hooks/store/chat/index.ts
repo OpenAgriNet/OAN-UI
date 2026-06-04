@@ -37,14 +37,12 @@ export type ApiNotification = {
 		source: string;
 		template: string;
 		unique_id_iitm: string;
-		unique_id_pm_kisan: number;
 	};
 };
 
 export const SEEN_NOTIFICATIONS_KEY = "seen_notification_ids";
 
 export type PxDWeatherRecord = {
-	unique_id_pm_kisan: number;
 	unique_id_iitm: number;
 	subdistrict_code: number;
 	subdistrict_name: string;
@@ -129,6 +127,7 @@ type ChatStore = {
 	fetchLocation: () => void;
 	weatherForecastMatches: WeatherForecastMatch[];
 	notifications: ApiNotification[];
+	seenNotificationIds: Set<string>;
 	isFetchingNotifications: boolean;
 	fetchNotifications: (language?: string) => Promise<void>;
 	markNotificationRead: (id: string) => void;
@@ -305,6 +304,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	ttsStatus: "stopped",
 	weatherForecastMatches: [],
 	notifications: [],
+	seenNotificationIds: new Set<string>(),
 	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
@@ -321,50 +321,24 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			console.error("Geolocation is not supported by this browser.");
 			return;
 		}
-
-		// Helper function to calculate distance between two coordinates using Haversine formula
-		const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
-			const R = 6371; // Radius of the Earth in kilometers
-			const dLat = (lat2 - lat1) * Math.PI / 180;
-			const dLon = (lon2 - lon1) * Math.PI / 180;
-			const a = 
-				Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-				Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-				Math.sin(dLon / 2) * Math.sin(dLon / 2);
-			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-			return R * c; // Distance in kilometers
-		};
-
-		const dedupeByPmKisan = (rows: WeatherForecastMatch[]): WeatherForecastMatch[] => {
-			const seen = new Set<number>();
-			const out: WeatherForecastMatch[] = [];
-			for (const x of rows) {
-				if (seen.has(x.unique_id_pm_kisan)) continue;
-				seen.add(x.unique_id_pm_kisan);
-				out.push(x);
-			}
-			return out;
-		};
-
-		/** PostGIS ST_DWithin-style: only points inside this radius count as “local”. */
-		const WITHIN_RADIUS_KM = 75;
-		const MAX_LOCAL_MATCHES = 10;
-		/** When no rows fall inside WITHIN_RADIUS_KM (e.g. user south of dataset min lat ~17.2°N), return this many nearest rows (KNN). */
-		const FALLBACK_NEAREST_K = 8;
-
+	
 		try {
 			const position = await new Promise<GeolocationPosition>((resolve, reject) => {
 				navigator.geolocation.getCurrentPosition(resolve, reject, {
-					enableHighAccuracy: true,
-					maximumAge: 0,
+					enableHighAccuracy: false,
+					maximumAge: 60000,
 					timeout: 10000
 				});
 			});
-			const { latitude, longitude } = position.coords;
+	
+			const latitude = parseFloat(position.coords.latitude.toFixed(4));
+			const longitude = parseFloat(position.coords.longitude.toFixed(4));
+	
 			console.log("=== User Location ===");
 			console.log("Latitude:", latitude);
 			console.log("Longitude:", longitude);
 			console.log("=====================");
+	
 			localStorage.setItem(
 				"user_location",
 				JSON.stringify({ latitude, longitude, timestamp: Date.now() })
@@ -394,11 +368,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const lang = language || localStorage.getItem("app_language") || DEFAULT_LANGUAGE;
 
-		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
-		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
-
 		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
-		if (seen_message_ids.length > 0) body.seen_message_ids = seen_message_ids;
 
 		try {
 			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
@@ -409,7 +379,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			if (!res.ok) return;
 			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
 			if (data.success && Array.isArray(data.notifications)) {
-				set({ notifications: data.notifications });
+				const seenRaw2 = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+				const seenIds: string[] = seenRaw2 ? JSON.parse(seenRaw2) : [];
+				set({ notifications: data.notifications, seenNotificationIds: new Set(seenIds) });
 			}
 		} catch { /* network error — keep previous notifications */ }
 		finally {
@@ -421,7 +393,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
 		const seen: string[] = seenRaw ? JSON.parse(seenRaw) : [];
 		if (!seen.includes(id)) {
-			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify([...seen, id]));
+			const updated = [...seen, id];
+			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify(updated));
+			set((state) => ({ seenNotificationIds: new Set([...state.seenNotificationIds, id]) }));
 		}
 	},
 

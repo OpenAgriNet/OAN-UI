@@ -44,6 +44,15 @@ export function NotificationsPopover() {
 		[notifications, seenIds]
 	);
 
+	const unreadNotifications = useMemo(
+		() => notifications.filter((n) => !seenIds.has(n.notification_id)),
+		[notifications, seenIds]
+	);
+	const readNotifications = useMemo(
+		() => notifications.filter((n) => seenIds.has(n.notification_id)),
+		[notifications, seenIds]
+	);
+
 	const openDetail = useCallback(
 		(n: ApiNotification) => {
 			markNotificationRead(n.notification_id);
@@ -125,70 +134,91 @@ export function NotificationsPopover() {
 					</div>
 
 					{/* List */}
-					<div className="max-h-60 overflow-y-auto px-2 py-1.5">
+					<div className="max-h-64 overflow-y-auto px-2 py-1.5">
 						{notifications.length > 0 ? (
 							<div className="flex flex-col gap-1">
-								{notifications.map((n) => {
-									const read = seenIds.has(n.notification_id);
-									return (
-										<button
-											key={n.notification_id}
-											type="button"
-											onClick={() => openDetail(n)}
-											className={cn(
-												"relative flex w-full cursor-pointer items-start gap-2 rounded-md border px-2 py-2 text-left transition-colors overflow-hidden",
-												read
-													? "border-gray-200 bg-white hover:bg-gray-50 dark:border-[var(--border-dark)] dark:bg-transparent dark:hover:bg-gray-900/40"
-													: "border-[var(--primary)]/30 bg-indigo-50/60 hover:bg-indigo-50 dark:border-[var(--primary)]/40 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30"
-											)}
-										>
-											{/* Left accent bar for unread */}
-											{!read && (
+								{/* ── Unread items first ── */}
+								{unreadNotifications.length > 0 && (
+									<>
+										{unreadNotifications.map((n) => (
+											<button
+												key={n.notification_id}
+												type="button"
+												onClick={() => openDetail(n)}
+												className="relative flex w-full cursor-pointer items-start gap-2 rounded-md border border-[var(--primary)]/30 bg-indigo-50/60 px-2 py-2 text-left transition-colors overflow-hidden hover:bg-indigo-50 dark:border-[var(--primary)]/40 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30"
+											>
 												<span className="absolute left-0 top-0 h-full w-[3px] rounded-l-md bg-[var(--primary)]" aria-hidden />
-											)}
-
-											<Cloud className={cn("mt-0.5 h-3.5 w-3.5 shrink-0", read ? "text-gray-400" : "text-[var(--primary)]")} aria-hidden />
-
-											<div className="min-w-0 flex-1 pl-0.5">
-												<div className="flex items-start justify-between gap-1">
-													<p className={cn(
-														"text-[11px] leading-tight",
-														read ? "font-medium text-gray-500 dark:text-gray-400" : "font-bold text-gray-900 dark:text-gray-100"
-													)}>
-														{n.location ? (
-															<>
-																{n.location.subdistrict_name}
-																<span className={cn("font-normal", read ? "text-gray-400" : "text-gray-500 dark:text-gray-400")}>
-																	{" "}· {n.location.district_name}
-																</span>
-															</>
-														) : (
-															n.content.title
-														)}
+												<Cloud className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--primary)]" aria-hidden />
+												<div className="min-w-0 flex-1 pl-0.5">
+													<div className="flex items-start justify-between gap-1">
+														<p className="text-[11px] font-bold leading-tight text-gray-900 dark:text-gray-100">
+															{n.location ? (
+																<>
+																	{n.location.subdistrict_name}
+																	<span className="font-normal text-gray-500 dark:text-gray-400">{" "}· {n.location.district_name}</span>
+																</>
+															) : n.content.title}
+														</p>
+														<span
+															className={cn(
+																"mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]",
+																n.priority === "HIGH" && "animate-pulse"
+															)}
+															aria-label="Unread"
+														/>
+													</div>
+													<p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-gray-600 dark:text-gray-400">
+														{bodyPreview(n.content.body)}
 													</p>
-													{/* Seen indicator */}
-													{read
-														? <CheckCheck className="h-3 w-3 shrink-0 text-gray-300 dark:text-gray-600" aria-label="Seen" />
-														: <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" aria-label="Unread" />
-													}
+													{n.location && n.location.distance_km != null && (
+														<span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-1.5 py-px text-[9px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+															📍 {n.location.distance_km === 0 ? "Your area" : `~${n.location.distance_km.toFixed(1)} km`}
+														</span>
+													)}
 												</div>
-												<p className={cn(
-													"mt-0.5 line-clamp-2 text-[10px] leading-snug",
-													read ? "text-gray-400 dark:text-gray-500" : "text-gray-600 dark:text-gray-400"
-												)}>
-													{bodyPreview(n.content.body)}
-												</p>
-												{n.location && n.location.distance_km != null && (
-													<p className="mt-0.5 text-[9px] text-gray-400 dark:text-gray-500">
-														{n.location.distance_km === 0
-															? "Your area"
-															: `~${n.location.distance_km.toFixed(1)} km away`}
+											</button>
+										))}
+									</>
+								)}
+
+								{/* ── Read items after ── */}
+								{readNotifications.length > 0 && (
+									<>
+										{readNotifications.map((n) => (
+											<button
+												key={n.notification_id}
+												type="button"
+												onClick={() => openDetail(n)}
+												className="relative flex w-full cursor-pointer items-start gap-2 rounded-md border border-gray-200 bg-gray-50 px-2 py-2 text-left transition-colors overflow-hidden hover:bg-gray-100 dark:border-[var(--border-dark)] dark:bg-gray-900/30 dark:hover:bg-gray-900/50"
+											>
+												<Cloud className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
+												<div className="min-w-0 flex-1 pl-0.5">
+													<div className="flex items-start justify-between gap-1">
+														<p className="text-[11px] font-medium leading-tight text-gray-700 dark:text-gray-300">
+															{n.location ? (
+																<>
+																	{n.location.subdistrict_name}
+																	<span className="font-normal text-gray-500 dark:text-gray-400">{" "}· {n.location.district_name}</span>
+																</>
+															) : n.content.title}
+														</p>
+														<span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/30">
+															<CheckCheck className="h-2.5 w-2.5 text-emerald-500 dark:text-emerald-400" aria-label="Read" />
+														</span>
+													</div>
+													<p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-gray-500 dark:text-gray-400">
+														{bodyPreview(n.content.body)}
 													</p>
-												)}
-											</div>
-										</button>
-									);
-								})}
+													{n.location && n.location.distance_km != null && (
+														<span className="mt-1 inline-flex items-center gap-0.5 rounded-full bg-gray-200/70 px-1.5 py-px text-[9px] font-medium text-gray-400 dark:bg-gray-800 dark:text-gray-500">
+															📍 {n.location.distance_km === 0 ? "Your area" : `~${n.location.distance_km.toFixed(1)} km`}
+														</span>
+													)}
+												</div>
+											</button>
+										))}
+									</>
+								)}
 							</div>
 						) : (
 							<div className="flex flex-col items-center justify-center py-6 text-center">
@@ -216,16 +246,20 @@ export function NotificationsPopover() {
 						)}
 					</div>
 
-					{notifications.length > 0 && unreadCount > 0 && (
+					{notifications.length > 0 && (
 						<div className="border-t border-gray-100 px-2 py-1.5 dark:border-gray-800">
 							<Button
 								variant="outline"
 								size="sm"
-								className="h-7 w-full rounded-full text-[10px]"
+								className={cn(
+									"h-7 w-full rounded-full text-[10px] transition-opacity",
+									unreadCount === 0 && "pointer-events-none opacity-40"
+								)}
 								onClick={markAllRead}
+								disabled={unreadCount === 0}
 							>
 								<CheckCheck className="mr-1.5 h-3 w-3" />
-								Mark all as read
+								{unreadCount === 0 ? "All caught up" : "Mark all as read"}
 							</Button>
 						</div>
 					)}
