@@ -62,10 +62,11 @@ export function NotificationsPopover() {
 	const openDetail = useCallback(
 		(n: ApiNotification) => {
 			apiService.trackUiTelemetryEvent({
-				event_name: "notification_clicked",
+				event_name: "notification_selected",
 				category: "notification",
 				metadata: {
-					notification_id: n.notification_id
+					notification_id: n.notification_id,
+					notification_detail: n
 				}
 			});
 			markNotificationRead(n.notification_id);
@@ -79,7 +80,7 @@ export function NotificationsPopover() {
 
 	const markAllRead = useCallback(() => {
 		apiService.trackUiTelemetryEvent({
-			event_name: "notification_mark_all_read_clicked",
+			event_name: "notifications_mark_all_read",
 			category: "notification",
 			metadata: {}
 		});
@@ -101,7 +102,7 @@ export function NotificationsPopover() {
 					setPopoverOpen(open);
 					if (open) {
 						apiService.trackUiTelemetryEvent({
-							event_name: "notification_bell_clicked",
+							event_name: "notification_panel_opened",
 							category: "notification",
 							metadata: {}
 						});
@@ -384,7 +385,7 @@ export function NotificationsPopover() {
 												type="button"
 												onClick={() => {
 													apiService.trackUiTelemetryEvent({
-														event_name: "notification_feedback_yes_clicked",
+														event_name: "notification_feedback_yes",
 														category: "notification_feedback",
 														metadata: {
 															notification_id: selected.notification_id
@@ -402,7 +403,7 @@ export function NotificationsPopover() {
 												type="button"
 												onClick={() => {
 													apiService.trackUiTelemetryEvent({
-														event_name: "notification_feedback_no_clicked",
+														event_name: "notification_feedback_no",
 														category: "notification_feedback",
 														metadata: {
 															notification_id: selected.notification_id
