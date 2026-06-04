@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import { MessageSquareWarning, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
+const MAX_FEEDBACK_LENGTH = 200;
+
 export type NotificationFeedbackReason =
 	| "not_relevant"
 	| "incorrect"
@@ -122,12 +124,16 @@ export function NotificationFeedbackModal({ open, onClose, onSubmit }: Notificat
 						</label>
 						<textarea
 							value={message}
-							onChange={(event) => setMessage(event.target.value)}
+							onChange={(event) => setMessage(event.target.value.slice(0, MAX_FEEDBACK_LENGTH))}
+							maxLength={MAX_FEEDBACK_LENGTH}
 							placeholder="Tell us more about what was wrong..."
 							className="w-full resize-none rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[var(--primary)] dark:border-[var(--border-dark)] dark:bg-[var(--inputBg-dark)] dark:text-white dark:placeholder:text-gray-400"
 							rows={4}
 							style={{ fontStyle: message ? "normal" : "italic" }}
 						/>
+						<p className="mt-2 text-right text-xs text-gray-400 dark:text-gray-500">
+							{message.length}/{MAX_FEEDBACK_LENGTH}
+						</p>
 					</div>
 				</div>
 
