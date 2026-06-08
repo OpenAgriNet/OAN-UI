@@ -156,6 +156,13 @@ function ChatLayout() {
 			{showLocationPrompt && (
 				<LocationPermissionDialog
 					onAllow={() => {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_allowed",
+							category: "location",
+							metadata: {
+								action: "allow"
+							}
+						});
 						setShowLocationPrompt(false);
 						fetchLocation(undefined, { trackBrowserDecision: true });
 					}}
