@@ -81,6 +81,10 @@ export type QuickAction = {
 	prompt: string;
 };
 
+type FetchLocationOptions = {
+	trackBrowserDecision?: boolean;
+};
+
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -122,7 +126,7 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: (t?: any) => Promise<void>;
+	fetchLocation: (t?: any, options?: FetchLocationOptions) => Promise<void>;
 	weatherForecastMatches: WeatherForecastMatch[];
 	notifications: ApiNotification[];
 	isFetchingNotifications: boolean;
@@ -317,7 +321,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: (t) => {
+	fetchLocation: (t, options) => {
 		if (typeof window === "undefined" || !navigator.geolocation) {
 			set({
 				toast: {
@@ -354,6 +358,26 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						category: "location",
 						metadata: { action: "allow" }
 					});
+					if (options?.trackBrowserDecision) {
+						void navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+							if (result.state === "granted") {
+								apiService.trackUiTelemetryEvent({
+									event_name: "location_browser_allow_while_visiting_site",
+									category: "location",
+									metadata: { action: "allow" }
+								});
+								return;
+							}
+
+							if (result.state === "prompt") {
+								apiService.trackUiTelemetryEvent({
+									event_name: "location_browser_allow_this_time",
+									category: "location",
+									metadata: { action: "allow" }
+								});
+							}
+						}).catch(() => undefined);
+					}
 					hasResolvedLocationAttempt = true;
 					locationFetchPromise = null;
 					void get().fetchNotifications();
@@ -368,6 +392,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 								: error.code === error.POSITION_UNAVAILABLE
 									? "toast.locationUnavailable.description"
 									: "toast.locationError.description";
+
+					if (options?.trackBrowserDecision) {
+						void navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+							if (result.state === "denied") {
+								apiService.trackUiTelemetryEvent({
+									event_name: "location_browser_never_allow",
+									category: "location",
+									metadata: { action: "deny" }
+								});
+							}
+						}).catch(() => undefined);
+					}
 
 					hasResolvedLocationAttempt = true;
 					locationFetchPromise = null;

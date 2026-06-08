@@ -10,6 +10,23 @@ import { SettingsDrawer } from "@/components/screens-component/chat-screen/compo
 import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
 import apiService from "@/lib/api-service";
 
+const ONE_DAY = 24 * 60 * 60 * 1000;
+
+function getCachedLocation() {
+	const cached = localStorage.getItem("user_location");
+	if (!cached) return null;
+
+	try {
+		const parsed = JSON.parse(cached) as { latitude: number; longitude: number; timestamp: number };
+		if (Date.now() - parsed.timestamp >= ONE_DAY) {
+			return null;
+		}
+		return parsed;
+	} catch {
+		return null;
+	}
+}
+
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
 	const clearChat = useChatStore((s) => s.clearChat);
@@ -34,25 +51,32 @@ function ChatLayout() {
 	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 	useEffect(() => {
+		const cachedLocation = getCachedLocation();
+		if (cachedLocation) {
+			apiService.setLocationData({
+				latitude: cachedLocation.latitude,
+				longitude: cachedLocation.longitude,
+			});
+			void useChatStore.getState().fetchNotifications();
+		}
+
 		navigator.permissions?.query({ name: "geolocation" }).then((result) => {
 			if (result.state === "granted") {
-				const cached = localStorage.getItem("user_location");
-				if (cached) {
-					try {
-						const { timestamp } = JSON.parse(cached) as { timestamp: number };
-						const ONE_DAY = 24 * 60 * 60 * 1000;
-						if (Date.now() - timestamp < ONE_DAY) {
-							fetchLocation();
-							return;
-						}
-					} catch { /* malformed cache — fall through */ }
+				if (cachedLocation) {
+					return;
 				}
 				fetchLocation();
 			} else if (result.state === "prompt") {
+				if (cachedLocation) {
+					return;
+				}
 				setShowLocationPrompt(true);
 			}
 			// "denied" — skip silently
 		}).catch(() => {
+			if (cachedLocation) {
+				return;
+			}
 			setShowLocationPrompt(true);
 		});
 	}, [fetchLocation]);
@@ -133,7 +157,7 @@ function ChatLayout() {
 				<LocationPermissionDialog
 					onAllow={() => {
 						setShowLocationPrompt(false);
-						fetchLocation();
+						fetchLocation(undefined, { trackBrowserDecision: true });
 					}}
 					onDismiss={(reason) => {
 						apiService.trackUiTelemetryEvent({

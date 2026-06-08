@@ -102,7 +102,7 @@ export function NotificationsPopover() {
 					setPopoverOpen(open);
 					if (open) {
 						apiService.trackUiTelemetryEvent({
-							event_name: "notification_panel_opened",
+							event_name: "notification_bell",
 							category: "notification",
 							metadata: {}
 						});
