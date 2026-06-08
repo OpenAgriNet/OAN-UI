@@ -353,30 +353,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						"user_location",
 						JSON.stringify({ latitude, longitude, timestamp: Date.now() })
 					);
-					apiService.trackUiTelemetryEvent({
-						event_name: "location_allowed",
-						category: "location",
-						metadata: { action: "allow" }
-					});
+					if (!options?.trackBrowserDecision) {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_allowed",
+							category: "location",
+							metadata: { action: "allow" }
+						});
+					}
 					if (options?.trackBrowserDecision) {
-						void navigator.permissions?.query({ name: "geolocation" }).then((result) => {
-							if (result.state === "granted") {
-								apiService.trackUiTelemetryEvent({
-									event_name: "location_browser_allow_while_visiting_site",
-									category: "location",
-									metadata: { action: "allow" }
-								});
-								return;
-							}
-
-							if (result.state === "prompt") {
-								apiService.trackUiTelemetryEvent({
-									event_name: "location_browser_allow_this_time",
-									category: "location",
-									metadata: { action: "allow" }
-								});
-							}
-						}).catch(() => undefined);
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_browser_allowed",
+							category: "location",
+							metadata: { action: "allow" }
+						});
 					}
 					hasResolvedLocationAttempt = true;
 					locationFetchPromise = null;
