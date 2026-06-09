@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
-import { getBrowserInfo } from '@/lib/utils';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 export interface LocationData {
   latitude: number;
@@ -10,6 +10,7 @@ export interface LocationData {
 export interface ChatResponse {
   response: string;
   status: string;
+  qid?: string;
 }
 
 export interface TranscriptionResponse {
@@ -32,12 +33,46 @@ interface AuthResponse {
   token: string;
 }
 
+interface TelemetryFeedbackPayload {
+  qid: string;
+  session_id: string;
+  message_id?: string;
+  feedback_type: string;
+  feedback_text: string;
+  question_text: string;
+  answer_text: string;
+}
+
+interface TelemetryErrorPayload {
+  qid: string;
+  session_id: string;
+  error_text: string;
+  question_text?: string;
+  message_id?: string;
+}
+
+type UiTelemetryEvent = {
+  event_name: string;
+  category: string;
+  time: string;
+  metadata: Record<string, unknown>;
+};
+
 interface ImageUploadResponse {
   image_id: string;
 }
 
+const CHAT_QID_HEADER = "X-QID";
+const SSE_KEEPALIVE_MARKER = "SSE_KEEPALIVE";
+
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
+
+const stripSseKeepAliveMarkers = (chunk: string): string =>
+  chunk
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== SSE_KEEPALIVE_MARKER)
+    .join('\n');
 
 const getTokenExpiryFromExp = (token: string): number | null => {
   try {
@@ -150,7 +185,8 @@ class ApiService {
     this.refreshTokenPromise = (async () => {
       try {
         const metadata = getBrowserInfo();
-        const newToken = await this.fetchAuthToken(metadata);
+        const fingerprintId = await getFingerprintId();
+        const newToken = await this.fetchAuthToken(metadata, fingerprintId);
         const expiry = getTokenExpiryFromExp(newToken);
         if (!expiry) {
           throw new Error('JWT exp claim missing; refusing to store token with synthetic expiry');
@@ -263,19 +299,26 @@ class ApiService {
         }
 
         if (!response.ok) {
+          const responseQid = response.headers.get(CHAT_QID_HEADER) || undefined;
           if (response.status === 401) {
             const error = new Error('Unauthorized');
             (error as any).status = 401;
+            if (responseQid) (error as any).qid = responseQid;
             throw error;
           }
           if (response.status === 429) {
             const error = new Error('Rate limit exceeded');
             (error as any).status = 429;
+            if (responseQid) (error as any).qid = responseQid;
             throw error;
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const error = new Error(`HTTP error! status: ${response.status}`);
+          (error as any).status = response.status;
+          if (responseQid) (error as any).qid = responseQid;
+          throw error;
         }
 
+        const responseQid = response.headers.get(CHAT_QID_HEADER) || undefined;
         onResponseStarted?.();
 
         const reader = response.body?.getReader();
@@ -291,11 +334,17 @@ class ApiService {
           if (done) break;
           
           const chunk = decoder.decode(value, { stream: true });
-          fullResponse += chunk;
-          onStreamData(chunk);
+          const displayChunk = stripSseKeepAliveMarkers(chunk);
+
+          if (chunk.includes(SSE_KEEPALIVE_MARKER) && !displayChunk.trim()) {
+            continue;
+          }
+
+          fullResponse += displayChunk;
+          onStreamData(displayChunk);
         }
 
-        return { response: fullResponse, status: 'success' };
+        return { response: fullResponse, status: 'success', qid: responseQid };
       } else {
         // Regular non-streaming request
         const config = {
@@ -303,10 +352,20 @@ class ApiService {
           headers: this.getAuthHeaders()
         };
         const response = await this.axiosInstance.get('/api/chat/', config);
+        const responseQid = response.headers[CHAT_QID_HEADER.toLowerCase()] as string | undefined;
         onResponseStarted?.();
-        return response.data;
+        return {
+          ...response.data,
+          qid: response.data?.qid || responseQid
+        };
       }
     } catch (error) {
+      const responseQid = axios.isAxiosError(error)
+        ? error.response?.headers?.[CHAT_QID_HEADER.toLowerCase()]
+        : undefined;
+      if (responseQid) {
+        (error as any).qid = responseQid;
+      }
       console.error('Error sending user query:', error);
       throw error;
     }
@@ -466,16 +525,14 @@ class ApiService {
 
   async submitPositiveFeedback(messageId: string): Promise<void> {
     try {
-      await this.refreshAuthTokenIfExpiredOrMissing();
-      if (!this.validateAuth()) return;
-      
-      const payload = {
+      await this.submitTelemetryFeedback({
+        qid: messageId,
+        session_id: this.currentSessionId || "",
         message_id: messageId,
-        feedback: "positive"
-      };
-
-      await this.axiosInstance.post('/api/feedback/positive/', payload, {
-        headers: this.getAuthHeaders()
+        feedback_type: "like",
+        feedback_text: "Liked the response",
+        question_text: "",
+        answer_text: ""
       });
     } catch (error) {
       console.error('Error submitting positive feedback:', error);
@@ -485,17 +542,14 @@ class ApiService {
 
   async submitNegativeFeedback(messageId: string, reason: string, feedback: string): Promise<void> {
     try {
-      await this.refreshAuthTokenIfExpiredOrMissing();
-      if (!this.validateAuth()) return;
-      
-      const payload = {
+      await this.submitTelemetryFeedback({
+        qid: messageId,
+        session_id: this.currentSessionId || "",
         message_id: messageId,
-        reason: reason,
-        feedback: feedback
-      };
-
-      await this.axiosInstance.post('/api/feedback/negative/', payload, {
-        headers: this.getAuthHeaders()
+        feedback_type: "dislike",
+        feedback_text: feedback || reason || "Negative feedback",
+        question_text: "",
+        answer_text: ""
       });
     } catch (error) {
       console.error('Error submitting negative feedback:', error);
@@ -541,13 +595,61 @@ class ApiService {
     return this.currentSessionId;
   }
 
-  async fetchAuthToken(metadata: string): Promise<string> {
+  async submitTelemetryFeedback(payload: TelemetryFeedbackPayload): Promise<void> {
+    await this.refreshAuthTokenIfExpiredOrMissing();
+    if (!this.validateAuth()) return;
+
+    await this.axiosInstance.post('/api/telemetry/feedback', payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  async submitTelemetryError(payload: TelemetryErrorPayload): Promise<void> {
+    await this.refreshAuthTokenIfExpiredOrMissing();
+    if (!this.validateAuth()) return;
+
+    await this.axiosInstance.post('/api/telemetry/error', payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  trackUiTelemetryEvent(event: Omit<UiTelemetryEvent, "time"> & { time?: string }): void {
+    void this.submitUiTelemetryEvent(event);
+  }
+
+  private async submitUiTelemetryEvent(event: Omit<UiTelemetryEvent, "time"> & { time?: string }): Promise<void> {
+    try {
+      await this.refreshAuthTokenIfExpiredOrMissing();
+      if (!this.validateAuth()) return;
+
+      const metadata = {
+        ...(event.metadata || {}),
+        ...(this.currentSessionId && !event.metadata?.sid ? { sid: this.currentSessionId } : {})
+      };
+
+      const payload: UiTelemetryEvent[] = [{
+        event_name: event.event_name,
+        category: event.category,
+        time: event.time || new Date().toISOString(),
+        metadata
+      }];
+
+      await this.axiosInstance.post('/api/telemetry/events', payload, {
+        headers: this.getAuthHeaders()
+      });
+    } catch {
+      // UI telemetry must never block or surface errors to users.
+    }
+  }
+
+  async fetchAuthToken(metadata: string, fingerprintId?: string | null): Promise<string> {
     try {
       // Don't use authentication headers for this call as we're getting the token
       const response = await axios.post<AuthResponse>(
         `${this.apiUrl}/api/token`,
         {
           metadata,
+          ...(fingerprintId && { fingerprint_id: fingerprintId }),
         },
         {
           headers: {

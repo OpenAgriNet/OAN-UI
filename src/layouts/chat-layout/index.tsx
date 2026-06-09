@@ -8,18 +8,22 @@ import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
 import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
+import apiService from "@/lib/api-service";
 
-const LOCATION_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const ONE_DAY = 24 * 60 * 60 * 1000;
 
-function hasFreshCachedLocation() {
+function getCachedLocation() {
 	const cached = localStorage.getItem("user_location");
-	if (!cached) return false;
+	if (!cached) return null;
 
 	try {
-		const { timestamp } = JSON.parse(cached) as { timestamp?: number };
-		return typeof timestamp === "number" && Date.now() - timestamp < LOCATION_CACHE_TTL_MS;
+		const parsed = JSON.parse(cached) as { latitude: number; longitude: number; timestamp: number };
+		if (Date.now() - parsed.timestamp >= ONE_DAY) {
+			return null;
+		}
+		return parsed;
 	} catch {
-		return false;
+		return null;
 	}
 }
 
@@ -41,48 +45,41 @@ function ChatLayout() {
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
-	const fetchNotifications = useChatStore((s) => s.fetchNotifications);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 	useEffect(() => {
-		const hasCachedLocation = hasFreshCachedLocation();
-
-		if (!navigator.geolocation) {
-			if (hasCachedLocation) {
-				void fetchNotifications(language);
-			}
-			return;
+		const cachedLocation = getCachedLocation();
+		if (cachedLocation) {
+			apiService.setLocationData({
+				latitude: cachedLocation.latitude,
+				longitude: cachedLocation.longitude,
+			});
+			void useChatStore.getState().fetchNotifications();
 		}
 
-		if (!navigator.permissions?.query) {
-			if (hasCachedLocation) {
-				void fetchNotifications(language);
-				return;
-			}
-			setShowLocationPrompt(true);
-			return;
-		}
-
-		navigator.permissions.query({ name: "geolocation" }).then((result) => {
+		navigator.permissions?.query({ name: "geolocation" }).then((result) => {
 			if (result.state === "granted") {
+				if (cachedLocation) {
+					return;
+				}
 				fetchLocation();
-			} else if (hasCachedLocation) {
-				void fetchNotifications(language);
 			} else if (result.state === "prompt") {
+				if (cachedLocation) {
+					return;
+				}
 				setShowLocationPrompt(true);
 			}
-			// "denied" — skip silently unless cached location is available
+			// "denied" — skip silently
 		}).catch(() => {
-			if (hasCachedLocation) {
-				void fetchNotifications(language);
+			if (cachedLocation) {
 				return;
 			}
 			setShowLocationPrompt(true);
 		});
-	}, [fetchLocation, fetchNotifications, language]);
+	}, [fetchLocation]);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
@@ -159,10 +156,27 @@ function ChatLayout() {
 			{showLocationPrompt && (
 				<LocationPermissionDialog
 					onAllow={() => {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_allowed",
+							category: "location",
+							metadata: {
+								action: "allow"
+							}
+						});
 						setShowLocationPrompt(false);
-						fetchLocation();
+						fetchLocation(undefined, { trackBrowserDecision: true });
 					}}
-					onDismiss={() => setShowLocationPrompt(false)}
+					onDismiss={(reason) => {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_denied",
+							category: "location",
+							metadata: {
+								action: "deny",
+								reason
+							}
+						});
+						setShowLocationPrompt(false);
+					}}
 				/>
 			)}
 

@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/popover";
 import { LANGUAGES } from "../config";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useChatStore } from "@/hooks/store/chat";
 
 const DROPDOWN_LANGUAGE_CODES = ["hi", "en"] as const;
 
@@ -18,11 +19,13 @@ export function LanguageSelectionDropdown({
 	children
 }: LanguageSelectionDropdownProps) {
 	const { language: selectedLanguage, setLanguage } = useLanguage();
+	const fetchNotifications = useChatStore((state) => state.fetchNotifications);
 	const [open, setOpen] = useState(false);
 
 	const handleLanguageSelect = (code: any) => {
 		setLanguage(code);
 		setOpen(false);
+		void fetchNotifications();
 	};
 
 	return (

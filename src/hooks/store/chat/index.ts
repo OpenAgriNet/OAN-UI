@@ -9,15 +9,11 @@ import {
 	type Suggestion
 } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import * as telemetry from "@/lib/telemetry";
-import { getVisitorId } from "@/lib/telemetry";
+import { getFingerprintId } from "@/lib/utils";
 import { shuffle, randomPick } from "@/lib/qa-utils";
-import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
-import { DEFAULT_LANGUAGE } from "@/components/screens-component/chat-screen/config";
 
-/* eslint-disable no-unused-vars */
 export type ApiNotification = {
 	notification_id: string;
 	type: string;
@@ -36,12 +32,14 @@ export type ApiNotification = {
 		source: string;
 		template: string;
 		unique_id_iitm: string;
+		unique_id_pm_kisan: number;
 	};
 };
 
 export const SEEN_NOTIFICATIONS_KEY = "seen_notification_ids";
 
 export type PxDWeatherRecord = {
+	unique_id_pm_kisan: number;
 	unique_id_iitm: number;
 	subdistrict_code: number;
 	subdistrict_name: string;
@@ -80,6 +78,10 @@ export type QuickAction = {
 		| "soil"
 		| "card";
 	prompt: string;
+};
+
+type FetchLocationOptions = {
+	trackBrowserDecision?: boolean;
 };
 
 type ChatStore = {
@@ -123,12 +125,11 @@ type ChatStore = {
 	) => Promise<void>;
 	toast: { message: string; type: ToastType } | null;
 	setToast: (toast: { message: string; type: ToastType } | null) => void;
-	fetchLocation: () => void;
+	fetchLocation: (t?: any, options?: FetchLocationOptions) => Promise<void>;
 	weatherForecastMatches: WeatherForecastMatch[];
 	notifications: ApiNotification[];
-	seenNotificationIds: Set<string>;
 	isFetchingNotifications: boolean;
-	fetchNotifications: (language?: string) => Promise<void>;
+	fetchNotifications: () => Promise<void>;
 	markNotificationRead: (id: string) => void;
 };
 const quickActionSeeds: QuickAction[] = [
@@ -258,6 +259,7 @@ function makeAssistantMessage(
 	text: string,
 	isError?: boolean,
 	showListenRow = false,
+	qid?: string,
 	failedUserText?: string,
 	failedLanguage?: string
 ): ChatMessage {
@@ -265,6 +267,7 @@ function makeAssistantMessage(
 		id: crypto.randomUUID(),
 		role: "assistant",
 		type: "card",
+		qid,
 		body: text,
 		createdAt: new Date().toISOString(),
 		showListenRow,
@@ -272,6 +275,32 @@ function makeAssistantMessage(
 		failedUserText,
 		failedLanguage
 	};
+}
+
+function getErrorQid(error: unknown): string | undefined {
+	const qid = (error as { qid?: unknown })?.qid;
+	return typeof qid === "string" && qid.trim() ? qid : undefined;
+}
+
+function warnMissingBackendQid(context: string, fallbackQid: string) {
+	console.warn(`Backend did not return X-QID for ${context}; using message id fallback for telemetry`, {
+		fallbackQid
+	});
+}
+
+function attachQidToLatestAssistantMessage(messages: ChatMessage[], qid?: string): ChatMessage[] {
+	if (!qid) return messages;
+
+	for (let index = messages.length - 1; index >= 0; index--) {
+		const message = messages[index];
+		if (message?.role === "assistant" && message.type === "card") {
+			const updated = [...messages];
+			updated[index] = { ...message, qid };
+			return updated;
+		}
+	}
+
+	return messages;
 }
 
 function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
@@ -286,6 +315,9 @@ function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
 }
 
 import { playTTS as playTTSHelper, pauseAudio, resumeAudio, stopAudio } from "@/lib/audio-utils";
+
+let locationFetchPromise: Promise<void> | null = null;
+let hasResolvedLocationAttempt = false;
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -303,7 +335,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	ttsStatus: "stopped",
 	weatherForecastMatches: [],
 	notifications: [],
-	seenNotificationIds: new Set<string>(),
 	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
@@ -315,59 +346,131 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	setDraft: (value) => set(() => ({ draft: value })),
 
-	fetchLocation: async () => {
-		if (!navigator.geolocation) {
-			console.error("Geolocation is not supported by this browser.");
-			return;
-		}
-	
-		try {
-			const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-				navigator.geolocation.getCurrentPosition(resolve, reject, {
-					enableHighAccuracy: false,
-					maximumAge: 60000,
-					timeout: 10000
-				});
+	fetchLocation: (t, options) => {
+		if (typeof window === "undefined" || !navigator.geolocation) {
+			set({
+				toast: {
+					message: t ? String(t("toast.locationNotSupported.description")) : "Your browser does not support geolocation.",
+					type: "error"
+				}
 			});
-	
-			const latitude = parseFloat(position.coords.latitude.toFixed(4));
-			const longitude = parseFloat(position.coords.longitude.toFixed(4));
-	
-			console.log("=== User Location ===");
-			console.log("Latitude:", latitude);
-			console.log("Longitude:", longitude);
-			console.log("=====================");
-	
-			localStorage.setItem(
-				"user_location",
-				JSON.stringify({ latitude, longitude, timestamp: Date.now() })
-			);
-			get().fetchNotifications();
-		} catch (error) {
-			console.error("Failed to fetch location:", error);
+			return Promise.resolve();
 		}
+
+		if (apiService.getLocationData() || hasResolvedLocationAttempt) {
+			return Promise.resolve();
+		}
+
+		if (locationFetchPromise) {
+			return locationFetchPromise;
+		}
+
+		locationFetchPromise = new Promise<void>((resolve) => {
+			navigator.geolocation.getCurrentPosition(
+				(position) => {
+					const latitude = position.coords.latitude;
+					const longitude = position.coords.longitude;
+					apiService.setLocationData({
+						latitude,
+						longitude,
+					});
+					localStorage.setItem(
+						"user_location",
+						JSON.stringify({ latitude, longitude, timestamp: Date.now() })
+					);
+					if (!options?.trackBrowserDecision) {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_allowed",
+							category: "location",
+							metadata: { action: "allow" }
+						});
+					}
+					if (options?.trackBrowserDecision) {
+						apiService.trackUiTelemetryEvent({
+							event_name: "location_browser_allowed",
+							category: "location",
+							metadata: { action: "allow" }
+						});
+					}
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					void get().fetchNotifications();
+					resolve();
+				},
+				(error) => {
+					const key =
+						error.code === error.PERMISSION_DENIED
+							? "toast.locationPermissionDenied.description"
+							: error.code === error.TIMEOUT
+								? "toast.locationTimeout.description"
+								: error.code === error.POSITION_UNAVAILABLE
+									? "toast.locationUnavailable.description"
+									: "toast.locationError.description";
+
+					if (options?.trackBrowserDecision) {
+						void navigator.permissions?.query({ name: "geolocation" }).then((result) => {
+							if (result.state === "denied") {
+								apiService.trackUiTelemetryEvent({
+									event_name: "location_browser_never_allow",
+									category: "location",
+									metadata: { action: "deny" }
+								});
+							}
+						}).catch(() => undefined);
+					}
+
+					hasResolvedLocationAttempt = true;
+					locationFetchPromise = null;
+					set({
+						toast: {
+							message: t ? String(t(key)) : "Could not get your location.",
+							type: "error"
+						}
+					});
+					resolve();
+				},
+				{
+					enableHighAccuracy: false,
+					timeout: 10000,
+					maximumAge: 300000,
+				}
+			);
+		});
+
+		return locationFetchPromise;
 	},
 
-	fetchNotifications: async (language) => {
+	fetchNotifications: async () => {
 		if (get().isFetchingNotifications) return;
 		const locationRaw = localStorage.getItem("user_location");
 		if (!locationRaw) return;
 
 		set({ isFetchingNotifications: true });
 
-		let latitude: number, longitude: number;
+		let latitude: number;
+		let longitude: number;
 		try {
 			({ latitude, longitude } = JSON.parse(locationRaw));
-		} catch { return; }
+		} catch {
+			set({ isFetchingNotifications: false });
+			return;
+		}
 
 		let visitor_id = "unknown";
 		try {
-			visitor_id = await getVisitorId();
-		} catch { /* use fallback */ }
+			visitor_id = (await getFingerprintId()) || "unknown";
+		} catch {
+			// Keep fallback visitor id.
+		}
 
-		const lang = language || localStorage.getItem("app_language") || DEFAULT_LANGUAGE;
+		const lang = localStorage.getItem("app_language") || "en";
+		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
+		const seen_message_ids: string[] = seenRaw ? JSON.parse(seenRaw) : [];
 
 		const body: Record<string, unknown> = { visitor_id, lat: latitude, lon: longitude, lang };
+		if (seen_message_ids.length > 0) {
+			body.seen_message_ids = seen_message_ids;
+		}
 
 		try {
 			const res = await fetch(`${environment.notificationApiUrl}/notification`, {
@@ -375,15 +478,35 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify(body),
 			});
-			if (!res.ok) return;
-			const data = await res.json() as { success: boolean; notifications: ApiNotification[] };
-			if (data.success && Array.isArray(data.notifications)) {
-				const seenRaw2 = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
-				const seenIds: string[] = seenRaw2 ? JSON.parse(seenRaw2) : [];
-				set({ notifications: data.notifications, seenNotificationIds: new Set(seenIds) });
+
+			let responseBody: unknown = null;
+			try {
+				responseBody = await res.clone().json();
+			} catch {
+				try {
+					responseBody = await res.clone().text();
+				} catch {
+					responseBody = null;
+				}
 			}
-		} catch { /* network error — keep previous notifications */ }
-		finally {
+
+			apiService.trackUiTelemetryEvent({
+				event_name: "notification_api_response",
+				category: "notification",
+				metadata: {
+					status_code: res.status,
+					success: res.ok,
+					response: responseBody
+				}
+			});
+			if (!res.ok) return;
+			const data = responseBody as { success: boolean; notifications: ApiNotification[] };
+			if (data.success && Array.isArray(data.notifications)) {
+				set({ notifications: data.notifications });
+			}
+		} catch {
+			// Keep previous notifications on request failure.
+		} finally {
 			set({ isFetchingNotifications: false });
 		}
 	},
@@ -392,9 +515,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const seenRaw = localStorage.getItem(SEEN_NOTIFICATIONS_KEY);
 		const seen: string[] = seenRaw ? JSON.parse(seenRaw) : [];
 		if (!seen.includes(id)) {
-			const updated = [...seen, id];
-			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify(updated));
-			set((state) => ({ seenNotificationIds: new Set([...state.seenNotificationIds, id]) }));
+			localStorage.setItem(SEEN_NOTIFICATIONS_KEY, JSON.stringify([...seen, id]));
 		}
 	},
 
@@ -425,6 +546,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		if (!trimmed) return;
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		const userMessage = makeUserMessage(trimmed);
 		set((state) => ({
@@ -442,29 +564,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = crypto.randomUUID();
-
-		// Telemetry: Log Question
-		const user = useAuthStore.getState().user;
-		const userDetails = {
-			preferred_username: user?.username || "guest",
-			email: user?.email || ""
-		};
-
-		try {
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
-			telemetry.endTelemetry();
-		} catch (e) {
-			console.warn("Telemetry question log failed", e);
-		}
-
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
-
-			// Mark request start for telemetry
-			telemetry.markServerRequestStart(questionId);
 
 			const response = await apiService.sendUserQuery(
 				trimmed,
@@ -482,7 +584,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								messages: [
+									...state.messages,
+									makeAssistantMessage(streamingText, false, true)
+								],
 								isAssistantTyping: false
 							};
 						}
@@ -491,16 +596,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				// Note: input stays locked until sendUserQuery fully resolves (after all stream chunks)
 			);
 
-			set({ isAssistantTyping: false, isInputLocked: false });
-
-			// Telemetry: Log Response
-			await telemetry.startTelemetry(currentSession, userDetails);
-
-			telemetry.markAnswerRendered(questionId, () => {
-				telemetry.logResponseEvent(questionId, currentSession, trimmed, response.response);
-			});
-
-			await telemetry.endTelemetryWithWait(questionId);
+			set((state) => ({
+				messages: attachQidToLatestAssistantMessage(state.messages, response.qid),
+				isAssistantTyping: false,
+				isInputLocked: false
+			}));
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -526,35 +626,57 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						if (!backendQid) warnMissingBackendQid("text rate-limit error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
-				// Telemetry: Log Error (Rate Limit)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
-				telemetry.endTelemetry();
+				await apiService
+					.submitTelemetryError({
+						qid: telemetryQid,
+						session_id: currentSession,
+						error_text: "Rate limit error (429)",
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			} else {
 				// Show error as an in-chat message with retry capability
 				const errorMessage = t
 					? t("chatErrorMessage") || "Sorry, there was an error processing your request. Please try again."
 					: "Sorry, there was an error processing your request. Please try again.";
 				set((state) => ({
-					messages: [
-						...state.messages,
-						makeAssistantMessage(
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(
 							errorMessage as string,
 							true,
 							false,
+							backendQid,
 							trimmed,
 							language
-						)
-					]
+						);
+						if (!backendQid) warnMissingBackendQid("text chat error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
-				// Telemetry: Log Error (Generic)
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
-				telemetry.endTelemetry();
+				await apiService
+					.submitTelemetryError({
+						qid: telemetryQid,
+						session_id: currentSession,
+						error_text: String(error),
+						question_text: trimmed
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			}
 		}
 	},
@@ -594,6 +716,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		get().stopTTS();
+		await get().fetchLocation(t);
 
 		let uploadFile = imageFile;
 		try {
@@ -635,26 +758,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = crypto.randomUUID();
-
-		const user = useAuthStore.getState().user;
-		const userDetails = {
-			preferred_username: user?.username || "guest",
-			email: user?.email || ""
-		};
-
-		try {
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, `[Image] ${uploadFile.name}`);
-			telemetry.endTelemetry();
-		} catch (e) {
-			console.warn("Telemetry question log failed", e);
-		}
-
 		try {
 			let streamingText = "";
-
-			telemetry.markServerRequestStart(questionId);
 
 			const response = await apiService.sendImageQuery(
 				uploadFile,
@@ -672,7 +777,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, makeAssistantMessage(streamingText, false, true)],
+								messages: [
+									...state.messages,
+									makeAssistantMessage(streamingText, false, true)
+								],
 								isAssistantTyping: false
 							};
 						}
@@ -681,13 +789,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				// Note: input stays locked until sendImageQuery fully resolves (after all stream chunks)
 			);
 
-			set({ isAssistantTyping: false, isInputLocked: false });
-
-			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.markAnswerRendered(questionId, () => {
-				telemetry.logResponseEvent(questionId, currentSession, `[Image] ${uploadFile.name}`, response.response);
-			});
-			await telemetry.endTelemetryWithWait(questionId);
+			set((state) => ({
+				messages: attachQidToLatestAssistantMessage(state.messages, response.qid),
+				isAssistantTyping: false,
+				isInputLocked: false
+			}));
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -713,21 +819,56 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true)]
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						if (!backendQid) warnMissingBackendQid("image rate-limit error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, "Rate limit error (429)");
-				telemetry.endTelemetry();
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
+
+				await apiService
+					.submitTelemetryError({
+						qid: telemetryQid,
+						session_id: currentSession,
+						error_text: "Rate limit error (429)",
+						question_text: `[Image] ${uploadFile.name}`
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			} else {
-				set({
-					toast: {
-						message: "Sorry, there was an error analyzing your image. Please try again.",
-						type: "error"
-					}
-				});
-				await telemetry.startTelemetry(currentSession, userDetails);
-				telemetry.logErrorEvent(questionId, currentSession, String(error));
-				telemetry.endTelemetry();
+				const errorMessage = t
+					? t("imageUpload.analysisFailed") || "Sorry, there was an error analyzing your image. Please try again."
+					: "Sorry, there was an error analyzing your image. Please try again.";
+				set((state) => ({
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(
+							errorMessage as string,
+							true,
+							false,
+							backendQid,
+							`[Image] ${uploadFile.name}`,
+							language
+						);
+						if (!backendQid) warnMissingBackendQid("image chat error", message.id);
+						return [...state.messages, message];
+					})()
+				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
+
+				await apiService
+					.submitTelemetryError({
+						qid: telemetryQid,
+						session_id: currentSession,
+						error_text: String(error),
+						question_text: `[Image] ${uploadFile.name}`
+					})
+					.catch((telemetryError) =>
+						console.warn("Backend telemetry error relay failed", telemetryError)
+					);
 			}
 		}
 	},
@@ -1035,29 +1176,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const userMsg = messages.findLast((m) => m.role === "user");
 		const questionText = userMsg && userMsg.type === "text" ? userMsg.text : "";
 		const responseText = msg && msg.type === "card" ? msg.body : "";
+		const qid = msg.type === "card" ? msg.qid || messageId : messageId;
+		if (msg.type !== "card" || !msg.qid) {
+			warnMissingBackendQid("message feedback", qid);
+		}
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive
 			? "Liked the response"
 			: feedback || reason || "Negative feedback";
 
 		try {
-			// Telemetry-only flow as per user request
-			const user = useAuthStore.getState().user;
-			await telemetry.startTelemetry(sessionId, {
-				preferred_username: user?.user_metadata?.name || user?.email || "guest",
-				email: user?.email || ""
+			await apiService.submitTelemetryFeedback({
+				qid,
+				session_id: sessionId,
+				message_id: messageId,
+				feedback_type: feedbackType,
+				feedback_text: feedbackMsg,
+				question_text: questionText,
+				answer_text: responseText
 			});
-
-			telemetry.logFeedbackEvent(
-				messageId,
-				sessionId,
-				feedbackMsg,
-				feedbackType,
-				questionText,
-				responseText
-			);
-
-			telemetry.endTelemetry();
 
 			// Logic from user code: show success toast
 			// if (isPositive) {
