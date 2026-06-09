@@ -321,10 +321,16 @@ export function NotificationsPopover() {
 							<div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5">
 								{(() => {
 									const paras = unescapeNewlines(selected.content.body).split(/\n\n+/).map(p => p.trim()).filter(Boolean);
-									const mainParas = paras.filter(p => !p.toLowerCase().startsWith("please note") && !p.startsWith("("));
+									const pleaseNoteLabel = String(t("notifications.pleaseNote")).toLowerCase();
+									const isNotePara = (p: string) => {
+										const lower = p.toLowerCase();
+										return lower.startsWith("please note") || lower.startsWith(pleaseNoteLabel);
+									};
+									const mainParas = paras.filter(p => !isNotePara(p) && !p.startsWith("("));
 									const infoLine = paras.find(p => p.startsWith("("));
-									const noteParas = paras.filter(p => p.toLowerCase().startsWith("please note"));
-									const noteItems = noteParas.map(p => p.replace(/^please note:\s*/i, "").trim());
+									const noteParas = paras.filter(p => isNotePara(p));
+									const escapedLabel = pleaseNoteLabel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+									const noteItems = noteParas.map(p => p.replace(new RegExp(`^(please note|${escapedLabel})[:\\s]*`, "i"), "").trim());
 
 									return (
 										<div className="space-y-4">
