@@ -277,6 +277,32 @@ function makeAssistantMessage(
 	};
 }
 
+function getErrorQid(error: unknown): string | undefined {
+	const qid = (error as { qid?: unknown })?.qid;
+	return typeof qid === "string" && qid.trim() ? qid : undefined;
+}
+
+function warnMissingBackendQid(context: string, fallbackQid: string) {
+	console.warn(`Backend did not return X-QID for ${context}; using message id fallback for telemetry`, {
+		fallbackQid
+	});
+}
+
+function attachQidToLatestAssistantMessage(messages: ChatMessage[], qid?: string): ChatMessage[] {
+	if (!qid) return messages;
+
+	for (let index = messages.length - 1; index >= 0; index--) {
+		const message = messages[index];
+		if (message?.role === "assistant" && message.type === "card") {
+			const updated = [...messages];
+			updated[index] = { ...message, qid };
+			return updated;
+		}
+	}
+
+	return messages;
+}
+
 function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
@@ -538,16 +564,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = crypto.randomUUID();
-
 		try {
 			// In a real app we'd detect language, here we use what's passed
 			let streamingText = "";
 
-			await apiService.sendUserQuery(
+			const response = await apiService.sendUserQuery(
 				trimmed,
 				currentSession,
-				questionId,
 				language, // source
 				language, // target
 				(chunk) => {
@@ -563,7 +586,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true, questionId)
+									makeAssistantMessage(streamingText, false, true)
 								],
 								isAssistantTyping: false
 							};
@@ -573,7 +596,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				// Note: input stays locked until sendUserQuery fully resolves (after all stream chunks)
 			);
 
-			set({ isAssistantTyping: false, isInputLocked: false });
+			set((state) => ({
+				messages: attachQidToLatestAssistantMessage(state.messages, response.qid),
+				isAssistantTyping: false,
+				isInputLocked: false
+			}));
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -599,12 +626,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						if (!backendQid) warnMissingBackendQid("text rate-limit error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
 				await apiService
 					.submitTelemetryError({
-						qid: questionId,
+						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: "Rate limit error (429)",
 						question_text: trimmed
@@ -618,22 +651,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("chatErrorMessage") || "Sorry, there was an error processing your request. Please try again."
 					: "Sorry, there was an error processing your request. Please try again.";
 				set((state) => ({
-					messages: [
-						...state.messages,
-						makeAssistantMessage(
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(
 							errorMessage as string,
 							true,
 							false,
-							questionId,
+							backendQid,
 							trimmed,
 							language
-						)
-					]
+						);
+						if (!backendQid) warnMissingBackendQid("text chat error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
 				await apiService
 					.submitTelemetryError({
-						qid: questionId,
+						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: String(error),
 						question_text: trimmed
@@ -722,15 +758,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			apiService.setSessionId(currentSession);
 		}
 
-		const questionId = crypto.randomUUID();
-
 		try {
 			let streamingText = "";
 
-			await apiService.sendImageQuery(
+			const response = await apiService.sendImageQuery(
 				uploadFile,
 				currentSession,
-				questionId,
 				language,
 				language,
 				(chunk) => {
@@ -746,7 +779,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true, questionId)
+									makeAssistantMessage(streamingText, false, true)
 								],
 								isAssistantTyping: false
 							};
@@ -756,7 +789,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				// Note: input stays locked until sendImageQuery fully resolves (after all stream chunks)
 			);
 
-			set({ isAssistantTyping: false, isInputLocked: false });
+			set((state) => ({
+				messages: attachQidToLatestAssistantMessage(state.messages, response.qid),
+				isAssistantTyping: false,
+				isInputLocked: false
+			}));
 
 			if (!environment.suggestionsDisabled) {
 				const suggestions = await apiService.getSuggestions(currentSession, language);
@@ -782,12 +819,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						if (!backendQid) warnMissingBackendQid("image rate-limit error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
 				await apiService
 					.submitTelemetryError({
-						qid: questionId,
+						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: "Rate limit error (429)",
 						question_text: `[Image] ${uploadFile.name}`
@@ -800,22 +843,25 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("imageUpload.analysisFailed") || "Sorry, there was an error analyzing your image. Please try again."
 					: "Sorry, there was an error analyzing your image. Please try again.";
 				set((state) => ({
-					messages: [
-						...state.messages,
-						makeAssistantMessage(
+					messages: (() => {
+						const backendQid = getErrorQid(error);
+						const message = makeAssistantMessage(
 							errorMessage as string,
 							true,
 							false,
-							questionId,
+							backendQid,
 							`[Image] ${uploadFile.name}`,
 							language
-						)
-					]
+						);
+						if (!backendQid) warnMissingBackendQid("image chat error", message.id);
+						return [...state.messages, message];
+					})()
 				}));
+				const telemetryQid = getErrorQid(error) || get().messages.at(-1)?.id || "missing-qid";
 
 				await apiService
 					.submitTelemetryError({
-						qid: questionId,
+						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: String(error),
 						question_text: `[Image] ${uploadFile.name}`
@@ -1131,6 +1177,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const questionText = userMsg && userMsg.type === "text" ? userMsg.text : "";
 		const responseText = msg && msg.type === "card" ? msg.body : "";
 		const qid = msg.type === "card" ? msg.qid || messageId : messageId;
+		if (msg.type !== "card" || !msg.qid) {
+			warnMissingBackendQid("message feedback", qid);
+		}
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive
 			? "Liked the response"

@@ -10,6 +10,7 @@ export interface LocationData {
 export interface ChatResponse {
   response: string;
   status: string;
+  qid?: string;
 }
 
 export interface TranscriptionResponse {
@@ -61,8 +62,17 @@ interface ImageUploadResponse {
   image_id: string;
 }
 
+const CHAT_QID_HEADER = "X-QID";
+const SSE_KEEPALIVE_MARKER = "SSE_KEEPALIVE";
+
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
+
+const stripSseKeepAliveMarkers = (chunk: string): string =>
+  chunk
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== SSE_KEEPALIVE_MARKER)
+    .join('\n');
 
 const getTokenExpiryFromExp = (token: string): number | null => {
   try {
@@ -245,7 +255,6 @@ class ApiService {
   async sendUserQuery(
     msg: string,
     session: string,
-    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -259,7 +268,6 @@ class ApiService {
       
       const params = {
         session_id: session,
-        qid,
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
@@ -291,19 +299,26 @@ class ApiService {
         }
 
         if (!response.ok) {
+          const responseQid = response.headers.get(CHAT_QID_HEADER) || undefined;
           if (response.status === 401) {
             const error = new Error('Unauthorized');
             (error as any).status = 401;
+            if (responseQid) (error as any).qid = responseQid;
             throw error;
           }
           if (response.status === 429) {
             const error = new Error('Rate limit exceeded');
             (error as any).status = 429;
+            if (responseQid) (error as any).qid = responseQid;
             throw error;
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const error = new Error(`HTTP error! status: ${response.status}`);
+          (error as any).status = response.status;
+          if (responseQid) (error as any).qid = responseQid;
+          throw error;
         }
 
+        const responseQid = response.headers.get(CHAT_QID_HEADER) || undefined;
         onResponseStarted?.();
 
         const reader = response.body?.getReader();
@@ -319,11 +334,17 @@ class ApiService {
           if (done) break;
           
           const chunk = decoder.decode(value, { stream: true });
-          fullResponse += chunk;
-          onStreamData(chunk);
+          const displayChunk = stripSseKeepAliveMarkers(chunk);
+
+          if (chunk.includes(SSE_KEEPALIVE_MARKER) && !displayChunk.trim()) {
+            continue;
+          }
+
+          fullResponse += displayChunk;
+          onStreamData(displayChunk);
         }
 
-        return { response: fullResponse, status: 'success' };
+        return { response: fullResponse, status: 'success', qid: responseQid };
       } else {
         // Regular non-streaming request
         const config = {
@@ -331,10 +352,20 @@ class ApiService {
           headers: this.getAuthHeaders()
         };
         const response = await this.axiosInstance.get('/api/chat/', config);
+        const responseQid = response.headers[CHAT_QID_HEADER.toLowerCase()] as string | undefined;
         onResponseStarted?.();
-        return response.data;
+        return {
+          ...response.data,
+          qid: response.data?.qid || responseQid
+        };
       }
     } catch (error) {
+      const responseQid = axios.isAxiosError(error)
+        ? error.response?.headers?.[CHAT_QID_HEADER.toLowerCase()]
+        : undefined;
+      if (responseQid) {
+        (error as any).qid = responseQid;
+      }
       console.error('Error sending user query:', error);
       throw error;
     }
@@ -400,7 +431,6 @@ class ApiService {
   async sendImageQuery(
     imageFile: File,
     session: string,
-    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -414,7 +444,7 @@ class ApiService {
     // The backend resolves this ID to a localhost image URL internally.
     const query = `please do the pest analysis for this image ${imageId}`;
 
-    return this.sendUserQuery(query, session, qid, sourceLang, targetLang, onStreamData, onResponseStarted);
+    return this.sendUserQuery(query, session, sourceLang, targetLang, onStreamData, onResponseStarted);
   }
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
