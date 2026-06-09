@@ -1,8 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect, useCallback } from 'react';
 import { importSPKI, jwtVerify, type JWTPayload } from 'jose';
 import apiService from '@/lib/api-service';
-import { getBrowserInfo } from '@/lib/utils';
-import { setTelemetryUserData } from '../lib/telemetry';
+import { getBrowserInfo, getFingerprintId } from '@/lib/utils';
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
@@ -91,9 +90,10 @@ hwIDAQAB
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
+      const fingerprintId = await getFingerprintId();
       
       // Call /api/token to get JWT token
-      const newToken = await apiService.fetchAuthToken(browserInfo);
+      const newToken = await apiService.fetchAuthToken(browserInfo, fingerprintId);
       
       // Validate and store the new token
       if (importedPublicKey) {
@@ -118,7 +118,6 @@ hwIDAQAB
           authenticated: true,
           is_guest_user: true,
         });
-        setTelemetryUserData({});
       }
     } catch (error) {
       console.error('Failed to fetch auth token from /api/token:', error);
@@ -205,7 +204,6 @@ hwIDAQAB
       setUser(null);
       setLocations([]);
       // Clear telemetry data when user is not available
-      setTelemetryUserData({});
       return;
     }
     
@@ -227,11 +225,6 @@ hwIDAQAB
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
-    // Extract additional user fields
-    const role = (payload as any)?.role as string || '';
-    const farmer_id = (payload as any)?.farmer_id as string || '';
-    const unique_id = (payload as any)?.unique_id as string | number | undefined;
-    
     setUser({
       authenticated: true,
       username: name,
@@ -265,16 +258,6 @@ hwIDAQAB
     
     setLocations(validatedLocations);
 
-    // Set comprehensive telemetry data with all location types
-    setTelemetryUserData({
-      mobile: mobile,
-      username: name,
-      email: email,
-      role: role,
-      farmer_id: farmer_id,
-      unique_id: unique_id,
-      locations: validatedLocations
-    });
   };
 
   // Store JWT in localStorage with expiration
@@ -382,7 +365,6 @@ hwIDAQAB
     setLocations([]);
     localStorage.removeItem(JWT_STORAGE_KEY);
     // Clear all telemetry data on logout
-    setTelemetryUserData({});
   };
 
   return (
@@ -399,4 +381,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

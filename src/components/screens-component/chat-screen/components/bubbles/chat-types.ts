@@ -18,6 +18,7 @@ export type TextMessage = MessageBase & {
 
 export type CardMessage = MessageBase & {
 	type: "card";
+	qid?: string;
 	title?: string;
 	body: string;
 	actions?: { id: string; label: string }[];
