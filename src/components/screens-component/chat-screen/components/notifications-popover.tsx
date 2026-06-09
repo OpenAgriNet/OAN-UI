@@ -203,7 +203,7 @@ export function NotificationsPopover() {
 													</p>
 													{/* Seen indicator */}
 													{read
-														? <CheckCheck className="h-3 w-3 shrink-0 text-gray-300 dark:text-gray-600" aria-label="Seen" />
+														? <CheckCheck className="h-3.5 w-3.5 shrink-0 text-blue-400 dark:text-blue-400" aria-label="Seen" />
 														: <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[var(--primary)]" aria-label="Unread" />
 													}
 												</div>
