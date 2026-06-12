@@ -47,12 +47,21 @@ export const getLanguageText = (languageCode: LanguageCode): any => {
 export type FAQItem = {
 	id: string;
 	question: string;
-	answer: string;
+	// Optional: data-query FAQ items are sent to the chat agent on tap (answered
+	// live with the farmer's own data) and carry no static answer.
+	answer?: string;
 	image?: string;
 };
 
 export const FAQ_DATA: Record<LanguageCode, FAQItem[]> = {
 	gu: [
+		{ id: "data-1", question: "છેલ્લા ૭ દિવસની મારી દૂધ ભરવાની વિગત આપો." },
+		{ id: "data-2", question: "મે આજે અને ગઈકાલે કેટલું દૂધ ભરાવ્યું છે?  લિટર અને રૂપિયામાં કહો" },
+		{ id: "data-3", question: "ગયા મહિના અને ચાલુ મહિના દરમિયાન મારી કુલ આવક અને કપાતની વિગતો બતાવો" },
+		{ id: "data-4", question: "મારી માહિતી સાથે મારા પશુઓ અને દૂધ ઉત્પાદનની વિગત જણાવો" },
+		{ id: "data-5", question: "મારા પશુઓની વિગતો આપો, જેમાં છેલ્લી AI (કૃત્રિમ ગર્ભાધાન) તારીખ અને સારવારના રેકોર્ડનો સમાવેશ કરો" },
+		{ id: "data-6", question: "મારા પશુ માટે AI (કૃત્રિમ ગર્ભાધાન) ની વિઝિટ બુક કરો." },
+		{ id: "data-7", question: "મારા કયા પશુઓનું રસીકરણ અથવા કૃમિનાશક દવા બાકી છે?" },
 		{
 			id: "1",
 			question: "વેતર આવેલ ગાય- ભેંસ ક્યારે ફેળવવી?",
@@ -252,6 +261,13 @@ export const FAQ_DATA: Record<LanguageCode, FAQItem[]> = {
 		},
 	],
 	en: [
+		{ id: "data-1", question: "Give me my milk collection and deduction details of last 7 days" },
+		{ id: "data-2", question: "How much milk did I pour today & yesterday in Rs. and Ltrs?" },
+		{ id: "data-3", question: "What is my total earning and deductions in previous & current month?" },
+		{ id: "data-4", question: "Show me my profile with cattle and milk data" },
+		{ id: "data-5", question: "Give me the details of my cattle including my last AI date and medical treatment records" },
+		{ id: "data-6", question: "Book an AI appointment for my cattle" },
+		{ id: "data-7", question: "Which of my animals are overdue for vaccinations or deworming?" },
 		{
 			id: "1",
 			question: "When should a cow/buffalo in heat be bred?",
