@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
+import { BetaLanguageNote } from "./beta-language-note";
 
 const markdownComponents: Components = {
 	p: ({ children }) => <p className="m-0 leading-relaxed whitespace-pre-line">{children}</p>,
@@ -141,14 +142,15 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 						) : null}
 
 						<div className={cn("prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)] break-words overflow-wrap-anywhere", message.isError && "text-red-600 dark:text-red-400 font-medium")}>
-						<ReactMarkdown
-							remarkPlugins={[remarkGfm]}
-							rehypePlugins={[rehypeRaw]}
-							components={markdownComponents}
-						>
-							{message.body}
-						</ReactMarkdown>
-					</div>
+							<ReactMarkdown
+								remarkPlugins={[remarkGfm]}
+								rehypePlugins={[rehypeRaw]}
+								components={markdownComponents}
+							>
+								{message.body}
+							</ReactMarkdown>
+						</div>
+						<BetaLanguageNote language={language} />
 
 						{/* Retry Button for error messages */}
 						{isRetryableError && (
@@ -281,4 +283,3 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 		</>
 	);
 }
-

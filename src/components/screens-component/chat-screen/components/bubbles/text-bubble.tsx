@@ -4,6 +4,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
+import { useLanguage } from "@/components/LanguageProvider";
+import { BetaLanguageNote } from "./beta-language-note";
 
 const markdownComponents: Components = {
 	p: ({ children }) => <p className="m-0 leading-relaxed">{children}</p>,
@@ -30,6 +32,7 @@ const markdownComponents: Components = {
 };
 
 export function TextBubble({ message }: { message: TextMessage }) {
+	const { language } = useLanguage();
 	const isUser = message.role === "user";
 
 	return (
@@ -50,6 +53,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 					{message.text}
 				</ReactMarkdown>
 			</div>
+			{!isUser ? <BetaLanguageNote language={language} /> : null}
 		</div>
 	);
 }
