@@ -1,3 +1,5 @@
+import { type LanguageCode } from "../../config";
+
 export type MessageRole = "user" | "assistant" | "system";
 
 export type DeliveryStatus = "sending" | "sent" | "delivered" | "read";
@@ -14,6 +16,7 @@ export type MessageBase = {
 export type TextMessage = MessageBase & {
 	type: "text";
 	text: string;
+	responseLanguage?: LanguageCode;
 };
 
 export type CardMessage = MessageBase & {
@@ -26,6 +29,7 @@ export type CardMessage = MessageBase & {
 	isError?: boolean;
 	failedUserText?: string;
 	failedLanguage?: string;
+	responseLanguage?: LanguageCode;
 };
 
 export type QuickRepliesMessage = MessageBase & {

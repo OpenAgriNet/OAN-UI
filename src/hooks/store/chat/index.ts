@@ -3,6 +3,7 @@ import type {
 	ChatMessage,
 	TextMessage
 } from "@/components/screens-component/chat-screen/components/bubbles/chat-types";
+import { LANGUAGES, type LanguageCode } from "@/components/screens-component/chat-screen/config";
 
 import {
 	fetchSuggestions,
@@ -262,7 +263,8 @@ function makeAssistantMessage(
 	showListenRow = false,
 	qid?: string,
 	failedUserText?: string,
-	failedLanguage?: string
+	failedLanguage?: string,
+	responseLanguage?: LanguageCode
 ): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
@@ -274,8 +276,13 @@ function makeAssistantMessage(
 		showListenRow,
 		isError,
 		failedUserText,
-		failedLanguage
+		failedLanguage,
+		responseLanguage
 	};
+}
+
+function getResponseLanguage(language: string): LanguageCode | undefined {
+	return language in LANGUAGES ? (language as LanguageCode) : undefined;
 }
 
 function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
@@ -519,6 +526,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	sendText: async (text, language, t) => {
 		const trimmed = text.trim();
 		if (!trimmed) return;
+		const responseLanguage = getResponseLanguage(language);
 
 		get().stopTTS();
 		await get().fetchLocation(t);
@@ -557,14 +565,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true, responseLanguage }],
 								isAssistantTyping: false
 							};
 						} else {
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true, questionId)
+									makeAssistantMessage(streamingText, false, true, questionId, undefined, undefined, responseLanguage)
 								],
 								isAssistantTyping: false
 							};
@@ -600,7 +608,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId, undefined, undefined, responseLanguage)]
 				}));
 
 				await apiService
@@ -627,7 +635,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							false,
 							questionId,
 							trimmed,
-							language
+							language,
+							responseLanguage
 						)
 					]
 				}));
@@ -660,6 +669,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendImage: async (imageFile, language, t) => {
 		if (!imageFile) return;
+		const responseLanguage = getResponseLanguage(language);
 		if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
 			set({
 				toast: {
@@ -740,14 +750,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true, responseLanguage }],
 								isAssistantTyping: false
 							};
 						} else {
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true, questionId)
+									makeAssistantMessage(streamingText, false, true, questionId, undefined, undefined, responseLanguage)
 								],
 								isAssistantTyping: false
 							};
@@ -783,7 +793,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					? t("limitMessage")
 					: "Dear user, you have reached the allotted question limit for today. You may continue to explore the other features of the Bharat-VISTAAR app.";
 				set((state) => ({
-					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId)]
+					messages: [...state.messages, makeAssistantMessage(limitMessage, true, true, questionId, undefined, undefined, responseLanguage)]
 				}));
 
 				await apiService
@@ -809,7 +819,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							false,
 							questionId,
 							`[Image] ${uploadFile.name}`,
-							language
+							language,
+							responseLanguage
 						)
 					]
 				}));

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Copy, ThumbsDown, ThumbsUp, Volume2, Check, Pause, Play, RefreshCw } from "lucide-react";
-import { CardMessage } from "./chat-types";
+import { type CardMessage } from "./chat-types";
 import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -58,6 +58,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const isThisPlaying = currentlyPlayingId === message.id && ttsStatus === "playing";
 	const isThisPaused = currentlyPlayingId === message.id && ttsStatus === "paused";
 	const isRetryableError = message.isError && message.failedUserText;
+	const responseLanguage = message.responseLanguage ?? language;
 
 	const handleListen = async () => {
 		try {
@@ -150,7 +151,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 								{message.body}
 							</ReactMarkdown>
 						</div>
-						<BetaLanguageNote language={language} />
+						<BetaLanguageNote language={responseLanguage} />
 
 						{/* Retry Button for error messages */}
 						{isRetryableError && (
