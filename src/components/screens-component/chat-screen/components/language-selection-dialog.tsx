@@ -9,8 +9,6 @@ import { LANGUAGES } from "../config";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useChatStore } from "@/hooks/store/chat";
 
-const DROPDOWN_LANGUAGE_CODES = ["hi", "en"] as const;
-
 type LanguageSelectionDropdownProps = {
 	children: React.ReactNode;
 };
@@ -22,7 +20,7 @@ export function LanguageSelectionDropdown({
 	const fetchNotifications = useChatStore((state) => state.fetchNotifications);
 	const [open, setOpen] = useState(false);
 
-	const handleLanguageSelect = (code: any) => {
+	const handleLanguageSelect = (code: keyof typeof LANGUAGES) => {
 		setLanguage(code);
 		setOpen(false);
 		void fetchNotifications();
@@ -39,8 +37,7 @@ export function LanguageSelectionDropdown({
 				sideOffset={8}
 			>
 				<div className="bg-white dark:bg-[#5D5D5D] flex flex-col">
-					{DROPDOWN_LANGUAGE_CODES.map((code) => {
-						const language = LANGUAGES[code];
+					{Object.values(LANGUAGES).map((language) => {
 						const isActive = selectedLanguage === language.code;
 						return (
 							<button
