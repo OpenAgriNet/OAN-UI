@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { TextMessage } from "./chat-types";
+import { type TextMessage } from "./chat-types";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeRaw from "rehype-raw";
@@ -34,6 +34,7 @@ const markdownComponents: Components = {
 export function TextBubble({ message }: { message: TextMessage }) {
 	const { language } = useLanguage();
 	const isUser = message.role === "user";
+	const responseLanguage = message.responseLanguage ?? language;
 
 	return (
 		<div
@@ -53,7 +54,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 					{message.text}
 				</ReactMarkdown>
 			</div>
-			{!isUser ? <BetaLanguageNote language={language} /> : null}
+			{!isUser ? <BetaLanguageNote language={responseLanguage} /> : null}
 		</div>
 	);
 }

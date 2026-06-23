@@ -12,7 +12,9 @@ const BETA_LANGUAGE_NOTES: Partial<Record<LanguageCode, string>> = {
 	as: "প্ৰাৰম্ভিক প্ৰৱেশ: কিছুমান ভুল থাকিব পাৰে।"
 };
 
-export function BetaLanguageNote({ language }: { readonly language: LanguageCode }) {
+export function BetaLanguageNote({ language }: { readonly language?: LanguageCode }) {
+	if (!language) return null;
+
 	const note = BETA_LANGUAGE_NOTES[language];
 
 	if (!note) return null;

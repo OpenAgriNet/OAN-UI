@@ -3,6 +3,7 @@ import type {
 	ChatMessage,
 	TextMessage
 } from "@/components/screens-component/chat-screen/components/bubbles/chat-types";
+import { LANGUAGES, type LanguageCode } from "@/components/screens-component/chat-screen/config";
 
 import {
 	fetchSuggestions,
@@ -261,7 +262,8 @@ function makeAssistantMessage(
 	showListenRow = false,
 	qid?: string,
 	failedUserText?: string,
-	failedLanguage?: string
+	failedLanguage?: string,
+	responseLanguage?: LanguageCode
 ): ChatMessage {
 	return {
 		id: crypto.randomUUID(),
@@ -273,8 +275,13 @@ function makeAssistantMessage(
 		showListenRow,
 		isError,
 		failedUserText,
-		failedLanguage
+		failedLanguage,
+		responseLanguage
 	};
+}
+
+function getResponseLanguage(language: string): LanguageCode | undefined {
+	return language in LANGUAGES ? (language as LanguageCode) : undefined;
 }
 
 function getErrorQid(error: unknown): string | undefined {
@@ -544,6 +551,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	sendText: async (text, language, t) => {
 		const trimmed = text.trim();
 		if (!trimmed) return;
+		const responseLanguage = getResponseLanguage(language);
 
 		get().stopTTS();
 		await get().fetchLocation(t);
@@ -579,14 +587,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true, responseLanguage }],
 								isAssistantTyping: false
 							};
 						} else {
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true)
+									makeAssistantMessage(streamingText, false, true, undefined, undefined, undefined, responseLanguage)
 								],
 								isAssistantTyping: false
 							};
@@ -628,7 +636,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				set((state) => ({
 					messages: (() => {
 						const backendQid = getErrorQid(error);
-						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid, undefined, undefined, responseLanguage);
 						if (!backendQid) warnMissingBackendQid("text rate-limit error", message.id);
 						return [...state.messages, message];
 					})()
@@ -659,7 +667,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							false,
 							backendQid,
 							trimmed,
-							language
+							language,
+							responseLanguage
 						);
 						if (!backendQid) warnMissingBackendQid("text chat error", message.id);
 						return [...state.messages, message];
@@ -695,6 +704,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendImage: async (imageFile, language, t) => {
 		if (!imageFile) return;
+		const responseLanguage = getResponseLanguage(language);
 		if (imageFile.size > MAX_IMAGE_SIZE_BYTES) {
 			set({
 				toast: {
@@ -772,14 +782,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
-								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true }],
+								messages: [...state.messages.slice(0, -1), { ...lastMsg, body: streamingText, showListenRow: true, responseLanguage }],
 								isAssistantTyping: false
 							};
 						} else {
 							return {
 								messages: [
 									...state.messages,
-									makeAssistantMessage(streamingText, false, true)
+									makeAssistantMessage(streamingText, false, true, undefined, undefined, undefined, responseLanguage)
 								],
 								isAssistantTyping: false
 							};
@@ -821,7 +831,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				set((state) => ({
 					messages: (() => {
 						const backendQid = getErrorQid(error);
-						const message = makeAssistantMessage(limitMessage, true, true, backendQid);
+						const message = makeAssistantMessage(limitMessage, true, true, backendQid, undefined, undefined, responseLanguage);
 						if (!backendQid) warnMissingBackendQid("image rate-limit error", message.id);
 						return [...state.messages, message];
 					})()
@@ -851,7 +861,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							false,
 							backendQid,
 							`[Image] ${uploadFile.name}`,
-							language
+							language,
+							responseLanguage
 						);
 						if (!backendQid) warnMissingBackendQid("image chat error", message.id);
 						return [...state.messages, message];
