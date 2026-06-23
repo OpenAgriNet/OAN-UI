@@ -20,7 +20,7 @@ export function LanguageSelectionDropdown({
 	const fetchNotifications = useChatStore((state) => state.fetchNotifications);
 	const [open, setOpen] = useState(false);
 
-	const handleLanguageSelect = (code: any) => {
+	const handleLanguageSelect = (code: keyof typeof LANGUAGES) => {
 		setLanguage(code);
 		setOpen(false);
 		void fetchNotifications();
