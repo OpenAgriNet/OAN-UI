@@ -1,3 +1,4 @@
+import { Info } from "lucide-react";
 import { type LanguageCode } from "../../config";
 
 const BETA_LANGUAGE_NOTES: Partial<Record<LanguageCode, string>> = {
@@ -17,8 +18,9 @@ export function BetaLanguageNote({ language }: { readonly language: LanguageCode
 	if (!note) return null;
 
 	return (
-		<div className="mt-3 border-t border-border/50 pt-2 text-[11px] leading-snug text-muted-foreground">
-			{note}
+		<div className="mt-3 flex items-start gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-[11px] leading-snug text-[var(--primary)] dark:bg-indigo-900/20 dark:text-indigo-300">
+			<Info className="mt-px h-3 w-3 shrink-0" />
+			<span>{note}</span>
 		</div>
 	);
 }
