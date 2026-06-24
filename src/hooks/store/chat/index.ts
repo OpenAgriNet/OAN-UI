@@ -3,7 +3,6 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
-import { environment } from "@/lib/config/environment";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -41,16 +40,6 @@ export type QuickAction = {
 	prompt: string;
 };
 
-export type TranslationPipeline = 'default' | 'oss_translate';
-
-const getTranslationPipelineForSession = (sessionId: string): TranslationPipeline => {
-	let hash = 0;
-	for (let i = 0; i < sessionId.length; i += 1) {
-		hash = (hash * 31 + sessionId.charCodeAt(i)) % 100;
-	}
-	return hash < environment.ossTranslateSessionPercent ? 'oss_translate' : 'default';
-};
-
 type ChatStore = {
 	messages: ChatMessage[];
 	quickActions: QuickAction[];
@@ -61,7 +50,6 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
-	translationPipeline: TranslationPipeline;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -171,7 +159,6 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
-	translationPipeline: 'default',
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -181,11 +168,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			(typeof sessionStorage !== "undefined" &&
 				sessionStorage.getItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY)) ||
 			uuidv4();
-		const translationPipeline = getTranslationPipelineForSession(sid);
 		if (typeof sessionStorage !== "undefined") {
 			sessionStorage.removeItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY);
 		}
-		set({ sessionId: sid, translationPipeline });
+		set({ sessionId: sid });
 		apiService.setSessionId(sid);
 		try {
 			telemetry.startTelemetry(sid, { 
@@ -260,10 +246,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 		const { sessionId } = get();
 		const currentSession = sessionId || uuidv4();
-		const pipeline = sessionId ? get().translationPipeline : getTranslationPipelineForSession(currentSession);
-		const useTranslationPipeline = pipeline === 'oss_translate';
 		if (!sessionId) {
-			set({ sessionId: currentSession, translationPipeline: pipeline });
+			set({ sessionId: currentSession });
 			apiService.setSessionId(currentSession);
 		}
 
@@ -271,7 +255,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		try {
 			const userDetails = get().getUserForTelemetry();
 			await telemetry.startTelemetry(currentSession, userDetails);
-			telemetry.logQuestionEvent(questionId, currentSession, trimmed, pipeline);
+			telemetry.logQuestionEvent(questionId, currentSession, trimmed);
 			telemetry.endTelemetry();
 		} catch (e) {
 			console.warn("Telemetry failed (question event)", e);
@@ -321,12 +305,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed, pipeline }]
+								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed }]
 							};
 						}
 					});
-				},
-				useTranslationPipeline
+				}
 			);
 
 			set((state) => {
@@ -544,8 +527,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
 		const feedbackMsg = isPositive ? "Liked the response" : (feedback || reason || "Negative feedback");
-		const pipeline = msg && msg.type === 'card' && msg.pipeline ? msg.pipeline : undefined;
-		const feedbackMeta = pipeline != null ? { ...meta, pipeline } : meta;
+		const feedbackMeta = meta;
 
 		try {
 			const user = useAuthStore.getState().user;
