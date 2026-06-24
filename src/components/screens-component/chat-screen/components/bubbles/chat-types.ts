@@ -25,8 +25,6 @@ export type CardMessage = MessageBase & {
 	actions?: { id: string; label: string }[];
 	showListenRow?: boolean;
 	isError?: boolean;
-	/** Pipeline that generated this response: default or oss_translate */
-	pipeline?: "default" | "oss_translate";
 };
 
 export type QuickRepliesMessage = MessageBase & {
