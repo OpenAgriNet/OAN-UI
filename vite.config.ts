@@ -55,6 +55,11 @@ export default defineConfig(({ mode }) => {
 							target: devProxyTarget,
 							changeOrigin: true,
 							secure: true
+						},
+						"/observability-service": {
+							target: devProxyTarget,
+							changeOrigin: true,
+							secure: true
 						}
 					}
 				: undefined

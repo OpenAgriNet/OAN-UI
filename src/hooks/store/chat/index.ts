@@ -132,8 +132,34 @@ function makeAssistantMessage(text: string, isError = false, showListenRow = fal
 	};
 }
 
+function normalizeAssistantBodyForDisplay(text: string): string {
+	// Backend guardrail prefixes milk-collection payloads with a success line.
+	// Remove that prefix so the chat starts directly with markdown sections/tables.
+	return text.replace(/^Farmer milk collection details fetched successfully:\s*\n*/i, "");
+}
+
 import { playTTS as playTTSHelper } from "@/lib/audio-utils";
 import { ANONYMOUS_BOOTSTRAP_SESSION_KEY } from "@/lib/anonymous-bootstrap";
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchSuggestionsWithRetry(
+	sessionId: string,
+	language: string,
+	isStale?: () => boolean,
+) {
+	const retryDelaysMs = [300, 700, 1200, 2000];
+	for (let attempt = 0; attempt < retryDelaysMs.length; attempt++) {
+		if (isStale?.()) return [];
+		const suggestions = await apiService.getSuggestions(sessionId, language);
+		if (suggestions.length > 0) {
+			return suggestions;
+		}
+		await wait(retryDelaysMs[attempt] ?? 0);
+	}
+	if (isStale?.()) return [];
+	return await apiService.getSuggestions(sessionId, language);
+}
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
@@ -284,17 +310,18 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 					}
 
 					set((state) => {
+						const displayBody = normalizeAssistantBodyForDisplay(streamingText);
 						const lastMsg = state.messages[state.messages.length - 1];
 						if (lastMsg && lastMsg.role === "assistant" && lastMsg.type === "card") {
 							return {
 								messages: [
 									...state.messages.slice(0, -1),
-									{ ...lastMsg, body: streamingText }
+									{ ...lastMsg, body: displayBody }
 								]
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(streamingText), questionId, questionText: trimmed, pipeline }]
+								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed, pipeline }]
 							};
 						}
 					});
@@ -316,21 +343,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				return { isAssistantTyping: false };
 			});
 
-			try {
-				const userDetailsResponse = get().getUserForTelemetry();
-				await telemetry.startTelemetry(currentSession, userDetailsResponse);
-				await telemetry.endTelemetryWithWait(questionId);
-			} catch (e) {
-				console.warn("Telemetry failed (response event)", e);
-			}
-
 			// Use inline suggestions from stream if available, fall back to API
 			const parsedInlineSuggestions = Array.isArray(inlineSuggestions) ? inlineSuggestions : [];
 			if (parsedInlineSuggestions.length > 0) {
 				set({ suggestions: parsedInlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
 			} else {
-				const suggestions = await apiService.getSuggestions(currentSession, language);
-				set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+				// Abort retries early if a new turn started (bounds the worst-case
+				// retry tail and prevents stale suggestions overwriting a newer turn).
+				const isStale = () =>
+					get().sessionId !== currentSession || get().isAssistantTyping;
+				const suggestions = await fetchSuggestionsWithRetry(currentSession, language, isStale);
+				if (!isStale()) {
+					set({ suggestions: suggestions.map(s => ({ id: uuidv4(), text: s.question, label: s.question })) });
+				}
 			}
 
 			// Show success for text completion if needed, though usually silent is better for chat.
@@ -432,7 +457,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						}
 					];
 
-					let icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+					const icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
 
 					return {
 						id: String(index + 1),
@@ -513,7 +538,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const msg = messages.find(m => m.id === messageId);
 		if (!msg) return;
 
-		const userMsg = messages.findLast((m) => m.role === 'user');
+		const feedbackQuestionId = msg.questionId || messageId;
+		const userMsg = messages.findLast((m) => m.role === 'user' && m.questionId === msg.questionId);
 		const questionText = userMsg && userMsg.type === 'text' ? userMsg.text : "";
 		const responseText = msg && msg.type === 'card' ? msg.body : "";
 		const feedbackType = isPositive ? "like" : "dislike";
@@ -528,7 +554,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				email: user?.email || ""
 			});
 			telemetry.logFeedbackEvent(
-				messageId,
+				feedbackQuestionId,
 				sessionId,
 				feedbackMsg,
 				feedbackType,
