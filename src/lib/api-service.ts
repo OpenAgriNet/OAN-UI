@@ -136,8 +136,7 @@ class ApiService {
     session: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (data: string) => void,
-    useTranslationPipeline?: boolean
+    onStreamData?: (data: string) => void
   ): Promise<ChatResponse> {
     try {
       this.refreshAuthToken();
@@ -150,7 +149,6 @@ class ApiService {
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
-        use_translation_pipeline: useTranslationPipeline ? 'true' : 'false',
         ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
 

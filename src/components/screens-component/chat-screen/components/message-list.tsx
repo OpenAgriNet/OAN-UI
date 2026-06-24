@@ -52,7 +52,6 @@ export function MessageList(props: MessageListProps) {
 			const questionId = msg.questionId;
 			if (loggedResponseQidsRef.current.has(questionId)) continue;
 
-			const pipeline = "pipeline" in msg ? msg.pipeline : undefined;
 			loggedResponseQidsRef.current.add(questionId);
 			markAnswerRendered(questionId, async () => {
 				try {
@@ -62,7 +61,6 @@ export function MessageList(props: MessageListProps) {
 						sessionId,
 						msg.questionText!,
 						msg.body,
-						pipeline,
 					);
 					endTelemetry();
 				} catch (error) {
