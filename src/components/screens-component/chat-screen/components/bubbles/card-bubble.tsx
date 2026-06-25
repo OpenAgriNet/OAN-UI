@@ -7,35 +7,8 @@ import { FeedbackModal } from "../feedback-modal";
 import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
-import type { Components } from "react-markdown";
 import { BetaLanguageNote } from "./beta-language-note";
-
-const markdownComponents: Components = {
-	p: ({ children }) => <p className="m-0 leading-relaxed whitespace-pre-line">{children}</p>,
-	a: ({ href, children }) => (
-		<a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline">
-			{children}
-		</a>
-	),
-	pre: ({ children }) => (
-		<pre className="bg-muted/50 p-2 rounded-lg overflow-x-auto">{children}</pre>
-	),
-	code: ({ className, children, ...props }) => {
-		const match = /language-(\w+)/.exec(className || "");
-		const isInline = !match;
-		return isInline ? (
-			<code className="bg-muted/50 rounded px-1 py-0.5" {...props}>{children}</code>
-		) : (
-			<code className={className} {...props}>{children}</code>
-		);
-	},
-	hr: () => (
-		<hr className="border-none h-px my-4 bg-primary/30 dark:bg-primary/40" />
-	),
-};
+import { SafeMarkdown } from "./safe-markdown";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -143,13 +116,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 						) : null}
 
 						<div className={cn("prose prose-sm dark:prose-invert max-w-none text-base leading-relaxed text-foreground dark:text-[var(--aiBubbleText-dark)] break-words overflow-wrap-anywhere", message.isError && "text-red-600 dark:text-red-400 font-medium")}>
-							<ReactMarkdown
-								remarkPlugins={[remarkGfm]}
-								rehypePlugins={[rehypeRaw]}
-								components={markdownComponents}
-							>
-								{message.body}
-							</ReactMarkdown>
+							<SafeMarkdown>{message.body}</SafeMarkdown>
 						</div>
 						<BetaLanguageNote language={responseLanguage} />
 

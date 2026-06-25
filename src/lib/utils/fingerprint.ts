@@ -1,5 +1,17 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
+const ensureChromiumDevtoolsMetricsReporter = () => {
+	if (typeof window === "undefined") return;
+
+	const chromiumWindow = window as Window & {
+		__chromium_devtools_metrics_reporter?: unknown;
+	};
+
+	if (typeof chromiumWindow.__chromium_devtools_metrics_reporter !== "function") {
+		chromiumWindow.__chromium_devtools_metrics_reporter = () => undefined;
+	}
+};
+
 export const getFingerprintId = async (): Promise<string | null> => {
 	try {
 		const cached = localStorage.getItem("fingerprint_context");
@@ -11,6 +23,7 @@ export const getFingerprintId = async (): Promise<string | null> => {
 			}
 		}
 
+		ensureChromiumDevtoolsMetricsReporter();
 		const fp = await FingerprintJS.load();
 		const result = await fp.get();
 		return result.visitorId || null;
