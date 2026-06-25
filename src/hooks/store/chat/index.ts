@@ -14,6 +14,7 @@ import { getFingerprintId } from "@/lib/utils";
 import { shuffle, randomPick } from "@/lib/qa-utils";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
+import { neutralizeHtmlMarkup } from "@/lib/security/html";
 
 export type ApiNotification = {
 	notification_id: string;
@@ -551,12 +552,13 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	sendText: async (text, language, t) => {
 		const trimmed = text.trim();
 		if (!trimmed) return;
+		const safeText = neutralizeHtmlMarkup(trimmed);
 		const responseLanguage = getResponseLanguage(language);
 
 		get().stopTTS();
 		await get().fetchLocation(t);
 
-		const userMessage = makeUserMessage(trimmed);
+		const userMessage = makeUserMessage(safeText);
 		set((state) => ({
 			messages: [...state.messages, userMessage],
 			draft: "",
@@ -577,7 +579,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			let streamingText = "";
 
 			const response = await apiService.sendUserQuery(
-				trimmed,
+				safeText,
 				currentSession,
 				language, // source
 				language, // target
@@ -648,7 +650,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: "Rate limit error (429)",
-						question_text: trimmed
+						question_text: safeText
 					})
 					.catch((telemetryError) =>
 						console.warn("Backend telemetry error relay failed", telemetryError)
@@ -666,7 +668,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							true,
 							false,
 							backendQid,
-							trimmed,
+							safeText,
 							language,
 							responseLanguage
 						);
@@ -681,7 +683,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 						qid: telemetryQid,
 						session_id: currentSession,
 						error_text: String(error),
-						question_text: trimmed
+						question_text: safeText
 					})
 					.catch((telemetryError) =>
 						console.warn("Backend telemetry error relay failed", telemetryError)
