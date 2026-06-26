@@ -3,7 +3,7 @@ import type {
 	ChatMessage,
 	TextMessage
 } from "@/components/screens-component/chat-screen/components/bubbles/chat-types";
-import { LANGUAGES, type LanguageCode } from "@/components/screens-component/chat-screen/config";
+import { DEFAULT_LANGUAGE, LANGUAGES, type LanguageCode } from "@/components/screens-component/chat-screen/config";
 
 import {
 	fetchSuggestions,
@@ -99,7 +99,12 @@ type ChatStore = {
 	sessionId: string | null;
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
-	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
+	sendAudio: (
+		blob: Blob,
+		sessionId: string,
+		language: string,
+		onLanguageDetected?: (language: LanguageCode) => void
+	) => Promise<void>;
 	sendImage: (imageFile: File, language: string, t?: any) => Promise<void>;
 	sendQuickAction: (id: string, language: string, t?: any) => void;
 	sendQuickReply: (payload: string, language: string, t?: any) => void;
@@ -283,6 +288,11 @@ function makeAssistantMessage(
 
 function getResponseLanguage(language: string): LanguageCode | undefined {
 	return language in LANGUAGES ? (language as LanguageCode) : undefined;
+}
+
+function getTranscriptionLanguage(status?: string, langCode?: string): LanguageCode {
+	if (status !== "success" || !langCode) return DEFAULT_LANGUAGE;
+	return getResponseLanguage(langCode) ?? DEFAULT_LANGUAGE;
 }
 
 function makeImageMessage(imageUrl: string, caption?: string): ChatMessage {
@@ -839,7 +849,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 	},
 
-	sendAudio: async (blob, sessionId, language) => {
+	sendAudio: async (blob, sessionId, language, onLanguageDetected) => {
 		if (!blob) return;
 
 		set({ isTranscribing: true });
@@ -912,6 +922,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				sessionId,
 				language
 			);
+			onLanguageDetected?.(getTranscriptionLanguage(transcription?.status, transcription?.lang_code));
 
 			if (transcription && transcription.text) {
 				set((state) => ({
@@ -924,6 +935,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 		} catch (error) {
 			console.error("Transcription error:", error);
+			onLanguageDetected?.(DEFAULT_LANGUAGE);
 			set({ isAssistantTyping: false, isTranscribing: false });
 			set({ toast: { message: "Transcription failed. Please try again.", type: "error" } });
 			throw error;
