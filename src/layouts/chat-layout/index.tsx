@@ -46,7 +46,7 @@ function ChatLayout() {
 	const setToast = useChatStore((s) => s.setToast);
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
 
-	const { language, setLanguage, t } = useLanguage();
+	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
@@ -131,7 +131,7 @@ function ChatLayout() {
 							sendText(text, language, t);
 						} else if (voice) {
 							try {
-								await sendAudio(voice, sessionId || '', language, setLanguage);
+								await sendAudio(voice, sessionId || '', language);
 							} catch (error) {
 								console.error(error);
 							}

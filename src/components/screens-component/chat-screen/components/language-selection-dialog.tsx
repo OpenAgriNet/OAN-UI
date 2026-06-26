@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import {
 	Popover,
@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/popover";
 import { LANGUAGES } from "../config";
 import { useLanguage } from "@/components/LanguageProvider";
+import { useChatStore } from "@/hooks/store/chat";
 
 type LanguageSelectionDropdownProps = {
 	children: React.ReactNode;
@@ -15,19 +16,20 @@ type LanguageSelectionDropdownProps = {
 export function LanguageSelectionDropdown({
 	children
 }: LanguageSelectionDropdownProps) {
-	const { language: selectedLanguage } = useLanguage();
+	const { language: selectedLanguage, setLanguage } = useLanguage();
+	const fetchNotifications = useChatStore((state) => state.fetchNotifications);
+	const [open, setOpen] = useState(false);
 
-	const disabledTrigger = React.isValidElement(children)
-		? React.cloneElement(children as React.ReactElement<any>, {
-			disabled: true,
-			"aria-disabled": true
-		})
-		: children;
+	const handleLanguageSelect = (code: keyof typeof LANGUAGES) => {
+		setLanguage(code);
+		setOpen(false);
+		void fetchNotifications();
+	};
 
 	return (
-		<Popover open={false}>
+		<Popover open={open} onOpenChange={setOpen}>
 			<PopoverTrigger asChild>
-				{disabledTrigger}
+				{children}
 			</PopoverTrigger>
 			<PopoverContent 
 				className="w-[200px] p-0 rounded-2xl border border-gray-100 dark:border-transparent overflow-hidden shadow-xl"
@@ -40,12 +42,12 @@ export function LanguageSelectionDropdown({
 						return (
 							<button
 								key={language.code}
-								disabled
+								onClick={() => handleLanguageSelect(language.code)}
 								className={cn(
-									"w-full flex items-center px-5 py-3.5 transition-colors text-left cursor-not-allowed",
+									"w-full flex items-center px-5 py-3.5 transition-colors text-left cursor-pointer",
 									isActive 
 										? "bg-[#FEF2B2] dark:bg-[#EFC300] text-gray-900 font-bold" 
-										: "bg-white dark:bg-[#5D5D5D] text-gray-800 dark:text-white font-medium opacity-70"
+										: "bg-white dark:bg-[#5D5D5D] text-gray-800 dark:text-white font-medium hover:bg-gray-50 dark:hover:brightness-110"
 								)}
 							>
 								<span className="text-sm font-medium">
