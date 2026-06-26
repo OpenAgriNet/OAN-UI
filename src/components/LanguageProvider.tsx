@@ -9,9 +9,7 @@ import gu from '../../translations/gu.json';
 import kn from '../../translations/kn.json';
 import ml from '../../translations/ml.json';
 import as_ from '../../translations/as.json';
-import { DEFAULT_LANGUAGE } from './screens-component/chat-screen/config';
-
-type LanguageCode = 'hi' | 'en' | 'bn' | 'te' | 'mr' | 'ta' | 'gu' | 'kn' | 'ml' | 'as';
+import { DEFAULT_LANGUAGE, LANGUAGES, type LanguageCode } from './screens-component/chat-screen/config';
 
 interface LanguageContextType {
   language: LanguageCode;
@@ -30,12 +28,13 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<LanguageCode>(() => {
     const saved = localStorage.getItem('app_language');
-    return (saved as LanguageCode) || DEFAULT_LANGUAGE;
+    return saved && saved in LANGUAGES ? (saved as LanguageCode) : DEFAULT_LANGUAGE;
   });
 
   const setLanguage = (lang: LanguageCode) => {
-    setLanguageState(lang);
-    localStorage.setItem('app_language', lang);
+    const nextLanguage = lang in LANGUAGES ? lang : DEFAULT_LANGUAGE;
+    setLanguageState(nextLanguage);
+    localStorage.setItem('app_language', nextLanguage);
   };
 
   const t = useCallback((key: string, params?: Record<string, string>): string | string[] => {
