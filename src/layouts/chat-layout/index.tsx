@@ -7,7 +7,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { useCallback, useState, useEffect } from "react";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { SettingsDrawer } from "@/components/screens-component/chat-screen/components/settings-drawer";
-import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
+// import { LocationPermissionDialog } from "@/components/screens-component/chat-screen/components/location-permission-dialog";
 import apiService from "@/lib/api-service";
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -48,7 +48,7 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+	// const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
 	useEffect(() => {
 		const cachedLocation = getCachedLocation();
@@ -70,14 +70,16 @@ function ChatLayout() {
 				if (cachedLocation) {
 					return;
 				}
-				setShowLocationPrompt(true);
+				// setShowLocationPrompt(true);
+				fetchLocation(undefined, { trackBrowserDecision: true });
 			}
 			// "denied" — skip silently
 		}).catch(() => {
 			if (cachedLocation) {
 				return;
 			}
-			setShowLocationPrompt(true);
+			// setShowLocationPrompt(true);
+			fetchLocation(undefined, { trackBrowserDecision: true });
 		});
 	}, [fetchLocation]);
 
@@ -153,6 +155,7 @@ function ChatLayout() {
 				onOpenChange={setSettingsOpen}
 			/>
 
+			{/* Custom location permission popup disabled — using native browser prompt instead
 			{showLocationPrompt && (
 				<LocationPermissionDialog
 					onAllow={() => {
@@ -179,6 +182,7 @@ function ChatLayout() {
 					}}
 				/>
 			)}
+			*/}
 
 		</div>
 	);
