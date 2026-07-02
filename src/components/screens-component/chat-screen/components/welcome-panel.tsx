@@ -2,6 +2,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
 import { QuickAction } from "@/hooks/store/chat";
+import { TickerBanner } from "./ticker-designs";
+import { env } from "@/config/env";
 
 type WelcomePanelProps = {
 	onAction: (id: string) => void;
@@ -32,6 +34,9 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 					<div className="text-xl font-medium text-black dark:text-[#F6F6F6]">{t("welcome")}</div>
 				</div>
 			</div>
+
+			{/* ── Ticker Banners (variants 2-4) ── variant 1 lives in the layout header ── */}
+			{env.uiTicker !== 1 && <TickerBanner />}
 
 			{/* Cards List (Full width as per image 1) */}
 			<div className="flex w-full max-w-2xl flex-col gap-3">
