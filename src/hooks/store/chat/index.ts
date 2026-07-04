@@ -73,29 +73,102 @@ type ChatStore = {
 };
 /* eslint-enable no-unused-vars */
 
-const quickActionSeeds: QuickAction[] = [
+const QUICK_ACTION_COUNT = 5;
+
+const KEYWORD_ICON_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
 	{
-		id: "1",
-		title: "What is the treatment for Mastitis in cow?",
-		description: "",
 		icon: "cow",
-		prompt: "What is the treatment for Mastitis in cow?"
+		keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves", "production", "ઉત્પાદન"]
 	},
 	{
-		id: "2",
-		title: "What is the today’s price of amaranth in APMC Mumbai?",
-		description: "",
 		icon: "wheat",
-		prompt: "What is the today’s price of amaranth in APMC Mumbai?"
+		keywords: ["પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
 	},
 	{
-		id: "3",
-		title: "What is the ideal irrigation schedule for muskmelon?",
-		description: "",
-		icon: "cloud", 
-		prompt: "What is the ideal irrigation schedule for muskmelon?"
+		icon: "cloud",
+		keywords: ["હવામાન", "weather", "rain", "forecast"]
 	}
 ];
+
+function pickIconForQuestion(question: string): QuickAction["icon"] {
+	const lowerQ = question.toLowerCase();
+	return KEYWORD_ICON_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon
+		|| randomPick(["tractor", "wheat", "cow", "cloud"] as const);
+}
+
+function toQuickAction(question: string, index: number): QuickAction {
+	return {
+		id: String(index + 1),
+		title: question,
+		description: "",
+		icon: pickIconForQuestion(question),
+		prompt: question
+	};
+}
+
+function buildQuickActions(t: (key: string, params?: Record<string, string>) => string | string[]): QuickAction[] {
+	const pinned = t("pinnedQuestions");
+	const pinnedQuestions = Array.isArray(pinned)
+		? pinned.filter((q): q is string => typeof q === "string")
+		: [];
+	const pinnedLimited = pinnedQuestions.slice(0, QUICK_ACTION_COUNT);
+	const pinnedSet = new Set(pinnedLimited);
+	const randomCount = Math.max(0, QUICK_ACTION_COUNT - pinnedLimited.length);
+
+	const staticQuestions = t("questions");
+	if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
+		const pool = staticQuestions.filter((q) => typeof q === "string" && !pinnedSet.has(q));
+		const randomQuestions = shuffle(pool).slice(0, randomCount);
+		return [...pinnedLimited, ...randomQuestions].slice(0, QUICK_ACTION_COUNT).map(toQuickAction);
+	}
+
+	const VARS = {
+		crop: t("variables.crop") as string[],
+		"fruit crop": t("variables.fruit crop") as string[],
+		"Flower crop": t("variables.Flower crop") as string[],
+		market: t("variables.market") as string[],
+		district: t("variables.district") as string[],
+		animal: t("variables.animal") as string[],
+		"Scheme name": t("variables.Scheme name") as string[]
+	} as const;
+
+	const templateActions: QuickAction[] = shuffle(QA_TEMPLATES)
+		.slice(0, randomCount)
+		.map(({ key, vars }, index) => {
+			let prompt = "";
+			if (vars) {
+				const params: Record<string, string> = {};
+				vars.forEach(v => {
+					const rawValues = (VARS as any)[v] as string[];
+					if (rawValues) {
+						const scopedValues = filterVariableValues(key, v, rawValues);
+						params[v] = randomPick(scopedValues);
+					} else {
+						params[v] = "";
+					}
+				});
+				prompt = t(key, params) as string;
+			} else {
+				prompt = t(key) as string;
+			}
+
+			let icon: QuickAction["icon"] = "tractor";
+			if (key.includes("livestock")) icon = "cow";
+			else if (key.includes("market") || key.includes("crop")) icon = "wheat";
+			else if (key.includes("weather")) icon = "cloud";
+
+			return {
+				id: String(pinnedLimited.length + index + 1),
+				title: prompt,
+				description: "",
+				icon,
+				prompt
+			};
+		});
+
+	return [...pinnedLimited.map(toQuickAction), ...templateActions].slice(0, QUICK_ACTION_COUNT);
+}
+
 
 function makeUserMessage(text: string): TextMessage {
 	return {
@@ -151,7 +224,7 @@ async function fetchSuggestionsWithRetry(
 
 export const useChatStore = create<ChatStore>((set, get) => ({
 	messages: [],
-	quickActions: quickActionSeeds,
+	quickActions: [],
 	draft: "",
 	suggestions: [],
 	isAssistantTyping: false,
@@ -416,91 +489,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	},
 
 	generateQuickActions: (t) => {
-		const staticQuestions = t("questions");
-		
-		if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
-			// If we have a static list of questions (like for Gujarati or English), use them
-			const newActions: QuickAction[] = shuffle(staticQuestions)
-				.slice(0, 3)
-				.map((question, index) => {
-					// Map based on keywords or random
-					const lowerQ = question.toLowerCase();
-					const KEYWORD_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
-						{
-							icon: "cow",
-							keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves"]
-						},
-						{
-							icon: "wheat",
-							keywords: ["પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
-						},
-						{
-							icon: "cloud",
-							keywords: ["હવામાન", "weather", "rain", "forecast"]
-						}
-					];
-
-					const icon = KEYWORD_MAP.find(m => m.keywords.some(k => lowerQ.includes(k)))?.icon || randomPick(["tractor", "wheat", "cow", "cloud"] as const);
-
-					return {
-						id: String(index + 1),
-						title: question,
-						description: "",
-						icon,
-						prompt: question
-					};
-				});
-			set({ quickActions: newActions });
-			return;
-		}
-
-		const VARS = {
-			crop: t("variables.crop") as string[],
-			"fruit crop": t("variables.fruit crop") as string[],
-			"Flower crop": t("variables.Flower crop") as string[],
-			market: t("variables.market") as string[],
-			district: t("variables.district") as string[],
-			animal: t("variables.animal") as string[],
-			"Scheme name": t("variables.Scheme name") as string[]
-		} as const;
-
-		const newActions: QuickAction[] = shuffle(QA_TEMPLATES)
-			.slice(0, 3)
-			.map(({ key, vars }, index) => {
-				let prompt = "";
-				if (vars) {
-					const params: Record<string, string> = {};
-					vars.forEach(v => {
-						const rawValues = (VARS as any)[v] as string[];
-						// Defensive check because translation might be missing for some languages
-						if (rawValues) {
-							const scopedValues = filterVariableValues(key, v, rawValues);
-							params[v] = randomPick(scopedValues);
-						} else {
-							params[v] = "";
-						}
-					});
-					prompt = t(key, params) as string;
-				} else {
-					prompt = t(key) as string;
-				}
-
-				// Map key prefix to icon
-				let icon: QuickAction["icon"] = "tractor";
-				if (key.includes("livestock")) icon = "cow";
-				else if (key.includes("market") || key.includes("crop")) icon = "wheat";
-				else if (key.includes("weather")) icon = "cloud";
-
-				return {
-					id: String(index + 1),
-					title: prompt,
-					description: "",
-					icon,
-					prompt
-				};
-			});
-
-		set({ quickActions: newActions });
+		set({ quickActions: buildQuickActions(t) });
 	},
 
 	playTTS: async (text, language) => {
