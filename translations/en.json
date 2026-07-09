@@ -8,8 +8,11 @@
   "Listen": "Listen",
   "selectLanguage": "Select language",
   "disclaimerText": "AI-generated content. Please verify locally if required.",
+  "pinnedQuestions": [
+    "Give me my milk collection details for the last 7 days.",
+    "What should be done to increase milk production?"
+  ],
   "questions": [
-    "Give me my milk collection and deduction details of last 7 days",
     "How much milk did I pour today & yesterday in Rs. and Ltrs?",
     "What is my total earning and deductions in previous & current month?",
     "Show me my profile with cattle and milk data",
@@ -28,8 +31,7 @@
     "How to take care of a pregnant animal?",
     "What is Silage?",
     "When should dehorning (disbudding) be done?",
-    "Which animal breeds should be kept?",
-    "What to do to increase milk yield?"
+    "Which animal breeds should be kept?"
   ],
   "recordingListening": "[botName] is listening, start speaking",
   "capabilities": [
