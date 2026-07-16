@@ -127,5 +127,9 @@
         "typing": "Typing..."
       }
     }
+  },
+  "contactIcon": {
+    "symbol": "material-filled",
+    "color": "#F65151"
   }
 }
