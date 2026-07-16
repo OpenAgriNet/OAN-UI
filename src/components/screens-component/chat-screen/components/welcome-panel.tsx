@@ -18,9 +18,9 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 
 	const welcomeText = t("welcome") as string;
 	return (
-		<div className="flex w-full flex-col items-center px-4 py-8">
+		<div className="flex w-full flex-col items-center px-4 py-4">
 			{/* Logo & Greeting */}
-			<div className="mb-6 flex flex-col items-center gap-4 text-center">
+			<div className="mb-4 flex flex-col items-center gap-4 text-center">
 				<div className="relative animate-smart-pulsate">
 					<Avatar className="h-24 w-24">
 						<AvatarImage src={CHAT_ASSISTANT.avatar} alt={CHAT_ASSISTANT.name} className="object-contain" />
@@ -57,10 +57,10 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 						<Button
 							key={action.id}
 							variant="ghost"
-							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-2.5 sm:px-6 sm:py-3 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
+							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-2 sm:px-6 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
 							onClick={() => onAction(action.id)}
 						>
-							<div className="text-2xl sm:text-3xl shrink-0">
+							<div className="text-xl shrink-0">
 								{icon}
 							</div>
 							<span className="text-base font-medium text-gray-900 leading-snug">
