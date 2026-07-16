@@ -50,17 +50,23 @@ function getStoredLocationCoordinates(): { latitude?: number; longitude?: number
 	}
 }
 
+function buildNotificationFeedbackContext(notification: ApiNotification) {
+	return {
+		notification_id: notification.notification_id,
+		notification_description: notification.content?.body,
+		message_type: notification.message_type ?? notification.metadata?.message_type,
+		category_type: notification.category_type,
+		...getStoredLocationCoordinates()
+	};
+}
+
 function buildNegativeFeedbackMetadata(
 	notification: ApiNotification,
 	reason: NotificationFeedbackReason,
 	message: string
 ) {
 	return {
-		notification_id: notification.notification_id,
-		notification_description: notification.content?.body,
-		message_type: notification.message_type ?? notification.metadata?.message_type,
-		category_type: notification.category_type,
-		...getStoredLocationCoordinates(),
+		...buildNotificationFeedbackContext(notification),
 		reason,
 		feedback: message
 	};
@@ -445,9 +451,7 @@ export function NotificationsPopover() {
 													apiService.trackUiTelemetryEvent({
 														event_name: "notification_feedback_no",
 														category: "notification_feedback",
-														metadata: {
-															notification_id: selected.notification_id
-														}
+														metadata: buildNotificationFeedbackContext(selected)
 													});
 													setFeedbackTarget(selected);
 													setDetailOpen(false);
