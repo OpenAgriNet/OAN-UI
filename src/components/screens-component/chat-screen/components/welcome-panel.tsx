@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
+import { ContactIcon } from "./contact-icon";
 import { QuickAction } from "@/hooks/store/chat";
 import amulText from "@/assets/amulText.svg";
 
@@ -16,7 +17,14 @@ import { useLanguage } from "@/components/LanguageProvider";
 export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 	const { t } = useLanguage();
 
-	const welcomeText = t("welcome") as string;
+	// Last line of the welcome text is the contact ("call / WhatsApp") line and
+	// gets the configurable call+chat icon (see config.json `contactIcon`).
+	const welcomeLines = (t("welcome") as string)
+		.split("\n")
+		.map((line) => line.trim())
+		.filter(Boolean);
+	const introLines = welcomeLines.slice(0, -1);
+	const contactLine = welcomeLines[welcomeLines.length - 1];
 	return (
 		<div className="flex w-full flex-col items-center px-4 py-4">
 			{/* Logo & Greeting */}
@@ -32,8 +40,16 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 				
 				<div className="space-y-4">
 					<img src={amulText} alt="Amul AI" className="h-10 mx-auto object-contain" />
-					<div className="text-xl font-medium text-foreground whitespace-pre-line">
-						{welcomeText}
+					<div className="text-xl font-medium text-foreground">
+						{introLines.map((line) => (
+							<div key={line}>{line}</div>
+						))}
+						{contactLine && (
+							<div className="flex items-center justify-center gap-2">
+								<ContactIcon className="h-6 w-6 shrink-0" />
+								<span>{contactLine}</span>
+							</div>
+						)}
 					</div>
 				</div>
 			</div>
