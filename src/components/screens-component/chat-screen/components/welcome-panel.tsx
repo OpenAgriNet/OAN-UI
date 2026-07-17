@@ -25,6 +25,9 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 		.filter(Boolean);
 	const introLines = welcomeLines.slice(0, -1);
 	const contactLine = welcomeLines[welcomeLines.length - 1];
+	// Anchor the icon to the phone number itself (per design mock), not the
+	// start of the sentence. Matches Gujarati and Latin digits, with hyphens.
+	const numberMatch = contactLine?.match(/[0-9૦-૯][0-9૦-૯-]{7,}/);
 	return (
 		<div className="flex w-full flex-col items-center px-4 py-4">
 			{/* Logo & Greeting */}
@@ -44,12 +47,21 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 						{introLines.map((line) => (
 							<div key={line}>{line}</div>
 						))}
-						{contactLine && (
+						{contactLine && (numberMatch?.index !== undefined ? (
+							<div>
+								{contactLine.slice(0, numberMatch.index)}
+								<span className="inline-flex items-center gap-1.5 whitespace-nowrap align-middle">
+									<ContactIcon className="h-6 w-6 shrink-0" />
+									<span>{numberMatch[0]}</span>
+								</span>
+								{contactLine.slice(numberMatch.index + numberMatch[0].length)}
+							</div>
+						) : (
 							<div className="flex items-center justify-center gap-2">
 								<ContactIcon className="h-6 w-6 shrink-0" />
 								<span>{contactLine}</span>
 							</div>
-						)}
+						))}
 					</div>
 				</div>
 			</div>
