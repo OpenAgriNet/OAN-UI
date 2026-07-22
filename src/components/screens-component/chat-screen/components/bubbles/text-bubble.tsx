@@ -19,7 +19,7 @@ export function TextBubble({ message }: { message: TextMessage }) {
 			)}
 		>
 			<div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-				<SafeMarkdown>{message.text}</SafeMarkdown>
+				{isUser ? message.text : <SafeMarkdown>{message.text}</SafeMarkdown>}
 			</div>
 			{!isUser ? <BetaLanguageNote language={responseLanguage} /> : null}
 		</div>
