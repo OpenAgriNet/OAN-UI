@@ -46,13 +46,17 @@ export function TextBubble({ message }: { message: TextMessage }) {
 			)}
 		>
 			<div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed whitespace-pre-wrap break-words overflow-wrap-anywhere">
-				<ReactMarkdown
-					remarkPlugins={[remarkGfm]}
-					rehypePlugins={[rehypeRaw]}
-					components={markdownComponents}
-				>
-					{message.text}
-				</ReactMarkdown>
+				{isUser ? (
+					message.text
+				) : (
+					<ReactMarkdown
+						remarkPlugins={[remarkGfm]}
+						rehypePlugins={[rehypeRaw]}
+						components={markdownComponents}
+					>
+						{message.text}
+					</ReactMarkdown>
+				)}
 			</div>
 			{!isUser ? <BetaLanguageNote language={responseLanguage} /> : null}
 		</div>
