@@ -29,7 +29,7 @@ interface TTSResponse {
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
-const SUPPORTED_LANGUAGE_CODES = new Set(['en', 'gu', 'hi']);
+const SUPPORTED_LANGUAGE_CODES = new Set(['en', 'gu', 'hi', 'mr']);
 
 class ApiService {
   private apiUrl: string = environment.apiUrl;
