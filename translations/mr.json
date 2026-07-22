@@ -7,7 +7,7 @@
   "stopRecording": "रेकॉर्डिंग थांबवा",
   "send": "संदेश पाठवा",
   "Listen": "ऐका",
-  "recordingListening": "[botName] ऐकत आहे, बोलायला सुरुवात करा",
+  "recordingListening": "ऐकत आहे… आता बोला",
   "selectLanguage": "भाषा निवडा",
   "disclaimerText": "AI-निर्मित माहिती. कृपया स्वतंत्रपणे सत्यापित करा।",
   "appTitle": "भारत विस्तार",
@@ -527,5 +527,12 @@
     "kmAway": "~[km] किमी दूर",
     "pleaseNote": "कृपया लक्षात घ्या"
   },
-  "chatErrorMessage": "क्षमस्व, तुमची विनंती प्रक्रिया करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा."
+  "chatErrorMessage": "क्षमस्व, तुमची विनंती प्रक्रिया करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.",
+  "assistantRole": "AI शेती सहाय्यक",
+  "tapToSpeak": "बोलण्यासाठी टॅप करा",
+  "inputPlaceholderWelcome": "तुमचा प्रश्न लिहा (पर्यायी)",
+  "transcribingTitle": "तुमचा आवाज समजत आहोत…",
+  "transcribingSubtitle": "कृपया थोडा वेळ थांबा",
+  "tapToStop": "थांबवण्यासाठी पुन्हा टॅप करा",
+  "recordingHint": "ऐकत आहे… संपल्यावर माइकवर पुन्हा टॅप करा"
 }

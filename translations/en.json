@@ -1,6 +1,6 @@
 {
-  "welcome": "Hello! I am your farming assistant. How can I help you today?",
-  "inputPlaceholder": "Ask your question...",
+  "welcome": "Hello! I am Bharati, your farming assistant. How can I help you today?",
+  "inputPlaceholder": "Type your question",
   "chatMicHint": "Tap the microphone button to ask your question",
   "startRecording": "Start recording",
   "stopRecording": "Stop recording",
@@ -154,7 +154,7 @@
       "Amritsar"
     ]
   },
-  "recordingListening": "[botName] is listening, start speaking",
+  "recordingListening": "Listening… speak now",
   "capabilities": [
     "Answers are based only on standard university documents and crop SOPs.",
     "You can ask about crop practices, pest/disease control, fertilizer schedules, and harvesting methods.",
@@ -320,5 +320,12 @@
     "yourArea": "Your area",
     "kmAway": "~[km] km away",
     "pleaseNote": "Please note"
-  }
+  },
+  "assistantRole": "AI Farming Assistant",
+  "tapToSpeak": "Tap to speak",
+  "inputPlaceholderWelcome": "Type your question",
+  "transcribingTitle": "Converting your voice…",
+  "transcribingSubtitle": "This will only take a moment",
+  "tapToStop": "Tap again to stop",
+  "recordingHint": "Listening… tap mic again when done"
 }

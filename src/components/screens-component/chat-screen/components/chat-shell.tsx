@@ -14,10 +14,15 @@ export function ChatShell() {
 	const messages = useChatStore((s) => s.messages);
 	const quickActions = useChatStore((s) => s.quickActions);
 	const isAssistantTyping = useChatStore((s) => s.isAssistantTyping);
+	const isInputLocked = useChatStore((s) => s.isInputLocked);
+	const isTranscribing = useChatStore((s) => s.isTranscribing);
+	const isListening = useChatStore((s) => s.isListening);
 	const sendQuickAction = useChatStore((s) => s.sendQuickAction);
 	const sendQuickReply = useChatStore((s) => s.sendQuickReply);
 	const initializeSession = useChatStore((s) => s.initializeSession);
 	const generateQuickActions = useChatStore((s) => s.generateQuickActions);
+	const requestMicStart = useChatStore((s) => s.requestMicStart);
+	const requestMicFinish = useChatStore((s) => s.requestMicFinish);
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const showWelcome = messages.length === 0;
@@ -80,16 +85,27 @@ export function ChatShell() {
 							</div>
 						</div>
 					</div>
+				) : showWelcome ? (
+					/* Full-bleed voice-first landing (farm bg + large mic) */
+					<WelcomePanel
+						actions={quickActions}
+						onAction={(id) => sendQuickAction(id, language, t)}
+						onMicClick={() => {
+							// Tap once to start; tap again to stop + send (no recording bar)
+							if (isListening) {
+								requestMicFinish();
+							} else {
+								requestMicStart();
+							}
+						}}
+						micDisabled={isInputLocked || isTranscribing}
+						isListening={isListening}
+					/>
 				) : (
 					<MessageList
 						messages={messages}
 						isAssistantTyping={isAssistantTyping}
 						onQuickReply={(payload) => sendQuickReply(payload, language, t)}
-						welcome={
-							showWelcome ? (
-								<WelcomePanel actions={quickActions} onAction={(id) => sendQuickAction(id, language, t)} />
-							) : null
-						}
 					/>
 				)}
 			</div>

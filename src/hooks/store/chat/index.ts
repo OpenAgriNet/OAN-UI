@@ -15,6 +15,11 @@ import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
+import {
+	isVoiceGatewayEnabled,
+	mapGatewayLangCode,
+	transcribeViaVoiceGateway
+} from "@/lib/voice-gateway";
 
 export type ApiNotification = {
 	notification_id: string;
@@ -96,6 +101,10 @@ type ChatStore = {
 	isListening: boolean;
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
+	/** When true, ChatInput should start a voice recording (e.g. welcome mic). */
+	micStartRequested: boolean;
+	/** When true, ChatInput should stop recording and send the clip. */
+	micFinishRequested: boolean;
 	sessionId: string | null;
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
@@ -112,6 +121,10 @@ type ChatStore = {
 	setDraft: (value: string) => void;
 	startListening: () => void;
 	stopListening: () => void;
+	requestMicStart: () => void;
+	clearMicStartRequest: () => void;
+	requestMicFinish: () => void;
+	clearMicFinishRequest: () => void;
 	clearChat: () => void;
 	setIsTranscribing: (value: boolean) => void;
 	setSuggestions: (suggestions: Suggestion[]) => void;
@@ -321,6 +334,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isListening: false,
 	isTranscribing: false,
 	isFetchingSuggestions: false,
+	micStartRequested: false,
+	micFinishRequested: false,
 	sessionId: null,
 	toast: null,
 	currentlyPlayingId: null,
@@ -520,6 +535,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		set(() => ({ isListening: true }));
 	},
 	stopListening: () => set(() => ({ isListening: false })),
+	requestMicStart: () => set(() => ({ micStartRequested: true, micFinishRequested: false })),
+	clearMicStartRequest: () => set(() => ({ micStartRequested: false })),
+	requestMicFinish: () => set(() => ({ micFinishRequested: true, micStartRequested: false })),
+	clearMicFinishRequest: () => set(() => ({ micFinishRequested: false })),
 
 	clearChat: () =>
 		set(() => ({
@@ -530,7 +549,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isInputLocked: false,
 			isListening: false,
 			isTranscribing: false,
-			isFetchingSuggestions: false
+			isFetchingSuggestions: false,
+			micStartRequested: false,
+			micFinishRequested: false
 		})),
 
 	sendText: async (text, language, t) => {
@@ -855,7 +876,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		set({ isTranscribing: true });
 
 		try {
-			// Convert raw MediaRecorder audio (WebM) to optimized WAV for ASR
+			// Convert raw MediaRecorder audio (WebM) to optimized WAV/PCM for ASR
 			const AudioContextClass =
 				window.AudioContext ||
 				(window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -863,7 +884,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const arrayBuffer = await blob.arrayBuffer();
 			const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-			// Create optimized WAV (16kHz, mono) - same as oan-ui-service
+			// Create optimized WAV (16kHz, mono)
 			const offlineContext = new OfflineAudioContext({
 				numberOfChannels: 1,
 				length: audioBuffer.duration * 16000,
@@ -915,6 +936,34 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			}
 
 			const wavBlob = new Blob([wavBuffer], { type: "audio/wav" });
+
+			// Prefer voice gateway (WSS ALD + ASR) when enabled; fall back to REST /api/transcribe/
+			if (isVoiceGatewayEnabled()) {
+				const gatewayResult = await transcribeViaVoiceGateway(wavBuffer);
+				const detectedLang = mapGatewayLangCode(gatewayResult.lang_code);
+				onLanguageDetected?.(detectedLang);
+
+				if (gatewayResult.status === "success" && gatewayResult.text) {
+					set((state) => ({
+						draft: state.draft ? `${state.draft} ${gatewayResult.text}` : gatewayResult.text,
+						isTranscribing: false
+					}));
+					set({ toast: { message: "Transcribed successfully", type: "success" } });
+				} else if (gatewayResult.status === "success") {
+					// Language may still update even if ASR text is empty
+					set({ isTranscribing: false });
+				} else {
+					set({ isTranscribing: false });
+					set({
+						toast: {
+							message: "Transcription failed. Please try again.",
+							type: "error"
+						}
+					});
+				}
+				return;
+			}
+
 			const base64Audio = await apiService.blobToBase64(wavBlob);
 			const transcription = await apiService.transcribeAudio(
 				base64Audio,
