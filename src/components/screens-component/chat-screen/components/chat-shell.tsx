@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useChatStore } from "@/hooks/store/chat";
+import { useChatStore, type QuickAction } from "@/hooks/store/chat";
 import { MessageList } from "./message-list";
 import { WelcomePanel } from "./welcome-panel";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -21,6 +21,13 @@ export function ChatShell() {
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const showWelcome = messages.length === 0;
+	const handleWelcomeAction = (action: QuickAction) => {
+		if (action.kind === "open_faq_panel") {
+			window.dispatchEvent(new CustomEvent("open-faq-panel"));
+			return;
+		}
+		sendQuickAction(action.id, language);
+	};
 
 	// If /chat is loaded directly and auth isn't set, ensure anonymous
 	// bootstrap runs as a safety net (in addition to the root bootstrap).
@@ -57,7 +64,7 @@ export function ChatShell() {
 					onQuickReply={(payload) => sendQuickReply(payload, language)}
 					welcome={
 						showWelcome ? (
-							<WelcomePanel actions={quickActions} onAction={(id) => sendQuickAction(id, language)} />
+							<WelcomePanel actions={quickActions} onAction={handleWelcomeAction} />
 						) : null
 					}
 				/>

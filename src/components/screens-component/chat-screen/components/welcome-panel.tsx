@@ -7,7 +7,7 @@ import amulText from "@/assets/amulText.svg";
 
 /* eslint-disable no-unused-vars */
 type WelcomePanelProps = {
-	onAction: (id: string) => void;
+	onAction: (action: QuickAction) => void;
 	actions: QuickAction[];
 };
 /* eslint-enable no-unused-vars */
@@ -86,7 +86,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 							key={action.id}
 							variant="ghost"
 							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-2 sm:px-6 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
-							onClick={() => onAction(action.id)}
+							onClick={() => onAction(action)}
 						>
 							<div className="text-xl shrink-0">
 								{icon}

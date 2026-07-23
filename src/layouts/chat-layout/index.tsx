@@ -12,6 +12,8 @@ import { FarmerAlert } from "@/components/screens-component/chat-screen/componen
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/apis/profile";
 
+const OPEN_FAQ_PANEL_EVENT = "open-faq-panel";
+
 function ChatLayout() {
 	const sessionId = useChatStore((s) => s.sessionId);
 	const clearChat = useChatStore((s) => s.clearChat);
@@ -50,6 +52,12 @@ function ChatLayout() {
 	useEffect(() => {
 		fetchLocation(t);
 	}, [fetchLocation, t]);
+
+	useEffect(() => {
+		const openFaqPanel = () => setSettingsOpen(true);
+		window.addEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
+		return () => window.removeEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
+	}, []);
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
