@@ -32,6 +32,46 @@ function getSeenIds(): Set<string> {
 	} catch { return new Set(); }
 }
 
+function getStoredLocationCoordinates(): { latitude?: number; longitude?: number } {
+	try {
+		const rawLocation = localStorage.getItem("user_location");
+		if (!rawLocation) return {};
+
+		const location = JSON.parse(rawLocation);
+		const latitude = Number(location?.latitude);
+		const longitude = Number(location?.longitude);
+
+		return {
+			...(Number.isFinite(latitude) ? { latitude } : {}),
+			...(Number.isFinite(longitude) ? { longitude } : {})
+		};
+	} catch {
+		return {};
+	}
+}
+
+function buildNotificationFeedbackContext(notification: ApiNotification) {
+	return {
+		notification_id: notification.notification_id,
+		notification_description: notification.content?.body,
+		message_type: notification.message_type ?? notification.metadata?.message_type,
+		category_type: notification.category_type,
+		...getStoredLocationCoordinates()
+	};
+}
+
+function buildNegativeFeedbackMetadata(
+	notification: ApiNotification,
+	reason: NotificationFeedbackReason,
+	message: string
+) {
+	return {
+		...buildNotificationFeedbackContext(notification),
+		reason,
+		feedback: message
+	};
+}
+
 export function NotificationsPopover() {
 	const notifications = useChatStore((s) => s.notifications);
 	const markNotificationRead = useChatStore((s) => s.markNotificationRead);
@@ -411,9 +451,7 @@ export function NotificationsPopover() {
 													apiService.trackUiTelemetryEvent({
 														event_name: "notification_feedback_no",
 														category: "notification_feedback",
-														metadata: {
-															notification_id: selected.notification_id
-														}
+														metadata: buildNotificationFeedbackContext(selected)
 													});
 													setFeedbackTarget(selected);
 													setDetailOpen(false);
@@ -445,11 +483,7 @@ export function NotificationsPopover() {
 					apiService.trackUiTelemetryEvent({
 						event_name: "notification_feedback_dislike_submitted",
 						category: "notification_feedback",
-						metadata: {
-							notification_id: feedbackTarget.notification_id,
-							reason,
-							feedback: message
-						}
+						metadata: buildNegativeFeedbackMetadata(feedbackTarget, reason, message)
 					});
 					setFeedbackMap((previous) => ({ ...previous, [feedbackTarget.notification_id]: "disliked" }));
 					setFeedbackModalOpen(false);

@@ -19,6 +19,8 @@ import { environment } from "@/lib/config/environment";
 export type ApiNotification = {
 	notification_id: string;
 	type: string;
+	message_type?: string;
+	category_type?: string;
 	priority: "HIGH" | "MEDIUM" | "LOW";
 	valid_from: string;
 	valid_to: string;
@@ -31,10 +33,11 @@ export type ApiNotification = {
 		distance_km?: number;
 	} | null;
 	metadata: {
-		source: string;
-		template: string;
-		unique_id_iitm: string;
-		unique_id_pm_kisan: number;
+		source?: string;
+		template?: string;
+		unique_id_iitm?: string;
+		unique_id_pm_kisan?: number;
+		message_type?: string;
 	};
 };
 
