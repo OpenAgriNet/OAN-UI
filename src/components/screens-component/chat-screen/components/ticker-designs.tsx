@@ -31,10 +31,13 @@ export interface Announcement {
 // ─── Static announcement list (titles/bodies resolved via t() at render time) ─
 
 export const ANNOUNCEMENTS: Announcement[] = [
+	/*
 	{ id: "1", category: "payment", titleKey: "ticker.sample.1_title", bodyKey: "ticker.sample.1_body", date: "Jun 18, 2025", isNew: true },
 	{ id: "2", category: "feature", titleKey: "ticker.sample.2_title", bodyKey: "ticker.sample.2_body", date: "Jun 15, 2025", isNew: true },
 	{ id: "3", category: "event",   titleKey: "ticker.sample.3_title", bodyKey: "ticker.sample.3_body", date: "Jun 25, 2025" },
 	{ id: "4", category: "feature", titleKey: "ticker.sample.4_title", date: "Jun 10, 2025" },
+	*/
+	{ id: "5", category: "feature", titleKey: "ticker.sample.5_title", date: "Jul 24, 2026", isNew: true },
 ];
 
 // Keep the old export name working for any imports that used it
