@@ -100,21 +100,21 @@ export function TickerVariant1({ announcements = ANNOUNCEMENTS, inLayout = false
 	if (inLayout) {
 		return (
 			<div className="relative flex w-full items-center gap-0 overflow-hidden border-b border-[var(--primary)]/15 bg-[var(--primary)]/6 dark:bg-[var(--primary)]/12">
-				<span className="flex shrink-0 items-center gap-1.5 border-r border-[var(--primary)]/15 bg-[var(--primary)] px-3 py-1.5 text-[10px] font-bold tracking-wider text-white">
+				<span className="flex shrink-0 items-center gap-1.5 self-stretch border-r border-[var(--primary)]/15 bg-[var(--primary)] px-3 py-3 text-[11px] font-bold tracking-wider text-white">
 					<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
 					{t("ticker.live") as string}
 				</span>
-				<div className="min-w-0 flex-1 overflow-hidden px-3 py-1.5">
-					<span className="ticker-v1-layout inline-block whitespace-nowrap text-[13px] font-medium text-[var(--primary)] dark:text-blue-200">
+				<div className="min-w-0 flex-1 overflow-hidden px-3 py-3">
+					<span className="ticker-v1-layout inline-block whitespace-nowrap text-[14px] font-medium leading-snug text-[var(--primary)] dark:text-blue-200">
 						{scrollText}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{scrollText}
 					</span>
 				</div>
 				<button
 					onClick={() => setDismissed(true)}
 					aria-label={t("ticker.dismiss") as string}
-					className="shrink-0 border-l border-[var(--primary)]/15 px-3 py-1.5 text-[var(--primary)]/40 transition hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]"
+					className="shrink-0 self-stretch border-l border-[var(--primary)]/15 px-3 py-3 text-[var(--primary)]/40 transition hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]"
 				>
-					<X className="h-3.5 w-3.5" />
+					<X className="h-4 w-4" />
 				</button>
 				<style>{`
 					@keyframes ticker-v1-layout-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }

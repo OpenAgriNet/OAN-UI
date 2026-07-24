@@ -9,7 +9,7 @@ export const env = {
 	//         3 = Story-ring Bubbles (tap to expand)
 	//         4 = Auto-rotating Carousel
 	// After changing this value, RESTART the dev server (Ctrl+C then npm run dev).
-	uiTicker: 2,
+	uiTicker: 1,
 };
 
 // if (!env.apiBaseUrl) throw new Error("Missing VITE_API_BASE_URL");
