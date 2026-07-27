@@ -11,11 +11,12 @@ import type { ToastType } from "@/components/screens-component/chat-screen/compo
 
 import enData from "../../../../translations/en.json";
 import guData from "../../../../translations/gu.json";
+import hiData from "../../../../translations/hi.json";
 
 const translations: Record<string, any> = {
 	en: enData,
 	gu: guData,
-	hi: enData,
+	hi: hiData,
 	mr: enData
 };
 
