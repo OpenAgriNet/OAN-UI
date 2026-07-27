@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, ChevronUp, Moon, Send, Sun, X } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,10 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const sendText = useChatStore((s) => s.sendText);
 	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
+
+useEffect(() => {
+		if (open) setFaqOpen(true);
+	}, [open]);
 
 	// FAQ items are quick prompts: tapping sends the question to the chat agent
 	// (answered live with the farmer's own data) and closes the drawer.

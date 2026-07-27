@@ -12,6 +12,7 @@
     "Give me my milk collection details for the last 7 days.",
     "What should be done to increase milk production?"
   ],
+  "moreUsefulQuestions": "More Useful Questions",
   "questions": [
     "How much milk did I pour today & yesterday in Rs. and Ltrs?",
     "What is my total earning and deductions in previous & current month?",

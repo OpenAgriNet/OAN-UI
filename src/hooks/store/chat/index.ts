@@ -39,6 +39,7 @@ export type QuickAction = {
 	description: string;
 	icon: "tractor" | "wheat" | "cow" | "cloud";
 	prompt: string;
+	kind: "ask" | "open_faq_panel";
 };
 
 type ChatStore = {
@@ -75,6 +76,7 @@ type ChatStore = {
 /* eslint-enable no-unused-vars */
 
 const QUICK_ACTION_COUNT = 5;
+const PINNED_ACTION_COUNT = 2;
 
 const KEYWORD_ICON_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
 	{
@@ -103,7 +105,8 @@ function toQuickAction(question: string, index: number): QuickAction {
 		title: question,
 		description: "",
 		icon: pickIconForQuestion(question),
-		prompt: question
+		prompt: question,
+		kind: "ask"
 	};
 }
 
@@ -112,15 +115,25 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 	const pinnedQuestions = Array.isArray(pinned)
 		? pinned.filter((q): q is string => typeof q === "string")
 		: [];
-	const pinnedLimited = pinnedQuestions.slice(0, QUICK_ACTION_COUNT);
+	const pinnedLimited = pinnedQuestions.slice(0, PINNED_ACTION_COUNT);
 	const pinnedSet = new Set(pinnedLimited);
-	const randomCount = Math.max(0, QUICK_ACTION_COUNT - pinnedLimited.length);
+	const randomCount = Math.max(0, QUICK_ACTION_COUNT - pinnedLimited.length - 1);
+	const faqAction: QuickAction = {
+		id: String(pinnedLimited.length + 1),
+		title: String(t("moreUsefulQuestions")),
+		description: "",
+		icon: "cloud",
+		prompt: "",
+		kind: "open_faq_panel"
+	};
+	const pinnedActions = pinnedLimited.map(toQuickAction);
 
 	const staticQuestions = t("questions");
 	if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
 		const pool = staticQuestions.filter((q) => typeof q === "string" && !pinnedSet.has(q));
-		const randomQuestions = shuffle(pool).slice(0, randomCount);
-		return [...pinnedLimited, ...randomQuestions].slice(0, QUICK_ACTION_COUNT).map(toQuickAction);
+		const randomQuestions = shuffle(pool).slice(0, randomCount)
+			.map((question, index) => toQuickAction(question, pinnedActions.length + 1 + index));
+		return [...pinnedActions, faqAction, ...randomQuestions].slice(0, QUICK_ACTION_COUNT);
 	}
 
 	const VARS = {
@@ -163,11 +176,16 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 				title: prompt,
 				description: "",
 				icon,
-				prompt
+				prompt,
+				kind: "ask"
 			};
 		});
 
-	return [...pinnedLimited.map(toQuickAction), ...templateActions].slice(0, QUICK_ACTION_COUNT);
+	const normalizedTemplateActions = templateActions.map((action, index) => ({
+		...action,
+		id: String(pinnedActions.length + 2 + index)
+	}));
+	return [...pinnedActions, faqAction, ...normalizedTemplateActions].slice(0, QUICK_ACTION_COUNT);
 }
 
 
@@ -481,7 +499,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendQuickAction: (id, language) => {
 		const action = get().quickActions.find((qa) => qa.id === id);
-		if (!action) return;
+		if (!action || action.kind === "open_faq_panel") return;
 		get().sendText(action.prompt, language);
 	},
 
