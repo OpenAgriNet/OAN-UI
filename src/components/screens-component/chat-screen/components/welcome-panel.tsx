@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
 import { ContactIcon } from "./contact-icon";
@@ -7,7 +8,7 @@ import amulText from "@/assets/amulText.svg";
 
 /* eslint-disable no-unused-vars */
 type WelcomePanelProps = {
-	onAction: (id: string) => void;
+	onAction: (action: QuickAction) => void;
 	actions: QuickAction[];
 };
 /* eslint-enable no-unused-vars */
@@ -86,14 +87,25 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 							key={action.id}
 							variant="ghost"
 							className="h-auto w-full cursor-pointer justify-start gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-2 sm:px-6 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left"
-							onClick={() => onAction(action.id)}
+							onClick={() => onAction(action)}
 						>
 							<div className="text-xl shrink-0">
 								{icon}
 							</div>
-							<span className="text-base font-medium text-gray-900 leading-snug">
+							<span className="flex-1 text-base font-medium text-gray-900 leading-snug">
 								{action.title}
 							</span>
+							{/* Only the FAQ-opener card is marked: the other cards send their prompt
+							    straight to the agent, this one opens the settings FAQ list. Same
+							    icon/size/colour as the FAQ rows in settings-drawer.tsx. */}
+							{/* Wrapped in a span on purpose: the Button `size: default` variant
+							    carries `has-[>svg]:px-3`, so a bare <svg> child would shrink this
+							    card's padding and shift it ~11px left of the other four. */}
+							{action.kind === "open_faq_panel" && (
+								<span className="shrink-0">
+									<Send className="h-4 w-4 text-[#F65151]" />
+								</span>
+							)}
 						</Button>
 					);
 				})}
