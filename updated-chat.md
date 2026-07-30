@@ -109,6 +109,21 @@ function shouldUseTranslationPipeline(targetLang) {
 - **Body**: Raw UTF-8 text chunks (no SSE envelope, no `data:` prefix).
 - **Usage**: Append chunks in order to build the full response.
 
+### Math Rendering Contract (Frontend Consumption)
+
+The chat UI now renders LaTeX math in markdown responses. Backend responses can use any of these delimiters:
+
+- Inline math: `\(...\)`
+- Block math: `\[...\]`
+- Inline math: `$...$`
+- Block math: `$$...$$`
+
+Notes for response generation:
+
+- Use inline delimiters for short in-sentence formulas and block delimiters for display equations.
+- Math-like content inside inline code and fenced code blocks stays literal and is not rendered as formula output.
+- To avoid ambiguity in mixed prose, prefer `\(...\)` / `\[...\]` when text contains currency-style `$`.
+
 ---
 
 ## Example: Fetch API (Streaming)
