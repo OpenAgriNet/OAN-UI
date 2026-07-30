@@ -1,5 +1,5 @@
 export const environment = {
-  apiUrl: import.meta.env.VITE_API_BASE_URL || 'https://chat-vistaar.da.gov.in',
+  apiUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   notificationApiUrl: import.meta.env.VITE_NOTIFICATION_API_URL || 'https://registry-sandbox-vistaar.da.gov.in/notification-api',
   maintenanceMode: false,
   guestUserLimit: 10,
