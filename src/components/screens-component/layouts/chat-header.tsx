@@ -4,7 +4,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { LANGUAGES } from "@/components/screens-component/chat-screen/config";
 import { LanguageSelectionDropdown } from "@/components/screens-component/chat-screen/components/language-selection-dialog";
 import { NotificationsPopover } from "@/components/screens-component/chat-screen/components/notifications-popover";
-const logo = "/maha-logo.svg";
+const logo = "/maha-logo.png";
 const settingsIcon = "/assets/settings.svg";
 const langIcon = "/assets/langIcon.svg";
 
@@ -30,10 +30,10 @@ export function ChatHeader(props: ChatHeaderProps) {
 			<div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-4">
 				{/* Left: Logo & Title */}
 				<div className="flex items-center gap-2 min-w-0">
-					<img 
-						src={logo} 
-						alt={title} 
-						className="h-11 sm:h-12 w-auto object-contain shrink-0" 
+					<img
+						src={logo}
+						alt={title}
+						className="h-11 sm:h-12 w-auto object-contain shrink-0"
 					/>
 				</div>
 
@@ -56,18 +56,18 @@ export function ChatHeader(props: ChatHeaderProps) {
 
 					{/* Mobile Language Button */}
 					<LanguageSelectionDropdown>
-						<Button 
-							variant="ghost" 
-							size="icon" 
+						<Button
+							variant="ghost"
+							size="icon"
 							className="h-9 w-9 sm:hidden cursor-pointer"
 						>
 							<img src={langIcon} alt="Language" className="h-6 w-6" />
 						</Button>
 					</LanguageSelectionDropdown>
 
-					<Button 
-						variant="ghost" 
-						size="icon" 
+					<Button
+						variant="ghost"
+						size="icon"
 						className="h-10 w-10 text-muted-foreground cursor-pointer hover:bg-[var(--secondary)]"
 						onClick={onOpenSettings}
 					>

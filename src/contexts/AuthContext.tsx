@@ -59,7 +59,7 @@ const AuthContext = createContext<AuthContextType>({
   locations: [],
   isLoading: true,
   login: async () => false,
-  logout: () => {},
+  logout: () => { },
   setAuthToken: async () => false,
 });
 
@@ -77,13 +77,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Keep this in sync with bharat-oan-api/jwt_public_key.pem.
   const publicKeyPEM = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiAT5pkWCk7KgBXDFO6C
-FHo1fmVMUHOCDXJ1EcAb11REiSHgxlP9TPLCs8qPSe5eeJAHGn9sqB0p0jC8cWzh
-RvnrCqRhNXhmOyqrCTudBT8ePnMYU7H/dpoqF1zpYctDVkaYOf0l/H+uWk55f+Zy
-zZVcpQAi2lTwNQP2teIHqt4YNsOKmX9J2BvczRj4wdCpp84+UkFJ+lVftHbEoxYM
-OnCObibmuJDPvwrkHtACJZFy1Dc371evaaTN3dGE/P7MLXRA+XtInY5lYfsB23/Q
-a37S+srKe59wFypSMOU+ZMvgFA2oK0zA1WEC93000n5HEQMJU8r7pCgKhq7oD8QJ
-hwIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnHMOp5XMfi2L4Wt+9rOj
+Yj25580J0C5tesk0Wh6DLgCgrW4WB3Hhc/4wlzO3tCiduCVWAYPJCf0ye5KK/RKm
+U9xyHDG2ZzoyswjxlkCwmZmyB4U0h/GwJ6LgZ+fGeIIEW6+gBh02gTDpSKMw+qUi
+kubaKyN0h+UKH5osfytSGA7tjFsg6/5IoRqil8uLWwJkZC8eS9/0ECGEEP36UspQ
+Oud28XGBOupZS14ovVAIvEGDURBk+LxmIr4y2QhaSvag9DlJZH+ieMPvG5h8ez/D
+QSEN+Sf+6sKHunZoUfMoYEqmUgX4VLu/blXAy48HJziJqdRzL93rKKjyaRvX41pE
+VQIDAQAB
 -----END PUBLIC KEY-----`;
 
   // Fetch new JWT token from /api/token and store it
@@ -91,10 +91,10 @@ hwIDAQAB
     try {
       // Get browser info to send as meta parameter
       const browserInfo = getBrowserInfo();
-      
+
       // Call /api/token to get JWT token
       const newToken = await apiService.fetchAuthToken(browserInfo);
-      
+
       // Validate and store the new token
       if (importedPublicKey) {
         const result = await validateJWT(newToken, importedPublicKey);
@@ -154,16 +154,16 @@ hwIDAQAB
               await fetchAndStoreNewToken(importedPublicKey);
             }
           } else {
-               console.error('Public key not loaded.');
-               // createUserFromPayload(null);
-               await fetchAndStoreNewToken(importedPublicKey);
+            console.error('Public key not loaded.');
+            // createUserFromPayload(null);
+            await fetchAndStoreNewToken(importedPublicKey);
           }
         }
         // Otherwise, check for JWT in localStorage
         else {
           const storedToken = getStoredJWT();
           if (storedToken) {
-             if (importedPublicKey) {
+            if (importedPublicKey) {
               const result = await validateJWT(storedToken, importedPublicKey);
               if (result.isValid) {
                 createUserFromPayload(result.payload);
@@ -174,11 +174,11 @@ hwIDAQAB
                 // createUserFromPayload(null);
                 await fetchAndStoreNewToken(importedPublicKey);
               }
-             } else {
-               console.error('Public key not loaded.');
-               // createUserFromPayload(null);
-               await fetchAndStoreNewToken(importedPublicKey);
-             }
+            } else {
+              console.error('Public key not loaded.');
+              // createUserFromPayload(null);
+              await fetchAndStoreNewToken(importedPublicKey);
+            }
           } else {
             // No token found
             // createUserFromPayload(null);
@@ -208,10 +208,10 @@ hwIDAQAB
       setTelemetryUserData({});
       return;
     }
-    
+
     // Extract name from payload, use fallbacks
     const name = payload.name as string || 'Anonymous User';
-    
+
     // For email, try to get from payload or use fallback
     // let email = 'user@example.com';
     let email = '';
@@ -220,10 +220,10 @@ hwIDAQAB
     } else if (payload.sub) {
       email = `${payload.sub}@example.com`;
     }
-    
+
     // Extract mobile from payload, use fallback
     const mobile = (payload as any)?.mobile as string || '';
-    
+
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
 
@@ -231,7 +231,7 @@ hwIDAQAB
     const role = (payload as any)?.role as string || '';
     const farmer_id = (payload as any)?.farmer_id as string || '';
     const unique_id = (payload as any)?.unique_id as string | number | undefined;
-    
+
     setUser({
       authenticated: true,
       username: name,
@@ -243,15 +243,15 @@ hwIDAQAB
     // Extract locations array from JWT payload
     const locationsData = (payload as any)?.locations as Location[] | undefined;
     const validatedLocations: Location[] = [];
-    
+
     if (Array.isArray(locationsData)) {
       locationsData.forEach((loc) => {
-        if (loc && typeof loc === 'object' && 
-            typeof loc.location_type === 'string' &&
-            typeof loc.district === 'string' &&
-            typeof loc.village === 'string' &&
-            typeof loc.taluka === 'string' &&
-            ['registered_location', 'device_location', 'agristack_location'].includes(loc.location_type)) {
+        if (loc && typeof loc === 'object' &&
+          typeof loc.location_type === 'string' &&
+          typeof loc.district === 'string' &&
+          typeof loc.village === 'string' &&
+          typeof loc.taluka === 'string' &&
+          ['registered_location', 'device_location', 'agristack_location'].includes(loc.location_type)) {
           validatedLocations.push({
             location_type: loc.location_type as 'registered_location' | 'device_location' | 'agristack_location',
             district: loc.district,
@@ -262,7 +262,7 @@ hwIDAQAB
         }
       });
     }
-    
+
     setLocations(validatedLocations);
 
     // Set comprehensive telemetry data with all location types
@@ -285,12 +285,12 @@ hwIDAQAB
         console.error('JWT exp claim missing; refusing to store token with synthetic expiry');
         return false;
       }
-      
+
       const tokenData = {
         token,
         expiry: expiryFromToken
       };
-      
+
       localStorage.setItem(JWT_STORAGE_KEY, JSON.stringify(tokenData));
       return true;
     } catch (error) {
@@ -304,16 +304,16 @@ hwIDAQAB
     try {
       const tokenData = localStorage.getItem(JWT_STORAGE_KEY);
       if (!tokenData) return null;
-      
+
       const parsedData = JSON.parse(tokenData);
       const now = new Date().getTime();
-      
+
       // Check if token is expired
       if (now > parsedData.expiry) {
         localStorage.removeItem(JWT_STORAGE_KEY);
         return null;
       }
-      
+
       return parsedData.token;
     } catch (error) {
       console.error("Error retrieving JWT:", error);

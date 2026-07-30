@@ -38,6 +38,17 @@ export default defineConfig({
 		virtualRouteFileChangeReloadPlugin
 	],
 	server: {
-		port: 3000
+		port: 3004,
+		proxy: {
+			"/api": {
+				target: "http://localhost:8000",
+				changeOrigin: true
+			},
+			"/observability-service": {
+				target: "https://dev-vistaar.da.gov.in",
+				changeOrigin: true,
+				secure: true
+			}
+		}
 	}
 });
