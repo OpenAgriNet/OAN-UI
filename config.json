@@ -54,8 +54,8 @@
     "thumbsDown": "ThumbsDown"
   },
   "languages": [
-    { "code": "hi", "name": "हिंदी", "nativeName": "हिंदी", "icon": "अ" },
     { "code": "en", "name": "English", "nativeName": "English", "icon": "अ" },
+    { "code": "hi", "name": "हिंदी", "nativeName": "हिंदी", "icon": "अ" },
     { "code": "bn", "name": "বাংলা", "nativeName": "বাংলা", "icon": "অ" },
     { "code": "te", "name": "తెలుగు", "nativeName": "తెలుగు", "icon": "అ" },
     { "code": "mr", "name": "मराठी", "nativeName": "मराठी", "icon": "अ" },
@@ -65,7 +65,7 @@
     { "code": "ml", "name": "മലയാളം", "nativeName": "മലയാളം", "icon": "അ" },
     { "code": "as", "name": "অসমীয়া", "nativeName": "অসমীয়া", "icon": "অ" }
   ],
-  "defaultLanguage": "hi",
+  "defaultLanguage": "en",
   "languageTexts": {
     "en": {
       "chatDisclaimer": "AI-generated content. Please verify locally if required.",

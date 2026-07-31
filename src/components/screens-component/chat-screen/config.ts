@@ -28,7 +28,7 @@ export const DEFAULT_LANGUAGE: LanguageCode = rootConfig.defaultLanguage as Lang
 // ============================================================================
 
 export const CHAT_ASSISTANT = {
-	name: "Bharti-AI",
+	name: "AI Assistance",
 	avatar: rootConfig.icons.assistant
 };
 
