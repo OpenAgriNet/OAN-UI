@@ -29,6 +29,7 @@ interface TTSResponse {
 
 // Constants
 const JWT_STORAGE_KEY = 'auth_jwt';
+const SUPPORTED_LANGUAGE_CODES = new Set(['en', 'gu', 'hi', 'mr']);
 
 class ApiService {
   private apiUrl: string = environment.apiUrl;
@@ -121,6 +122,11 @@ class ApiService {
     };
   }
 
+  private normalizeLanguageCode(lang: string, fallback = 'gu'): string {
+    const normalized = (lang || '').toLowerCase();
+    return SUPPORTED_LANGUAGE_CODES.has(normalized) ? normalized : fallback;
+  }
+
   private validateAuth(): boolean {
     // If we have no token, alert but don't force redirect here
     // Let the calling component or an interceptor handle navigation
@@ -144,11 +150,13 @@ class ApiService {
         return { response: "Authentication error", status: "error" };
       }
       
+      const resolvedSourceLang = this.normalizeLanguageCode(sourceLang, 'gu');
+      const resolvedTargetLang = this.normalizeLanguageCode(targetLang, 'gu');
       const params: Record<string, string> = {
         session_id: session,
         query: msg,
-        source_lang: sourceLang,
-        target_lang: targetLang,
+        source_lang: resolvedSourceLang,
+        target_lang: resolvedTargetLang,
         ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
 
@@ -214,7 +222,7 @@ class ApiService {
     }
   }
 
-  async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
+  async getSuggestions(session: string, targetLang: string = 'gu'): Promise<SuggestionItem[]> {
     try {
       this.refreshAuthToken();
       if (!this.validateAuth()) {
@@ -223,7 +231,7 @@ class ApiService {
       
       const params = {
         session_id: session,
-        target_lang: targetLang
+        target_lang: this.normalizeLanguageCode(targetLang, 'gu')
       };
 
       const config = {
@@ -255,7 +263,7 @@ class ApiService {
       
       const payload = {
         audio_content: audioBase64,
-        source_lang: sourceLang,
+        source_lang: this.normalizeLanguageCode(sourceLang, 'gu'),
         service_type: serviceType,
         session_id: sessionId
       };
@@ -285,7 +293,7 @@ class ApiService {
     return this.axiosInstance.post(`/api/tts/`, {
       session_id: sessionId,
       text: text,
-      target_lang: targetLang,
+      target_lang: this.normalizeLanguageCode(targetLang, 'gu'),
       service_type: environment.ttsProvider,
     }, config);
   }
