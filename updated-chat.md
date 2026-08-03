@@ -115,14 +115,14 @@ The chat UI now renders LaTeX math in markdown responses. Backend responses can 
 
 - Inline math: `\(...\)`
 - Block math: `\[...\]`
-- Inline math: `$...$`
+
 - Block math: `$$...$$`
 
 Notes for response generation:
 
-- Use inline delimiters for short in-sentence formulas and block delimiters for display equations.
+- Use `\(...\)` for short in-sentence formulas and `\[...\]` / `$$...$$` for display equations.
 - Math-like content inside inline code and fenced code blocks stays literal and is not rendered as formula output.
-- To avoid ambiguity in mixed prose, prefer `\(...\)` / `\[...\]` when text contains currency-style `$`.
+- Single-dollar parsing (`$...$`) is intentionally disabled in the frontend to avoid currency collisions such as `$5 to $10`.
 
 ---
 

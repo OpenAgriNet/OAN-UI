@@ -103,15 +103,32 @@ function getProtectedRanges(markdown: string): ProtectedRange[] {
 }
 
 export function normalizeMathDelimiters(markdown: string): string {
+	const isStandaloneOnLine = (
+		text: string,
+		matchStart: number,
+		matchEnd: number
+	): boolean => {
+		const lineStart = text.lastIndexOf("\n", matchStart - 1) + 1;
+		const lineEndIndex = text.indexOf("\n", matchEnd);
+		const lineEnd = lineEndIndex === -1 ? text.length : lineEndIndex;
+		const before = text.slice(lineStart, matchStart).trim();
+		const after = text.slice(matchEnd, lineEnd).trim();
+		return before.length === 0 && after.length === 0;
+	};
+
 	const normalizePlainText = (text: string): string =>
 		text
-			.replace(/\\\[((?:[\s\S]*?))\\\]/g, (_match, content: string) => {
+			.replace(/\\\[((?:[\s\S]*?))\\\]/g, (match, content: string, offset: number) => {
 				const trimmedContent = content.trim();
-				return `\n$$\n${trimmedContent}\n$$\n`;
+				const matchEnd = offset + match.length;
+				if (isStandaloneOnLine(text, offset, matchEnd)) {
+					return `$$\n${trimmedContent}\n$$`;
+				}
+				return `$$${trimmedContent}$$`;
 			})
 			.replace(/\\\(((?:[\s\S]*?))\\\)/g, (_match, content: string) => {
 				const trimmedContent = content.trim();
-				return `$${trimmedContent}$`;
+				return `$$${trimmedContent}$$`;
 			});
 
 	const protectedRanges = getProtectedRanges(markdown);
