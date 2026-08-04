@@ -1,10 +1,11 @@
 /**
  * Ticker Feature — BharatVistaar Homepage Announcement Banners
  *
- * Controlled by VITE_UI_TICKER in .env  (values: 1 | 2 | 3 | 4)
+ * Controlled by uiTicker in src/config/env.ts  (values: 1 | 2 | 3 | 4 | 5)
  *
  * Variant 1 placement: Below the ChatHeader (full-width persistent strip)
  * Variants 2-4 placement: Welcome panel, between avatar & quick-action cards
+ * Variant 5 placement: Above the ChatHeader (full-width branded hero)
  *
  * All text and announcement content is fully localised via useLanguage().
  */
@@ -37,7 +38,8 @@ export const ANNOUNCEMENTS: Announcement[] = [
 	{ id: "3", category: "event",   titleKey: "ticker.sample.3_title", bodyKey: "ticker.sample.3_body", date: "Jun 25, 2025" },
 	{ id: "4", category: "feature", titleKey: "ticker.sample.4_title", date: "Jun 10, 2025" },
 	*/
-	{ id: "5", category: "feature", titleKey: "ticker.sample.5_title", date: "Jul 24, 2026", isNew: true },
+	{ id: "5", category: "feature", titleKey: "ticker.sample.5_title", date: "Aug 4, 2026", isNew: true },
+	{ id: "1", category: "payment", titleKey: "ticker.sample.1_title", bodyKey: "ticker.sample.1_body", date: "Jun 18, 2025", isNew: true },
 ];
 
 // Keep the old export name working for any imports that used it
@@ -149,6 +151,93 @@ export function TickerVariant1({ announcements = ANNOUNCEMENTS, inLayout = false
 				.ticker-v1:hover { animation-play-state: paused; }
 			`}</style>
 		</div>
+	);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  VARIANT 5 — Branded Top Announcement Hero
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function TickerVariant5({ announcements = ANNOUNCEMENTS }: { announcements?: Announcement[] }) {
+	const { t } = useLanguage();
+	const [dismissed, setDismissed] = useState(false);
+	const [idx, setIdx] = useState(0);
+
+	useEffect(() => {
+		if (announcements.length < 2) return;
+		const timer = window.setInterval(() => {
+			setIdx((current) => (current + 1) % announcements.length);
+		}, 6000);
+		return () => window.clearInterval(timer);
+	}, [announcements.length]);
+
+	if (dismissed || !announcements.length) return null;
+
+	const ann = announcements[idx]!;
+	const meta = META[ann.category];
+	const Icon = meta.icon;
+
+	return (
+		<section className="relative isolate w-full overflow-hidden border-b border-indigo-950/15 bg-gradient-to-r from-[#29266f] via-[#4742c8] to-[#655df2] text-white shadow-[0_10px_28px_rgba(49,46,129,0.2)]">
+			<div className="absolute -right-16 -top-24 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
+			<div className="absolute -bottom-24 left-1/3 h-40 w-40 rounded-full bg-violet-200/10 blur-2xl" />
+			<div className="absolute inset-y-0 left-0 w-1 bg-[#f6a91a]" />
+
+			<div className="relative mx-auto flex min-h-[104px] w-full max-w-[1440px] items-center gap-3 px-4 py-4 sm:gap-5 sm:px-7 lg:px-10">
+				<div className="hidden h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/25 bg-white/10 shadow-inner sm:flex">
+					<Icon className="h-7 w-7 text-[#ffc857]" />
+				</div>
+
+				<div className="min-w-0 flex-1">
+					<div className="mb-1.5 flex flex-wrap items-center gap-2">
+						<span className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/80 sm:text-xs">
+							{t(meta.labelKey) as string}
+						</span>
+						{ann.isNew && (
+							<span className="rounded-full border border-[#ffd47a] bg-[#f6a91a] px-2.5 py-0.5 text-[10px] font-extrabold tracking-wide text-[#29266f] shadow-sm">
+								{t("ticker.new") as string}
+							</span>
+						)}
+					</div>
+					<h2 className="max-w-5xl text-sm font-bold leading-snug text-white sm:text-lg lg:text-xl">
+						{t(ann.titleKey) as string}
+					</h2>
+					{ann.bodyKey && (
+						<p className="mt-1 hidden max-w-4xl text-sm leading-snug text-white/80 md:block">
+							{t(ann.bodyKey) as string}
+						</p>
+					)}
+				</div>
+
+				<div className="hidden shrink-0 items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-semibold text-white/90 backdrop-blur-sm sm:flex">
+					<CalendarDays className="h-4 w-4 text-[#ffc857]" />
+					{ann.date}
+				</div>
+
+				<button
+					type="button"
+					onClick={() => setDismissed(true)}
+					aria-label={t("ticker.dismiss") as string}
+					className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+				>
+					<X className="h-4 w-4" />
+				</button>
+			</div>
+
+			{announcements.length > 1 && (
+				<div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5" aria-label={t("ticker.announcements") as string}>
+					{announcements.map((item, index) => (
+						<button
+							key={item.id}
+							type="button"
+							onClick={() => setIdx(index)}
+							aria-label={`${index + 1}`}
+							className={cn("h-1.5 rounded-full transition-all", index === idx ? "w-7 bg-white" : "w-1.5 bg-white/40 hover:bg-white/65")}
+						/>
+					))}
+				</div>
+			)}
+		</section>
 	);
 }
 

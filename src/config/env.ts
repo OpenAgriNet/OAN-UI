@@ -8,8 +8,9 @@ export const env = {
 	//         2 = Pinned Banner Card (prev/next arrows)
 	//         3 = Story-ring Bubbles (tap to expand)
 	//         4 = Auto-rotating Carousel
+	//         5 = Branded Top Announcement Hero (above header)
 	// After changing this value, RESTART the dev server (Ctrl+C then npm run dev).
-	uiTicker: 1,
+	uiTicker: 5,
 };
 
 // if (!env.apiBaseUrl) throw new Error("Missing VITE_API_BASE_URL");
