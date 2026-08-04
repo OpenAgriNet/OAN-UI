@@ -35,8 +35,8 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 				</div>
 			</div>
 
-			{/* ── Ticker Banners (variants 2-4) ── variant 1 lives in the layout header ── */}
-			{env.uiTicker !== 1 && <TickerBanner />}
+			{/* Ticker banners 2-4 live inside the welcome panel; variants 1 and 5 live in the layout. */}
+			{env.uiTicker >= 2 && env.uiTicker <= 4 && <TickerBanner />}
 
 			{/* Cards List (Full width as per image 1) */}
 			<div className="flex w-full max-w-2xl flex-col gap-3">
