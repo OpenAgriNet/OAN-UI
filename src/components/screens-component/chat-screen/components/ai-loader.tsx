@@ -32,12 +32,15 @@ export function AILoader({ className }: AILoaderProps) {
 
 	return (
 		<div className={cn("flex items-center gap-4 py-3 px-2", className)}>
-			{/* Lottie Dot Loader */}
-			<div className="h-8 w-8 shrink-0">
-				<Lottie animationData={dotLoader} loop={true} />
+			<div className="h-8 w-8 shrink-0 overflow-hidden">
+				<Lottie
+					animationData={dotLoader}
+					loop={true}
+					autoplay={true}
+					style={{ width: "100%", height: "100%" }}
+				/>
 			</div>
 
-			{/* Message */}
 			<span className="text-base text-gray-500 font-medium dark:text-[#B0B0B0]">
 				{messages[messageIndex] || messages[0]}
 			</span>
