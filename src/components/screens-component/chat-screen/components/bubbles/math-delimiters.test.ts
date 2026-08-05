@@ -95,11 +95,32 @@ describe("normalizeMathDelimiters", () => {
 		expect(output).toBe(["- Yield: $$x = a+b$$", "- Ratio: $$y = c+d$$"].join("\n"));
 	});
 
-	// Note: this asserts only that the normalizer does not rewrite `$`. remark-math still owns
-	// those delimiters and will render `$5 to $10` as math. That is a deliberate trade: the
-	// backend emits `$...$` maths constantly and never uses `$` for currency (prices are in ₹).
-	it("does not rewrite dollar delimiters, which remark-math owns", () => {
+	it("escapes currency-like dollar pairs so they render literally", () => {
 		const input = "Price moved from $5 to $10 today.";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe("Price moved from \\$5 to \\$10 today.");
+	});
+
+	it("leaves genuine single-dollar math alone", () => {
+		const input = "For 4.8% fat that is $15 \\times 4.8 = 720$ grams.";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("leaves percentage math alone", () => {
+		const input = "Fat is $2.6\\%$ today.";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("leaves block dollar math alone", () => {
+		const input = "Formula:\n\n$$\n\\pi r^2\n$$\n";
 
 		const output = normalizeMathDelimiters(input);
 

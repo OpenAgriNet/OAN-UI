@@ -116,16 +116,69 @@ export function normalizeMathDelimiters(markdown: string): string {
 		return before.length === 0 && after.length === 0;
 	};
 
-	// `\[...\]` is ambiguous: the backend uses it far more often for citations and source
-	// attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`) than for
-	// display math. Converting those to math renders them as unreadable KaTeX, so require the
+	// Both `\[...\]` and `$...$` are ambiguous: the backend uses them for citations, source
+	// attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`) and ordinary
+	// prose as well as for maths. Rendering those as KaTeX produces gibberish, so require the
 	// content to carry an actual math signal — a LaTeX control sequence or a maths operator.
+	// `\$` is excluded so that escaping a dollar pair cannot make it look like maths afterwards.
 	// `\(...\)` is not ambiguous in practice and stays unconditional.
 	const looksLikeMath = (content: string): boolean =>
-		/\\[a-zA-Z]/.test(content) || /[\^_=+×÷≈<>]/.test(content);
+		/\\[^\s$]/.test(content) || /[\^_=+×÷≈<>]/.test(content);
+
+	// remark-math treats every `$...$` pair as inline maths. Escape the delimiters of any pair
+	// whose content carries no math signal so it renders as literal text instead of an equation.
+	// Written as a scan rather than a regex to avoid lookbehind, which older mobile Safari
+	// rejects at parse time.
+	const escapeNonMathDollarPairs = (text: string): string => {
+		let result = "";
+		let index = 0;
+
+		while (index < text.length) {
+			if (text[index] !== "$") {
+				result += text[index];
+				index += 1;
+				continue;
+			}
+
+			// `$$...$$` is display maths and is copied through untouched.
+			if (text[index + 1] === "$") {
+				const closingIndex = text.indexOf("$$", index + 2);
+				const blockEnd = closingIndex === -1 ? text.length : closingIndex + 2;
+				result += text.slice(index, blockEnd);
+				index = blockEnd;
+				continue;
+			}
+
+			let cursor = index + 1;
+			let closingDollar = -1;
+			while (cursor < text.length && text[cursor] !== "\n") {
+				if (text[cursor] === "$" && text[cursor + 1] !== "$") {
+					closingDollar = cursor;
+					break;
+				}
+				cursor += 1;
+			}
+
+			if (closingDollar === -1) {
+				result += text[index];
+				index += 1;
+				continue;
+			}
+
+			const content = text.slice(index + 1, closingDollar);
+			result += looksLikeMath(content)
+				? text.slice(index, closingDollar + 1)
+				: `\\$${content}\\$`;
+			index = closingDollar + 1;
+		}
+
+		return result;
+	};
 
 	const normalizePlainText = (text: string): string =>
-		text
+		// Escaping runs first so it only ever sees the backend's own dollars, never the ones
+		// this function emits when converting `\[...\]` and `\(...\)`.
+		escapeNonMathDollarPairs(text)
 			// The content may not contain another `\[`, so a stray opener can never swallow the
 			// prose between two citation markers into a single math block.
 			.replace(/\\\[((?:(?!\\\[)[\s\S])*?)\\\]/g, (match, content: string, offset: number) => {
