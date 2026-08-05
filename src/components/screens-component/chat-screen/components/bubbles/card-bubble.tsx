@@ -93,7 +93,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 						<div className={cn("text-base leading-snug text-foreground break-words", message.isError && "text-red-500")}>
 							<ReactMarkdown
-								remarkPlugins={[remarkGfm, [remarkMath, { singleDollarTextMath: false }]]}
+								remarkPlugins={[remarkGfm, remarkMath]}
 								rehypePlugins={[rehypeKatex]}
 								components={{
 									p: ({ node, ...props }) => (

@@ -9,7 +9,7 @@ describe("normalizeMathDelimiters", () => {
 		const output = normalizeMathDelimiters(input);
 
 		expect(output).toBe(
-			"Inline $$a + b$$ and block: $$x^2 + y^2 = z^2$$."
+			"Inline $a + b$ and block: $$x^2 + y^2 = z^2$$."
 		);
 	});
 
@@ -18,7 +18,7 @@ describe("normalizeMathDelimiters", () => {
 
 		const output = normalizeMathDelimiters(input);
 
-		expect(output).toBe("Code `\\(a+b\\)` should stay literal, but $$c+d$$ should render.");
+		expect(output).toBe("Code `\\(a+b\\)` should stay literal, but $c+d$ should render.");
 	});
 
 	it("keeps escaped delimiters inside fenced code blocks literal", () => {
@@ -38,7 +38,7 @@ describe("normalizeMathDelimiters", () => {
 				"const formula = \"\\\\(a+b\\\\)\";",
 				"```",
 				"",
-				"Outside fence: $$x+y$$"
+				"Outside fence: $x+y$"
 			].join("\n")
 		);
 	});
@@ -48,7 +48,7 @@ describe("normalizeMathDelimiters", () => {
 
 		const output = normalizeMathDelimiters(input);
 
-		expect(output).toBe(["~~~md", "\\(a+b\\)", "~~~", "", "$$m+n$$"].join("\n"));
+		expect(output).toBe(["~~~md", "\\(a+b\\)", "~~~", "", "$m+n$"].join("\n"));
 	});
 
 	it("treats an unclosed fenced block as protected until end of message", () => {
@@ -95,11 +95,57 @@ describe("normalizeMathDelimiters", () => {
 		expect(output).toBe(["- Yield: $$x = a+b$$", "- Ratio: $$y = c+d$$"].join("\n"));
 	});
 
-	it("leaves currency-like single-dollar prose untouched", () => {
+	// Note: this asserts only that the normalizer does not rewrite `$`. remark-math still owns
+	// those delimiters and will render `$5 to $10` as math. That is a deliberate trade: the
+	// backend emits `$...$` maths constantly and never uses `$` for currency (prices are in ₹).
+	it("does not rewrite dollar delimiters, which remark-math owns", () => {
 		const input = "Price moved from $5 to $10 today.";
 
 		const output = normalizeMathDelimiters(input);
 
 		expect(output).toBe(input);
+	});
+
+	// The strings below are taken from two months of production chat, where every observed
+	// `\[...\]` was a citation or a source attribution and none was display math.
+	it("leaves numeric citation markers untouched", () => {
+		const input = "પ્રજનન કરાવો. \\[1]\\[2]";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("leaves document citation markers untouched", () => {
+		const input = "વરસાદ પછી એક વાર. \\[doc-c3c9fec0ddfb\\]";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("does not swallow prose between two citation markers", () => {
+		const input =
+			"પ્રજનન કરાવો. \\[1]\\[2] આ મહત્વનું છે અને દરરોજ આપો. \\[doc-56db97fcf363\\]";
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("leaves a standalone source attribution untouched", () => {
+		const input = ["Summary text.", "\\[Source: Scientific herd nutrition guidelines\\]"].join("\n");
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(input);
+	});
+
+	it("still converts standalone block math that carries a math signal", () => {
+		const input = ["Summary:", "\\[ x^2 + y^2 = z^2 \\]", "Done."].join("\n");
+
+		const output = normalizeMathDelimiters(input);
+
+		expect(output).toBe(["Summary:", "$$", "x^2 + y^2 = z^2", "$$", "Done."].join("\n"));
 	});
 });

@@ -116,19 +116,34 @@ export function normalizeMathDelimiters(markdown: string): string {
 		return before.length === 0 && after.length === 0;
 	};
 
+	// `\[...\]` is ambiguous: the backend uses it far more often for citations and source
+	// attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`) than for
+	// display math. Converting those to math renders them as unreadable KaTeX, so require the
+	// content to carry an actual math signal — a LaTeX control sequence or a maths operator.
+	// `\(...\)` is not ambiguous in practice and stays unconditional.
+	const looksLikeMath = (content: string): boolean =>
+		/\\[a-zA-Z]/.test(content) || /[\^_=+×÷≈<>]/.test(content);
+
 	const normalizePlainText = (text: string): string =>
 		text
-			.replace(/\\\[((?:[\s\S]*?))\\\]/g, (match, content: string, offset: number) => {
+			// The content may not contain another `\[`, so a stray opener can never swallow the
+			// prose between two citation markers into a single math block.
+			.replace(/\\\[((?:(?!\\\[)[\s\S])*?)\\\]/g, (match, content: string, offset: number) => {
 				const trimmedContent = content.trim();
+				if (!looksLikeMath(trimmedContent)) {
+					return match;
+				}
 				const matchEnd = offset + match.length;
+				// Only a match that owns its whole line may inject newlines; doing so mid-line
+				// would break the surrounding table row or list item.
 				if (isStandaloneOnLine(text, offset, matchEnd)) {
 					return `$$\n${trimmedContent}\n$$`;
 				}
 				return `$$${trimmedContent}$$`;
 			})
-			.replace(/\\\(((?:[\s\S]*?))\\\)/g, (_match, content: string) => {
+			.replace(/\\\(((?:(?!\\\()[\s\S])*?)\\\)/g, (_match, content: string) => {
 				const trimmedContent = content.trim();
-				return `$$${trimmedContent}$$`;
+				return `$${trimmedContent}$`;
 			});
 
 	const protectedRanges = getProtectedRanges(markdown);
