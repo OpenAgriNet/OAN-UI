@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Copy, ThumbsDown, ThumbsUp, Volume2, Check } from "lucide-react";
@@ -23,7 +23,11 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showCopySuccess, setShowCopySuccess] = useState(false);
 	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
-	const normalizedBody = normalizeMathDelimiters(message.body);
+	// Normalising scans the whole message, so keep it off the re-renders driven by the local
+	// state above — copying, rating and opening the feedback modal all re-render this bubble
+	// without touching the body. Deliberately derived from `message.body` rather than replacing
+	// it: the copy and listen handlers below send the raw text, not the KaTeX-ready version.
+	const normalizedBody = useMemo(() => normalizeMathDelimiters(message.body), [message.body]);
 
 	const handleListen = async () => {
 		try {
