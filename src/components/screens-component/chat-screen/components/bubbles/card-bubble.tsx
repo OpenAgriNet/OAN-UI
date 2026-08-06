@@ -98,7 +98,9 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 						<div className={cn("text-base leading-snug text-foreground break-words", message.isError && "text-red-500")}>
 							<ReactMarkdown
 								remarkPlugins={[remarkGfm, remarkMath]}
-								rehypePlugins={[rehypeKatex]}
+								// maxSize caps user-visible dimensions: without it a response containing
+								// \rule{500em}{500em} paints a screen-filling block on the farmer's phone.
+								rehypePlugins={[[rehypeKatex, { maxSize: 20 }]]}
 								components={{
 									p: ({ node, ...props }) => (
 										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />

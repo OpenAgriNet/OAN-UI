@@ -5,19 +5,31 @@ function getProtectedRanges(markdown: string): ProtectedRange[] {
 	const textLength = markdown.length;
 	let index = 0;
 
+	// Markdown lets a fence be indented by up to three spaces; four or more makes it an indented
+	// code block instead. Returns where the marker would start, or -1 when the line is too deep.
+	const fenceMarkerStart = (lineStart: number): number => {
+		let indent = 0;
+		while (indent < 4 && markdown[lineStart + indent] === " ") {
+			indent += 1;
+		}
+		return indent < 4 ? lineStart + indent : -1;
+	};
+
 	while (index < textLength) {
 		const isLineStart = index === 0 || markdown[index - 1] === "\n";
 		const currentChar = markdown[index];
+		const markerStart = isLineStart ? fenceMarkerStart(index) : -1;
+		const markerChar = markerStart === -1 ? "" : markdown[markerStart];
 
-		if (isLineStart && (currentChar === "`" || currentChar === "~")) {
+		if (markerStart !== -1 && (markerChar === "`" || markerChar === "~")) {
 			let markerLength = 0;
-			while (markdown[index + markerLength] === currentChar) {
+			while (markdown[markerStart + markerLength] === markerChar) {
 				markerLength += 1;
 			}
 
 			if (markerLength >= 3) {
 				const fenceStart = index;
-				let cursor = index + markerLength;
+				let cursor = markerStart + markerLength;
 
 				while (cursor < textLength && markdown[cursor] !== "\n") {
 					cursor += 1;
@@ -30,14 +42,15 @@ function getProtectedRanges(markdown: string): ProtectedRange[] {
 				while (cursor < textLength) {
 					const cursorIsLineStart =
 						cursor === 0 || markdown[cursor - 1] === "\n";
-					if (cursorIsLineStart) {
+					const closingStart = cursorIsLineStart ? fenceMarkerStart(cursor) : -1;
+					if (closingStart !== -1) {
 						let closingLength = 0;
-						while (markdown[cursor + closingLength] === currentChar) {
+						while (markdown[closingStart + closingLength] === markerChar) {
 							closingLength += 1;
 						}
 
 						if (closingLength >= markerLength) {
-							let fenceEnd = cursor + closingLength;
+							let fenceEnd = closingStart + closingLength;
 							while (fenceEnd < textLength && markdown[fenceEnd] !== "\n") {
 								fenceEnd += 1;
 							}
@@ -116,69 +129,18 @@ export function normalizeMathDelimiters(markdown: string): string {
 		return before.length === 0 && after.length === 0;
 	};
 
-	// Both `\[...\]` and `$...$` are ambiguous: the backend uses them for citations, source
-	// attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`) and ordinary
-	// prose as well as for maths. Rendering those as KaTeX produces gibberish, so require the
-	// content to carry an actual math signal — a LaTeX control sequence or a maths operator.
-	// `\$` is excluded so that escaping a dollar pair cannot make it look like maths afterwards.
-	// `\(...\)` is not ambiguous in practice and stays unconditional.
-	const looksLikeMath = (content: string): boolean =>
-		/\\[^\s$]/.test(content) || /[\^_=+×÷≈<>]/.test(content);
-
-	// remark-math treats every `$...$` pair as inline maths. Escape the delimiters of any pair
-	// whose content carries no math signal so it renders as literal text instead of an equation.
-	// Written as a scan rather than a regex to avoid lookbehind, which older mobile Safari
-	// rejects at parse time.
-	const escapeNonMathDollarPairs = (text: string): string => {
-		let result = "";
-		let index = 0;
-
-		while (index < text.length) {
-			if (text[index] !== "$") {
-				result += text[index];
-				index += 1;
-				continue;
-			}
-
-			// `$$...$$` is display maths and is copied through untouched.
-			if (text[index + 1] === "$") {
-				const closingIndex = text.indexOf("$$", index + 2);
-				const blockEnd = closingIndex === -1 ? text.length : closingIndex + 2;
-				result += text.slice(index, blockEnd);
-				index = blockEnd;
-				continue;
-			}
-
-			let cursor = index + 1;
-			let closingDollar = -1;
-			while (cursor < text.length && text[cursor] !== "\n") {
-				if (text[cursor] === "$" && text[cursor + 1] !== "$") {
-					closingDollar = cursor;
-					break;
-				}
-				cursor += 1;
-			}
-
-			if (closingDollar === -1) {
-				result += text[index];
-				index += 1;
-				continue;
-			}
-
-			const content = text.slice(index + 1, closingDollar);
-			result += looksLikeMath(content)
-				? text.slice(index, closingDollar + 1)
-				: `\\$${content}\\$`;
-			index = closingDollar + 1;
-		}
-
-		return result;
-	};
+	// `\[...\]` is ambiguous: the backend uses it for citations and source attributions
+	// (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`), never for display maths in
+	// any response observed so far. Rendering those as KaTeX produces unreadable mush, so require
+	// a LaTeX control sequence before converting. A bare operator is deliberately not enough:
+	// citation text routinely contains `>`, `_`, `+` and `=`, so accepting those re-opens the bug.
+	// The cost is that pure-ASCII block maths like `\[ x^2 = y^2 \]` stays literal; no response
+	// has ever used that form, whereas mangled citations were a live defect.
+	// `$...$` is left entirely to remark-math, and `\(...\)` is not ambiguous in practice.
+	const looksLikeMath = (content: string): boolean => /\\\S/.test(content);
 
 	const normalizePlainText = (text: string): string =>
-		// Escaping runs first so it only ever sees the backend's own dollars, never the ones
-		// this function emits when converting `\[...\]` and `\(...\)`.
-		escapeNonMathDollarPairs(text)
+		text
 			// The content may not contain another `\[`, so a stray opener can never swallow the
 			// prose between two citation markers into a single math block.
 			.replace(/\\\[((?:(?!\\\[)[\s\S])*?)\\\]/g, (match, content: string, offset: number) => {

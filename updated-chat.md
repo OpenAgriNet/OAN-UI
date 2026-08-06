@@ -113,16 +113,21 @@ function shouldUseTranslationPipeline(targetLang) {
 
 The chat UI now renders LaTeX math in markdown responses. Backend responses can use any of these delimiters:
 
-- Inline math: `\(...\)`
-- Block math: `\[...\]`
-
+- Inline math: `$...$` or `\(...\)`
 - Block math: `$$...$$`
 
 Notes for response generation:
 
-- Use `\(...\)` for short in-sentence formulas and `\[...\]` / `$$...$$` for display equations.
-- Math-like content inside inline code and fenced code blocks stays literal and is not rendered as formula output.
-- Single-dollar parsing (`$...$`) is intentionally disabled in the frontend to avoid currency collisions such as `$5 to $10`.
+- Prefer `$...$` for short in-sentence formulas and `$$...$$` for display equations. Both are
+  rendered as maths unconditionally, and `$...$` is what responses already use.
+- Math-like content inside inline code and fenced code blocks stays literal and is not rendered as
+  formula output.
+- **`\[...\]` is not a reliable maths delimiter here.** Responses use it overwhelmingly for
+  citations and source attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`),
+  so the frontend only treats it as maths when the content contains a LaTeX control sequence such
+  as `\pi` or `\frac`. Anything else is left as literal text. Use `$$...$$` for display equations.
+- Because `$...$` always renders as maths, do not write bare currency amounts as `$5 to $10` — they
+  would be parsed as a formula. Prices should use ₹ / Rs, which is already the convention.
 
 ---
 
