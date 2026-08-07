@@ -4,6 +4,7 @@ import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 import { Loader } from "./components";
+import "katex/dist/katex.min.css";
 import "./styles/global.css";
 import { queryClient } from "./hooks";
 import PageNotFound from "./pages/error/404";
