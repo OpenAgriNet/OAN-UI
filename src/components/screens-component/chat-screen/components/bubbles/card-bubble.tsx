@@ -8,7 +8,7 @@ import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -89,7 +89,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 						<div className={cn("text-base leading-snug text-foreground break-words", message.isError && "text-red-500")}>
 							<ReactMarkdown
-								remarkPlugins={[remarkGfm]}
+								remarkPlugins={chatRemarkPlugins}
+								rehypePlugins={chatRehypePlugins}
 								components={{
 									p: ({ node, ...props }) => (
 										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />
