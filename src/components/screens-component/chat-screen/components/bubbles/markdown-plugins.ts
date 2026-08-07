@@ -1,7 +1,10 @@
-import type { PluggableList } from "unified";
+import type { Options } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+
+type RemarkPlugins = NonNullable<Options["remarkPlugins"]>;
+type RehypePlugins = NonNullable<Options["rehypePlugins"]>;
 
 /**
  * Markdown plugin configuration for assistant chat bubbles.
@@ -13,9 +16,9 @@ import remarkMath from "remark-math";
  *
  * Exported so the rendering tests exercise exactly the configuration the bubble uses.
  */
-export const chatRemarkPlugins: PluggableList = [remarkGfm, remarkMath];
+export const chatRemarkPlugins: RemarkPlugins = [remarkGfm, remarkMath];
 
-export const chatRehypePlugins: PluggableList = [
+export const chatRehypePlugins: RehypePlugins = [
 	// maxSize caps user-visible dimensions: without it a response containing
 	// \rule{500em}{500em} paints a screen-filling block on the farmer's phone.
 	[rehypeKatex, { maxSize: 20 }]
