@@ -113,19 +113,22 @@ function shouldUseTranslationPipeline(targetLang) {
 
 The chat UI now renders LaTeX math in markdown responses. Backend responses can use any of these delimiters:
 
-- Inline math: `$...$` or `\(...\)`
+- Inline math: `$...$`
 - Block math: `$$...$$`
+
+These are the only two maths delimiters. The frontend does no pre-processing: it passes the
+response straight to `remark-math`, which owns `$` exclusively.
 
 Notes for response generation:
 
-- Prefer `$...$` for short in-sentence formulas and `$$...$$` for display equations. Both are
-  rendered as maths unconditionally, and `$...$` is what responses already use.
-- Math-like content inside inline code and fenced code blocks stays literal and is not rendered as
-  formula output.
-- **`\[...\]` is not a reliable maths delimiter here.** Responses use it overwhelmingly for
+- **`\(...\)` and `\[...\]` are not maths delimiters here and will render as literal text.** Use
+  `$...$` and `$$...$$` instead. This is deliberate: responses use `\[...\]` overwhelmingly for
   citations and source attributions (`\[1\]`, `\[doc-c3c9fec0ddfb\]`, `\[Source: dairy handbook\]`),
-  so the frontend only treats it as maths when the content contains a LaTeX control sequence such
-  as `\pi` or `\frac`. Anything else is left as literal text. Use `$$...$$` for display equations.
+  and any attempt to tell those apart from formulas mangled real citations into unreadable output.
+- Citations in the `\[1\]` / `\[doc-...\]` form render as plain `[1]`, `[doc-...]`. That is correct
+  and needs no change.
+- Math-like content inside inline code and fenced code blocks stays literal, handled natively by the
+  markdown parser.
 - Because `$...$` always renders as maths, do not write bare currency amounts as `$5 to $10` — they
   would be parsed as a formula. Prices should use ₹ / Rs, which is already the convention.
 

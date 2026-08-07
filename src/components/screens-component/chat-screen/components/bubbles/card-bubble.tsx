@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Copy, ThumbsDown, ThumbsUp, Volume2, Check } from "lucide-react";
@@ -8,10 +8,7 @@ import { useChatStore } from "@/hooks/store/chat";
 import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
-import rehypeKatex from "rehype-katex";
-import remarkGfm from "remark-gfm";
-import remarkMath from "remark-math";
-import { normalizeMathDelimiters } from "./math-delimiters";
+import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -23,11 +20,6 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [showCopySuccess, setShowCopySuccess] = useState(false);
 	const [showThumbsUpSuccess, setShowThumbsUpSuccess] = useState(false);
-	// Normalising scans the whole message, so keep it off the re-renders driven by the local
-	// state above — copying, rating and opening the feedback modal all re-render this bubble
-	// without touching the body. Deliberately derived from `message.body` rather than replacing
-	// it: the copy and listen handlers below send the raw text, not the KaTeX-ready version.
-	const normalizedBody = useMemo(() => normalizeMathDelimiters(message.body), [message.body]);
 
 	const handleListen = async () => {
 		try {
@@ -97,10 +89,8 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 
 						<div className={cn("text-base leading-snug text-foreground break-words", message.isError && "text-red-500")}>
 							<ReactMarkdown
-								remarkPlugins={[remarkGfm, remarkMath]}
-								// maxSize caps user-visible dimensions: without it a response containing
-								// \rule{500em}{500em} paints a screen-filling block on the farmer's phone.
-								rehypePlugins={[[rehypeKatex, { maxSize: 20 }]]}
+								remarkPlugins={chatRemarkPlugins}
+								rehypePlugins={chatRehypePlugins}
 								components={{
 									p: ({ node, ...props }) => (
 										<p className="mb-1.5 last:mb-0 leading-snug" {...props} />
@@ -163,7 +153,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									),
 								}}
 							>
-								{normalizedBody}
+								{message.body}
 							</ReactMarkdown>
 						</div>
 
