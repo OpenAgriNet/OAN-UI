@@ -45,6 +45,11 @@ export default defineConfig(({ mode }) => {
 			react(),
 			virtualRouteFileChangeReloadPlugin
 		],
+		test: {
+			// Without an explicit include, vitest walks above the project root and collects
+			// unrelated specs from sibling directories, which fail on missing dependencies.
+			include: ["src/**/*.{test,spec}.{ts,tsx}"]
+		},
 		server: {
 			port: 3000,
 			// In dev, proxy /api to the real API so you avoid CORS without hardcoding domains.
