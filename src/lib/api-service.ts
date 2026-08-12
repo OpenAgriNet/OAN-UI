@@ -255,6 +255,7 @@ class ApiService {
   async sendUserQuery(
     msg: string,
     session: string,
+    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -268,6 +269,7 @@ class ApiService {
       
       const params = {
         session_id: session,
+        qid,
         query: msg,
         source_lang: sourceLang,
         target_lang: targetLang,
@@ -344,7 +346,7 @@ class ApiService {
           onStreamData(displayChunk);
         }
 
-        return { response: fullResponse, status: 'success', qid: responseQid };
+        return { response: fullResponse, status: 'success', qid: responseQid || qid };
       } else {
         // Regular non-streaming request
         const config = {
@@ -356,7 +358,7 @@ class ApiService {
         onResponseStarted?.();
         return {
           ...response.data,
-          qid: response.data?.qid || responseQid
+          qid: response.data?.qid || responseQid || qid
         };
       }
     } catch (error) {
@@ -431,6 +433,7 @@ class ApiService {
   async sendImageQuery(
     imageFile: File,
     session: string,
+    qid: string,
     sourceLang: string,
     targetLang: string,
     onStreamData?: (_data: string) => void,
@@ -444,7 +447,7 @@ class ApiService {
     // The backend resolves this ID to a localhost image URL internally.
     const query = `please do the pest analysis for this image ${imageId}`;
 
-    return this.sendUserQuery(query, session, sourceLang, targetLang, onStreamData, onResponseStarted);
+    return this.sendUserQuery(query, session, qid, sourceLang, targetLang, onStreamData, onResponseStarted);
   }
 
   async getSuggestions(session: string, targetLang: string = 'mr'): Promise<SuggestionItem[]> {
