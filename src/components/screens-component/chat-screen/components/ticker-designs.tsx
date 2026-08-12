@@ -26,6 +26,7 @@ export interface Announcement {
 	titleKey: string;
 	bodyKey?: string;
 	date: string;
+	expiresAt?: string;
 	isNew?: boolean;
 }
 
@@ -38,8 +39,16 @@ export const ANNOUNCEMENTS: Announcement[] = [
 	{ id: "3", category: "event",   titleKey: "ticker.sample.3_title", bodyKey: "ticker.sample.3_body", date: "Jun 25, 2025" },
 	{ id: "4", category: "feature", titleKey: "ticker.sample.4_title", date: "Jun 10, 2025" },
 	*/
-	{ id: "5", category: "feature", titleKey: "ticker.sample.5_title", date: "Aug 4, 2026", isNew: true },
-	{ id: "1", category: "payment", titleKey: "ticker.sample.1_title", bodyKey: "ticker.sample.1_body", date: "Jun 18, 2026", isNew: true },
+	{ id: "5", category: "feature", titleKey: "ticker.sample.5_title", date: "Aug 12, 2026", isNew: true },
+	{
+		id: "pest-detection",
+		category: "feature",
+		titleKey: "pestApi.title",
+		bodyKey: "pestApi.description",
+		date: "Aug 12, 2026",
+		expiresAt: "2026-08-19T23:59:59+05:30",
+		isNew: true,
+	},
 ];
 
 // Keep the old export name working for any imports that used it
@@ -162,18 +171,22 @@ export function TickerVariant5({ announcements = ANNOUNCEMENTS }: { announcement
 	const { t } = useLanguage();
 	const [dismissed, setDismissed] = useState(false);
 	const [idx, setIdx] = useState(0);
+	const activeAnnouncements = announcements.filter((announcement) => (
+		!announcement.expiresAt || Date.now() <= Date.parse(announcement.expiresAt)
+	));
 
 	useEffect(() => {
-		if (announcements.length < 2) return;
+		if (activeAnnouncements.length < 2) return;
 		const timer = window.setInterval(() => {
-			setIdx((current) => (current + 1) % announcements.length);
+			setIdx((current) => (current + 1) % activeAnnouncements.length);
 		}, 6000);
 		return () => window.clearInterval(timer);
-	}, [announcements.length]);
+	}, [activeAnnouncements.length]);
 
-	if (dismissed || !announcements.length) return null;
+	if (dismissed || !activeAnnouncements.length) return null;
 
-	const ann = announcements[idx]!;
+	const safeIdx = idx % activeAnnouncements.length;
+	const ann = activeAnnouncements[safeIdx]!;
 	const meta = META[ann.category];
 	const Icon = meta.icon;
 
@@ -224,15 +237,15 @@ export function TickerVariant5({ announcements = ANNOUNCEMENTS }: { announcement
 				</button>
 			</div>
 
-			{announcements.length > 1 && (
+			{activeAnnouncements.length > 1 && (
 				<div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5" aria-label={t("ticker.announcements") as string}>
-					{announcements.map((item, index) => (
+					{activeAnnouncements.map((item, index) => (
 						<button
 							key={item.id}
 							type="button"
 							onClick={() => setIdx(index)}
 							aria-label={`${index + 1}`}
-							className={cn("h-1.5 rounded-full transition-all", index === idx ? "w-7 bg-white" : "w-1.5 bg-white/40 hover:bg-white/65")}
+							className={cn("h-1.5 rounded-full transition-all", index === safeIdx ? "w-7 bg-white" : "w-1.5 bg-white/40 hover:bg-white/65")}
 						/>
 					))}
 				</div>
