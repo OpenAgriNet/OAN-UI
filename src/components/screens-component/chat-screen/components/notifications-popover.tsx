@@ -105,7 +105,7 @@ export function NotificationsPopover() {
 				event_name: "notification_selected",
 				category: "notification",
 				metadata: {
-					notification_id: n.notification_id,
+					...buildNotificationFeedbackContext(n),
 					notification_detail: n
 				}
 			});
