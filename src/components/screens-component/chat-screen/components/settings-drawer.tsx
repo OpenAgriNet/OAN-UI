@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Moon, Send, Sun, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Moon, Sun, X } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { useThemeStore } from "@/hooks/store/theme";
 import { useChatStore } from "@/hooks/store/chat";
-import { THEMES, FAQ_DATA } from "@/components/screens-component/chat-screen/config";
+import { THEMES } from "@/components/screens-component/chat-screen/config";
+import { FAQGroups } from "@/components/screens-component/chat-screen/components/faq-groups";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -24,7 +25,6 @@ export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
 	const { theme, setTheme } = useThemeStore();
 	const { t, language } = useLanguage();
 	const sendText = useChatStore((s) => s.sendText);
-	const faqItems = FAQ_DATA[language] || FAQ_DATA["en"];
 	const [faqOpen, setFaqOpen] = useState(true);
 
 useEffect(() => {
@@ -109,23 +109,9 @@ useEffect(() => {
 									)}
 								</button>
 							</CollapsibleTrigger>
-							<CollapsibleContent className="px-5 pb-5 space-y-4">
-								<div className="border-t border-gray-100 dark:border-gray-900 pt-5 space-y-4">
-									{faqItems.map((faq, index) => (
-										<button
-											key={faq.id}
-											onClick={() => askQuestion(faq.question)}
-											className="w-full flex items-start gap-3 px-4 py-4 text-left border border-gray-100 dark:border-gray-900 rounded-xl hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-colors"
-										>
-											<span className="font-bold text-gray-400 dark:text-gray-500 mt-0.5 min-w-[20px]">
-												{index + 1}.
-											</span>
-											<span className="font-bold text-gray-900 dark:text-gray-100 flex-1 leading-snug">
-												{faq.question}
-											</span>
-											<Send className="h-4 w-4 text-[#F65151] flex-shrink-0 mt-0.5" />
-										</button>
-									))}
+							<CollapsibleContent className="px-5 pb-5">
+								<div className="border-t border-gray-100 dark:border-gray-900 pt-5">
+									<FAQGroups variant="drawer" onAsk={askQuestion} />
 								</div>
 							</CollapsibleContent>
 						</Collapsible>
