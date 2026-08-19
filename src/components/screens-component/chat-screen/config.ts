@@ -53,6 +53,107 @@ export type FAQItem = {
 	image?: string;
 };
 
+// The 48 FAQ prompts are too long to scan as one flat list, so they are grouped
+// into six themed sections rendered as collapsible boxes. The question `id` is
+// the same across every language, so one id -> category map covers all of them.
+export type FAQCategoryId =
+	| "myData"
+	| "breeding"
+	| "health"
+	| "feed"
+	| "calf"
+	| "management";
+
+export const FAQ_CATEGORY_ORDER: FAQCategoryId[] = [
+	"myData",
+	"breeding",
+	"health",
+	"feed",
+	"calf",
+	"management",
+];
+
+export const FAQ_CATEGORY_LABELS: Record<FAQCategoryId, Record<LanguageCode, string>> = {
+	myData: {
+		en: "My Milk & Records",
+		gu: "મારું દૂધ અને રેકોર્ડ",
+		hi: "मेरा दूध और रिकॉर्ड",
+		mr: "माझे दूध आणि नोंदी",
+	},
+	breeding: {
+		en: "Breeding & Reproduction",
+		gu: "પ્રજનન અને ગર્ભાધાન",
+		hi: "प्रजनन और गर्भाधान",
+		mr: "प्रजनन आणि गर्भाधान",
+	},
+	health: {
+		en: "Health & Disease",
+		gu: "આરોગ્ય અને રોગ",
+		hi: "स्वास्थ्य और रोग",
+		mr: "आरोग्य आणि आजार",
+	},
+	feed: {
+		en: "Feed & Nutrition",
+		gu: "આહાર અને પોષણ",
+		hi: "आहार और पोषण",
+		mr: "आहार आणि पोषण",
+	},
+	calf: {
+		en: "Calf Care",
+		gu: "વાછરડાની સંભાળ",
+		hi: "बछड़े की देखभाल",
+		mr: "वासराची काळजी",
+	},
+	management: {
+		en: "Management & Schemes",
+		gu: "વ્યવસ્થાપન અને યોજનાઓ",
+		hi: "प्रबंधन और योजनाएं",
+		mr: "व्यवस्थापन आणि योजना",
+	},
+};
+
+const FAQ_CATEGORY_BY_ID: Record<string, FAQCategoryId> = {
+	"1": "myData", "2": "myData", "3": "myData", "4": "myData", "5": "myData",
+	"23": "myData", "25": "myData",
+
+	"6": "breeding", "8": "breeding", "9": "breeding", "10": "breeding",
+	"11": "breeding", "18": "breeding", "27": "breeding", "28": "breeding",
+	"29": "breeding", "30": "breeding", "31": "breeding", "32": "breeding",
+	"33": "breeding",
+
+	"7": "health", "12": "health", "13": "health", "14": "health",
+	"15": "health", "16": "health", "24": "health", "26": "health",
+	"39": "health",
+
+	"19": "feed", "22": "feed", "34": "feed", "35": "feed", "36": "feed",
+	"37": "feed", "38": "feed",
+
+	"17": "calf", "20": "calf", "40": "calf", "41": "calf", "42": "calf",
+
+	"21": "management", "43": "management", "44": "management",
+	"45": "management", "46": "management", "47": "management",
+	"48": "management",
+};
+
+export type FAQGroup = {
+	id: FAQCategoryId;
+	label: string;
+	items: FAQItem[];
+};
+
+// Groups the language's FAQ list into the six categories, preserving the
+// original order within each. Categories with no items are dropped, and any
+// item whose id is missing from the map falls back to "management" so a newly
+// added question is still reachable.
+export const getFAQGroups = (language: LanguageCode): FAQGroup[] => {
+	const items = FAQ_DATA[language] || FAQ_DATA[DEFAULT_LANGUAGE];
+	return FAQ_CATEGORY_ORDER.map((id) => ({
+		id,
+		label: FAQ_CATEGORY_LABELS[id][language] || FAQ_CATEGORY_LABELS[id].en,
+		items: items.filter((item) => (FAQ_CATEGORY_BY_ID[item.id] ?? "management") === id),
+	})).filter((group) => group.items.length > 0);
+};
+
 // FAQ items are tap-to-ask prompts: each question is sent to the chat agent
 // on tap and answered live (no static answers).
 const FAQ_GU: FAQItem[] = [
