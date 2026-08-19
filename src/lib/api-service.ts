@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { environment } from '@/lib/config/environment';
+import type { ChatPersona } from '@/lib/chat-persona';
 
 export interface LocationData {
   latitude: number;
@@ -142,7 +143,8 @@ class ApiService {
     session: string,
     sourceLang: string,
     targetLang: string,
-    onStreamData?: (data: string) => void
+    onStreamData?: (data: string) => void,
+    persona?: ChatPersona
   ): Promise<ChatResponse> {
     try {
       this.refreshAuthToken();
@@ -157,6 +159,7 @@ class ApiService {
         query: msg,
         source_lang: resolvedSourceLang,
         target_lang: resolvedTargetLang,
+        ...(persona && { persona }),
         ...(this.locationData && { location: `${this.locationData.latitude},${this.locationData.longitude}` })
       };
 

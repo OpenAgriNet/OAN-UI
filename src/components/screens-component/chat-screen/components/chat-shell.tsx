@@ -19,6 +19,7 @@ export function ChatShell() {
 	const initializeSession = useChatStore((s) => s.initializeSession);
 	const generateQuickActions = useChatStore((s) => s.generateQuickActions);
 	const sessionId = useChatStore((s) => s.sessionId);
+	const persona = useChatStore((s) => s.persona);
 
 	const showWelcome = messages.length === 0;
 	const handleWelcomeAction = (action: QuickAction) => {
@@ -64,7 +65,7 @@ export function ChatShell() {
 					onQuickReply={(payload) => sendQuickReply(payload, language)}
 					welcome={
 						showWelcome ? (
-							<WelcomePanel actions={quickActions} onAction={handleWelcomeAction} />
+							<WelcomePanel actions={quickActions} onAction={handleWelcomeAction} persona={persona} />
 						) : null
 					}
 				/>

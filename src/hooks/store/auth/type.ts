@@ -5,6 +5,7 @@ export type User = {
   username?: string;
   role?: string;
   is_guest_user?: boolean;
+  user_type?: "farmer" | "doctor";
   user_metadata?: Record<string, any>;
   app_metadata?: Record<string, any>;
 };
