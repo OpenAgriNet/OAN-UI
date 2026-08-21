@@ -36,17 +36,13 @@ function applyTheme(theme: Theme) {
 	root.classList.add(theme);
 }
 
-// Initial theme application
+// Initial theme application. The light/dark selector was removed from the UI
+// (AMUL-53), so the app is light-only: anyone whose browser still holds a
+// persisted "dark" has no way to switch back, and we drop it here rather than
+// leaving them stuck.
 if (typeof window !== "undefined") {
-	const storedTheme = localStorage.getItem("theme-storage");
-	if (storedTheme) {
-		try {
-			const parsed = JSON.parse(storedTheme);
-			if (parsed.state && parsed.state.theme) {
-				applyTheme(parsed.state.theme);
-			}
-		} catch (e) {
-			console.error("Failed to parse theme from storage", e);
-		}
+	applyTheme(THEMES.light);
+	if (localStorage.getItem("theme-storage")) {
+		localStorage.removeItem("theme-storage");
 	}
 }

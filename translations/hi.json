@@ -50,9 +50,6 @@
   },
   "settingsPage": {
     "title": "सेटिंग्स",
-    "appearance": "दिखावट",
-    "lightMode": "लाइट मोड",
-    "darkMode": "डार्क मोड",
     "helpAndSupport": "मदद और सहायता",
     "faq": "अक्सर पूछे जाने वाले प्रश्न"
   },

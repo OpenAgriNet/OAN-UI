@@ -5,22 +5,27 @@ import { CHAT_ASSISTANT } from "../config";
 import { ContactIcon } from "./contact-icon";
 import { QuickAction } from "@/hooks/store/chat";
 import amulText from "@/assets/amulText.svg";
+import type { ChatPersona } from "@/lib/chat-persona";
 
 /* eslint-disable no-unused-vars */
 type WelcomePanelProps = {
 	onAction: (action: QuickAction) => void;
 	actions: QuickAction[];
+	persona?: ChatPersona;
 };
 /* eslint-enable no-unused-vars */
 
 import { useLanguage } from "@/components/LanguageProvider";
 
-export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
+export function WelcomePanel({ onAction, actions, persona = "farmer" }: WelcomePanelProps) {
 	const { t } = useLanguage();
+	const isDoctor = persona === "doctor";
 
 	// Last line of the welcome text is the contact ("call / WhatsApp") line and
 	// gets the configurable call+chat icon (see config.json `contactIcon`).
-	const welcomeLines = (t("welcome") as string)
+	const welcomeLines = (isDoctor
+		? "Veterinary clinical decision support\nAsk a cattle or buffalo clinical question."
+		: (t("welcome") as string))
 		.split("\n")
 		.map((line) => line.trim())
 		.filter(Boolean);
@@ -48,7 +53,9 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 						{introLines.map((line) => (
 							<div key={line}>{line}</div>
 						))}
-						{contactLine && (numberMatch?.index !== undefined ? (
+						{contactLine && (isDoctor ? (
+							<div>{contactLine}</div>
+						) : numberMatch?.index !== undefined ? (
 							<div>
 								{contactLine.slice(0, numberMatch.index)}
 								<span className="inline-flex items-center gap-1.5 whitespace-nowrap align-middle">
@@ -68,7 +75,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 			</div>
 
 			{/* Cards List (Full width as per image 1) */}
-			<div className="flex w-full flex-col gap-2 max-w-2xl">
+			{!isDoctor && <div className="flex w-full flex-col gap-2 max-w-2xl">
 				{actions.map((action) => {
 					// Map icons from store to emojis for the UI match
 					const iconMap: Record<string, string> = {
@@ -109,7 +116,7 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 						</Button>
 					);
 				})}
-			</div>
+			</div>}
 		</div>
 	);
 }

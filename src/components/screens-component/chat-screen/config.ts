@@ -53,6 +53,121 @@ export type FAQItem = {
 	image?: string;
 };
 
+// The FAQ prompts are too long to scan as one flat list, so they are grouped
+// into themed sections rendered as collapsible boxes. The question `id` is
+// the same across every language, so one id -> category map covers all of them.
+export type FAQCategoryId =
+	| "myData"
+	| "breeding"
+	| "health"
+	| "feed"
+	| "calf"
+	| "management"
+	| "agri";
+
+export const FAQ_CATEGORY_ORDER: FAQCategoryId[] = [
+	"myData",
+	"breeding",
+	"health",
+	"feed",
+	"calf",
+	"management",
+	"agri",
+];
+
+export const FAQ_CATEGORY_LABELS: Record<FAQCategoryId, Record<LanguageCode, string>> = {
+	myData: {
+		en: "My Milk & Records",
+		gu: "મારું દૂધ અને રેકોર્ડ",
+		hi: "मेरा दूध और रिकॉर्ड",
+		mr: "माझे दूध आणि नोंदी",
+	},
+	breeding: {
+		en: "Breeding & Reproduction",
+		gu: "પ્રજનન અને ગર્ભાધાન",
+		hi: "प्रजनन और गर्भाधान",
+		mr: "प्रजनन आणि गर्भाधान",
+	},
+	health: {
+		en: "Health & Disease",
+		gu: "આરોગ્ય અને રોગ",
+		hi: "स्वास्थ्य और रोग",
+		mr: "आरोग्य आणि आजार",
+	},
+	feed: {
+		en: "Feed & Nutrition",
+		gu: "આહાર અને પોષણ",
+		hi: "आहार और पोषण",
+		mr: "आहार आणि पोषण",
+	},
+	calf: {
+		en: "Calf Care",
+		gu: "વાછરડાની સંભાળ",
+		hi: "बछड़े की देखभाल",
+		mr: "वासराची काळजी",
+	},
+	management: {
+		en: "Management & Schemes",
+		gu: "વ્યવસ્થાપન અને યોજનાઓ",
+		hi: "प्रबंधन और योजनाएं",
+		mr: "व्यवस्थापन आणि योजना",
+	},
+	agri: {
+		en: "Farming & Crops",
+		gu: "ખેતી અને પાક",
+		hi: "खेती और फसल",
+		mr: "शेती आणि पीक",
+	},
+};
+
+const FAQ_CATEGORY_BY_ID: Record<string, FAQCategoryId> = {
+	"1": "myData", "2": "myData", "3": "myData", "4": "myData", "5": "myData",
+	"23": "myData", "25": "myData",
+
+	"6": "breeding", "8": "breeding", "9": "breeding", "10": "breeding",
+	"11": "breeding", "18": "breeding", "27": "breeding", "28": "breeding",
+	"29": "breeding", "30": "breeding", "31": "breeding", "32": "breeding",
+	"33": "breeding",
+
+	"7": "health", "12": "health", "13": "health", "14": "health",
+	"15": "health", "16": "health", "24": "health", "26": "health",
+	"39": "health",
+
+	"19": "feed", "22": "feed", "34": "feed", "35": "feed", "36": "feed",
+	"37": "feed", "38": "feed",
+
+	"17": "calf", "20": "calf", "40": "calf", "41": "calf", "42": "calf",
+
+	"21": "management", "43": "management", "44": "management",
+	"45": "management", "46": "management", "47": "management",
+	"48": "management",
+
+	// Bharat Vistaar farming questions (AMUL-53), ids 49-68.
+	"49": "agri", "50": "agri", "51": "agri", "52": "agri", "53": "agri",
+	"54": "agri", "55": "agri", "56": "agri", "57": "agri", "58": "agri",
+	"59": "agri", "60": "agri", "61": "agri", "62": "agri", "63": "agri",
+	"64": "agri", "65": "agri", "66": "agri", "67": "agri", "68": "agri",
+};
+
+export type FAQGroup = {
+	id: FAQCategoryId;
+	label: string;
+	items: FAQItem[];
+};
+
+// Groups the language's FAQ list into the categories above, preserving the
+// original order within each. Categories with no items are dropped, and any
+// item whose id is missing from the map falls back to "management" so a newly
+// added question is still reachable.
+export const getFAQGroups = (language: LanguageCode): FAQGroup[] => {
+	const items = FAQ_DATA[language] || FAQ_DATA[DEFAULT_LANGUAGE];
+	return FAQ_CATEGORY_ORDER.map((id) => ({
+		id,
+		label: FAQ_CATEGORY_LABELS[id][language] || FAQ_CATEGORY_LABELS[id].en,
+		items: items.filter((item) => (FAQ_CATEGORY_BY_ID[item.id] ?? "management") === id),
+	})).filter((group) => group.items.length > 0);
+};
+
 // FAQ items are tap-to-ask prompts: each question is sent to the chat agent
 // on tap and answered live (no static answers).
 const FAQ_GU: FAQItem[] = [
@@ -104,6 +219,27 @@ const FAQ_GU: FAQItem[] = [
 	{ id: "46", question: "સરકારની પશુપાલન યોજનાઓ વિશે જણાવો." },
 	{ id: "47", question: "પશુપાલન માટે લોન અથવા સહાય કેવી રીતે મેળવી શકાય?" },
 	{ id: "48", question: "ચોમાસામાં પશુની સંભાળ કેવી રીતે રાખવી?" },
+	// Bharat Vistaar farming questions (AMUL-53).
+	{ id: "49", question: "મારી જમીનનું આરોગ્ય પત્રક (સોઈલ હેલ્થ કાર્ડ – SHC) કેવી રીતે કઢાવવું?" },
+	{ id: "50", question: "આજે જૂનાગઢ નજીકના યાર્ડમાં મગફળી (Groundnut) નો ભાવ શું છે?" },
+	{ id: "51", question: "મારી જમીન માટે કયો પાક સૌથી વધુ અનુકૂળ છે?" },
+	{ id: "52", question: "જમીનમાં કુદરતી રીતે નાઇટ્રોજનનું પ્રમાણ વધારવા માટે શું કરવું?" },
+	{ id: "53", question: "જમીનની ફળદ્રુપતા વધારવા માટે કયું ખાતર અને કેટલા પ્રમાણમાં વાપરવું?" },
+	{ id: "54", question: "ખારાશવાળી જમીનમાં કયો પાક લઈ શકાય?" },
+	{ id: "55", question: "ગ્રીનહાઉસ અને પોલીહાઉસ શું છે? તેના ફાયદા જણાવો." },
+	{ id: "56", question: "ગ્રીનહાઉસ અને પોલીહાઉસ માટે સરકાર દ્વારા કરવામાં આવતી સહાય વિશે જણાવો." },
+	{ id: "57", question: "રાસાયણિક ખાતરને બદલે જૈવિક (ઓર્ગેનિક) ખાતર કેવી રીતે વાપરવું? તેનાથી શું ફાયદો થાય?" },
+	{ id: "58", question: "ઓછા પાણીમાં વધુ પાક કેવી રીતે લેવો?" },
+	{ id: "59", question: "મગફળીની વાવણી માટે યોગ્ય સમય ક્યારે છે?" },
+	{ id: "60", question: "આવતા અઠવાડિયે વરસાદની શક્યતા છે કે નહીં?" },
+	{ id: "61", question: "ફુલાવર (Cauliflower) આણંદ નજીક કયા યાર્ડમાં મળે?" },
+	{ id: "62", question: "મારા વિસ્તારની નજીકની મંડી/યાર્ડમાં આજે ઘઉંનો ભાવ શું છે?" },
+	{ id: "63", question: "પ્રધાનમંત્રી પાક વીમા યોજના હેઠળ દાવો કેવી રીતે કરવો?" },
+	{ id: "64", question: "કિસાન ક્રેડિટ કાર્ડ માટે અરજી કેવી રીતે કરવી?" },
+	{ id: "65", question: "પ્રધાનમંત્રી કૃષિ સિંચાઈ યોજનાનો લાભ કેવી રીતે મળે?" },
+	{ id: "66", question: "કૃષિ યાંત્રિકીકરણ યોજના હેઠળ સબસિડી કેવી રીતે મળે?" },
+	{ id: "67", question: "ઓર્ગેનિક રીતે જીવાત નિયંત્રણ કેવી રીતે કરવું?" },
+	{ id: "68", question: "ગાય આધારિત ઓર્ગેનિક રીતે ખેતી કરવાના શું લાભ છે?" },
 ];
 
 const FAQ_EN: FAQItem[] = [
@@ -155,6 +291,27 @@ const FAQ_EN: FAQItem[] = [
 	{ id: "46", question: "Tell me about government animal husbandry schemes." },
 	{ id: "47", question: "How can I get a loan or subsidy for animal husbandry?" },
 	{ id: "48", question: "How to take care of animals during the monsoon?" },
+	// Bharat Vistaar farming questions (AMUL-53).
+	{ id: "49", question: "How do I get my Soil Health Card (SHC)?" },
+	{ id: "50", question: "What is today's groundnut price at the yard near Junagadh?" },
+	{ id: "51", question: "Which crop is best suited to my land?" },
+	{ id: "52", question: "How can I increase nitrogen in the soil naturally?" },
+	{ id: "53", question: "Which fertiliser should I use to improve soil fertility, and how much?" },
+	{ id: "54", question: "Which crop can be grown in saline soil?" },
+	{ id: "55", question: "What are greenhouses and polyhouses? Tell me their benefits." },
+	{ id: "56", question: "Tell me about the government subsidy available for greenhouses and polyhouses." },
+	{ id: "57", question: "How do I use organic manure instead of chemical fertiliser, and what are the benefits?" },
+	{ id: "58", question: "How can I grow more crop with less water?" },
+	{ id: "59", question: "When is the right time to sow groundnut?" },
+	{ id: "60", question: "Is there a chance of rain next week?" },
+	{ id: "61", question: "Which yard near Anand has cauliflower?" },
+	{ id: "62", question: "What is today's wheat price at the mandi/yard nearest to me?" },
+	{ id: "63", question: "How do I file a claim under the Pradhan Mantri Fasal Bima Yojana?" },
+	{ id: "64", question: "How do I apply for a Kisan Credit Card?" },
+	{ id: "65", question: "How can I benefit from the Pradhan Mantri Krishi Sinchayee Yojana?" },
+	{ id: "66", question: "How do I get a subsidy under the Krishi Yantrikikaran (farm mechanisation) scheme?" },
+	{ id: "67", question: "How do I control pests organically?" },
+	{ id: "68", question: "What are the benefits of cow-based organic farming?" },
 ];
 
 const FAQ_HI: FAQItem[] = [
@@ -206,6 +363,27 @@ const FAQ_HI: FAQItem[] = [
 	{ id: "46", question: "सरकारी पशुपालन योजनाओं के बारे में बताएं।" },
 	{ id: "47", question: "पशुपालन के लिए लोन या सब्सिडी कैसे मिल सकती है?" },
 	{ id: "48", question: "मानसून के दौरान पशुओं की देखभाल कैसे करें?" },
+	// Bharat Vistaar farming questions (AMUL-53).
+	{ id: "49", question: "मेरा मृदा स्वास्थ्य कार्ड (सॉइल हेल्थ कार्ड – SHC) कैसे बनवाएं?" },
+	{ id: "50", question: "आज जूनागढ़ के पास वाले यार्ड में मूंगफली का भाव क्या है?" },
+	{ id: "51", question: "मेरी जमीन के लिए कौन सी फसल सबसे उपयुक्त है?" },
+	{ id: "52", question: "मिट्टी में प्राकृतिक रूप से नाइट्रोजन कैसे बढ़ाएं?" },
+	{ id: "53", question: "मिट्टी की उर्वरता बढ़ाने के लिए कौन सा खाद और कितनी मात्रा में डालें?" },
+	{ id: "54", question: "खारी (लवणीय) जमीन में कौन सी फसल ली जा सकती है?" },
+	{ id: "55", question: "ग्रीनहाउस और पॉलीहाउस क्या हैं? इनके फायदे बताएं।" },
+	{ id: "56", question: "ग्रीनहाउस और पॉलीहाउस के लिए सरकार द्वारा दी जाने वाली सहायता के बारे में बताएं।" },
+	{ id: "57", question: "रासायनिक खाद की जगह जैविक (ऑर्गेनिक) खाद कैसे इस्तेमाल करें? इससे क्या फायदा होता है?" },
+	{ id: "58", question: "कम पानी में ज्यादा फसल कैसे लें?" },
+	{ id: "59", question: "मूंगफली की बुवाई का सही समय कब है?" },
+	{ id: "60", question: "अगले हफ्ते बारिश की संभावना है या नहीं?" },
+	{ id: "61", question: "फूलगोभी आणंद के पास किस यार्ड में मिलती है?" },
+	{ id: "62", question: "मेरे इलाके की नजदीकी मंडी/यार्ड में आज गेहूं का भाव क्या है?" },
+	{ id: "63", question: "प्रधानमंत्री फसल बीमा योजना के तहत दावा कैसे करें?" },
+	{ id: "64", question: "किसान क्रेडिट कार्ड के लिए आवेदन कैसे करें?" },
+	{ id: "65", question: "प्रधानमंत्री कृषि सिंचाई योजना का लाभ कैसे मिलेगा?" },
+	{ id: "66", question: "कृषि यंत्रीकरण योजना के तहत सब्सिडी कैसे मिलेगी?" },
+	{ id: "67", question: "जैविक तरीके से कीट नियंत्रण कैसे करें?" },
+	{ id: "68", question: "गाय आधारित जैविक खेती करने के क्या लाभ हैं?" },
 ];
 
 // Keep Marathi on English FAQs for now; Hindi now has dedicated localized FAQs.
