@@ -3,6 +3,8 @@ import type { ChatMessage, TextMessage } from "@/components/screens-component/ch
 
 import { fetchSuggestions, type Suggestion } from "@/components/screens-component/chat-screen/api/suggestions-api";
 import apiService from "@/lib/api-service";
+import { environment } from "@/lib/config/environment";
+import { resolveChatPersona, type ChatPersona } from "@/lib/chat-persona";
 import * as telemetry from "@/lib/telemetry";
 import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
@@ -52,6 +54,8 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	persona: ChatPersona;
+	setPersona: (persona: ChatPersona) => void;
 	initializeSession: (user: any) => void;
 	sendText: (text: string, language: string) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -251,6 +255,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isTranscribing: false,
 	isFetchingSuggestions: false,
 	sessionId: null,
+	persona: "farmer",
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -263,7 +268,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		if (typeof sessionStorage !== "undefined") {
 			sessionStorage.removeItem(ANONYMOUS_BOOTSTRAP_SESSION_KEY);
 		}
-		set({ sessionId: sid });
+		const persona = resolveChatPersona(
+			user?.userType ?? user?.user_type ?? user?.user_metadata?.user_type,
+			environment.doctorPersonaSelectorEnabled,
+		);
+		set({ sessionId: sid, persona });
 		apiService.setSessionId(sid);
 		try {
 			telemetry.startTelemetry(sid, { 
@@ -284,6 +293,26 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     },
 
 	setDraft: (value) => set(() => ({ draft: value })),
+
+	setPersona: (persona) => {
+		// Only the flagged-on build has a selector to call this; ignore anything
+		// else so the persona cannot be switched on a build that hides it.
+		if (!environment.doctorPersonaSelectorEnabled) return;
+		if (get().persona === persona) return;
+		const sid = uuidv4();
+		set({
+			persona,
+			sessionId: sid,
+			messages: [],
+			draft: "",
+			suggestions: [],
+			isAssistantTyping: false,
+			isListening: false,
+			isTranscribing: false,
+			isFetchingSuggestions: false,
+		});
+		apiService.setSessionId(sid);
+	},
 
 	fetchLocation: (t) => {
 		if (navigator.geolocation) {
@@ -336,12 +365,14 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isAssistantTyping: true
 		}));
 
-		const { sessionId } = get();
+		const { sessionId, persona } = get();
 		const currentSession = sessionId || uuidv4();
 		if (!sessionId) {
 			set({ sessionId: currentSession });
 			apiService.setSessionId(currentSession);
 		}
+		const isTurnStale = () =>
+			get().sessionId !== currentSession || get().persona !== persona;
 
 		telemetry.markServerRequestStart(questionId);
 		try {
@@ -362,6 +393,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				language, // source
 				language, // target
 				(chunk) => {
+					if (isTurnStale()) return;
 					// Check for inline suggestions tag from backend
 					const combined = streamingText + chunk;
 					const sugStart = combined.indexOf("__SUGGESTIONS__");
@@ -401,8 +433,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							};
 						}
 					});
-				}
+				},
+				environment.doctorPersonaSelectorEnabled ? persona : undefined,
 			);
+			if (isTurnStale()) return;
 
 			set((state) => {
 				const lastMsg = state.messages[state.messages.length - 1];
@@ -422,7 +456,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const parsedInlineSuggestions = Array.isArray(inlineSuggestions) ? inlineSuggestions : [];
 			if (parsedInlineSuggestions.length > 0) {
 				set({ suggestions: parsedInlineSuggestions.map((q: string) => ({ id: uuidv4(), text: q, label: q })) });
-			} else {
+			} else if (persona === "farmer") {
 				// Abort retries early if a new turn started (bounds the worst-case
 				// retry tail and prevents stale suggestions overwriting a newer turn).
 				const isStale = () =>
@@ -438,6 +472,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			// set({ toast: { message: "Response received", type: "success" } });
 
 		} catch (error: any) {
+			if (isTurnStale()) return;
 			console.error("Error sending text:", error);
 			set({ isAssistantTyping: false });
 			

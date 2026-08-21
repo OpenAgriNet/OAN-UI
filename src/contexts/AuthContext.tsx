@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import { jwtVerify, importSPKI, JWTPayload } from 'jose';
 import apiService from '../lib/api-service';
 import { useAuthStore } from '../hooks/store/auth';
+import { normalizeChatPersona, type ChatPersona } from '../lib/chat-persona';
 // import { setTelemetryUserData } from '../lib/telemetry';
 
 // Constants
@@ -24,6 +25,7 @@ export interface User {
   email: string;
   mobile: string;
   is_guest_user?: boolean;
+  userType: ChatPersona;
   farmerSummary?: {
     farmerName?: string;
     societyName?: string;
@@ -178,6 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     
     // Extract guest user flag
     const is_guest_user = (payload as any)?.is_guest_user === true;
+    const userType = normalizeChatPersona((payload as any)?.user_type);
 
     // Extract farmer summary from JWT (embedded at webview-url time)
     const farmerSummary = (payload as any)?.farmer_summary as User['farmerSummary'] | undefined;
@@ -196,6 +199,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email: email,
       mobile: mobile,
       is_guest_user: is_guest_user,
+      userType,
       farmerSummary: farmerSummary,
     });
 
@@ -242,6 +246,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const exp = payload.exp || Math.floor(Date.now() / 1000) + JWT_EXPIRY_DAYS * 86400;
     const farmerSummary = (payload as any)?.farmer_summary as { farmerName?: string } | undefined;
     const displayName = farmerSummary?.farmerName || (payload.name as string) || undefined;
+    const userType = normalizeChatPersona((payload as any)?.user_type);
     useAuthStore.getState().setSession({
       access_token: token,
       refresh_token: '',
@@ -252,6 +257,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         name: displayName,
         username: displayName,
         is_guest_user: false,
+        user_type: userType,
+        user_metadata: { user_type: userType },
       },
     });
   };
@@ -390,4 +397,4 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-} 
+}

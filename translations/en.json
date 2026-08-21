@@ -394,9 +394,6 @@
   ],
   "settingsPage": {
     "title": "Settings",
-    "appearance": "Appearance",
-    "lightMode": "Light mode",
-    "darkMode": "Dark mode",
     "helpAndSupport": "Help & Support",
     "faq": "Frequently Asked Questions (FAQs)"
   },

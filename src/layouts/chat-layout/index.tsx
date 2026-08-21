@@ -11,6 +11,7 @@ import { ProfileDialog } from "@/components/screens-component/profile/profile-di
 import { FarmerAlert } from "@/components/screens-component/chat-screen/components/farmer-alert";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserProfile } from "@/hooks/apis/profile";
+import { environment } from "@/lib/config/environment";
 
 const OPEN_FAQ_PANEL_EVENT = "open-faq-panel";
 
@@ -31,6 +32,8 @@ function ChatLayout() {
 	const toastData = useChatStore((s) => s.toast);
 	const setToast = useChatStore((s) => s.setToast);
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
+	const persona = useChatStore((s) => s.persona);
+	const setPersona = useChatStore((s) => s.setPersona);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
@@ -45,6 +48,7 @@ function ChatLayout() {
 
 	// Determine alert state
 	const showWarningAlert =
+		persona === "farmer" &&
 		!isAnonymous &&
 		profileData &&
 		(profileData.status === "error" || profileData.status === "not_found");
@@ -73,7 +77,7 @@ function ChatLayout() {
 				/>
 			)}
 			<ChatHeader
-				title={CHAT_ASSISTANT.name}
+				title={persona === "doctor" ? "Amul Veterinary Assistant" : CHAT_ASSISTANT.name}
 				subtitle="Government assistance and agriculture insights"
 				leftAvatarUrl={CHAT_ASSISTANT.avatar}
 				rightAvatarUrl={CHAT_USER.avatar}
@@ -82,6 +86,9 @@ function ChatLayout() {
 				onOpenProfile={() => setProfileOpen(true)}
 				onOpenSettings={() => setSettingsOpen(true)}
 				onBack={() => window.history.back()}
+				showPersonaSelector={environment.doctorPersonaSelectorEnabled}
+				persona={persona}
+				onPersonaChange={setPersona}
 			/>
 
 			{/* Alert cards */}
