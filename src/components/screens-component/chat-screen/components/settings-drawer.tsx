@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, Moon, Sun, X } from "lucide-react";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
-import { useThemeStore } from "@/hooks/store/theme";
 import { useChatStore } from "@/hooks/store/chat";
-import { THEMES } from "@/components/screens-component/chat-screen/config";
 import { FAQGroups } from "@/components/screens-component/chat-screen/components/faq-groups";
 import {
 	Collapsible,
@@ -22,7 +20,6 @@ interface SettingsDrawerProps {
 }
 
 export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
-	const { theme, setTheme } = useThemeStore();
 	const { t, language } = useLanguage();
 	const sendText = useChatStore((s) => s.sendText);
 	const [faqOpen, setFaqOpen] = useState(true);
@@ -59,36 +56,6 @@ useEffect(() => {
 				</div>
 
 				<div className="p-6 flex-1 overflow-y-auto space-y-8">
-					{/* Theme Toggle */}
-					<div className="space-y-4">
-						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t("settingsPage.appearance")}</h3>
-						<div className="flex gap-4">
-							<button
-								onClick={() => setTheme(THEMES.light)}
-								className={`flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border-2 transition-all ${
-									theme === THEMES.light
-										? "border-[#F65151] text-[#F65151] bg-[#F65151]/5"
-										: "border-gray-100 dark:border-gray-900 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50"
-								}`}
-							>
-								<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#F65151]" : "text-gray-400"}`} />
-								<span className="font-bold text-sm">{t("settingsPage.lightMode")}</span>
-							</button>
-
-							<button
-								onClick={() => setTheme(THEMES.dark)}
-								className={`flex-1 flex items-center justify-center gap-3 h-14 rounded-xl border-2 transition-all ${
-									theme === THEMES.dark
-										? "border-[#F65151] text-[#F65151] bg-[#F65151]/5"
-										: "border-gray-100 dark:border-gray-900 text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50"
-								}`}
-							>
-								<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[#F65151]" : "text-gray-400"}`} />
-								<span className="font-bold text-sm">{t("settingsPage.darkMode")}</span>
-							</button>
-						</div>
-					</div>
-
 					{/* FAQ Section */}
 					<div className="space-y-4">
 						<h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t("settingsPage.helpAndSupport")}</h3>
