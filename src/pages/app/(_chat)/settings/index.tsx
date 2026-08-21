@@ -1,9 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, ChevronDown, ChevronUp, Moon, Sun } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useThemeStore } from "@/hooks/store/theme";
 import { useChatStore } from "@/hooks/store/chat";
-import { THEMES } from "@/components/screens-component/chat-screen/config";
 import { FAQGroups } from "@/components/screens-component/chat-screen/components/faq-groups";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useState } from "react";
@@ -15,7 +13,6 @@ import {
 
 export default function SettingsPage() {
 	const navigate = useNavigate();
-	const { theme, setTheme } = useThemeStore();
 	const { t, language } = useLanguage();
 	const sendText = useChatStore((s) => s.sendText);
 	const [faqOpen, setFaqOpen] = useState(true);
@@ -43,38 +40,6 @@ export default function SettingsPage() {
 			</div>
 
 			<div className="p-5 flex-1 overflow-y-auto space-y-6">
-				{/* Appearance Section */}
-				<div>
-					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
-						{t("settingsPage.appearance")}
-					</h2>
-					<div className="flex gap-4">
-					<button
-						onClick={() => setTheme(THEMES.light)}
-						className={`flex-1 flex items-center justify-center gap-2 h-14 rounded-xl border-2 transition-all ${
-							theme === THEMES.light
-								? "border-[#00a651] text-[#00a651] bg-white dark:bg-gray-900"
-								: "border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950"
-						}`}
-					>
-						<Sun className={`h-5 w-5 ${theme === THEMES.light ? "text-[#00a651]" : "text-gray-400 dark:text-gray-500"}`} />
-						<span className="font-semibold text-sm">{t("settingsPage.lightMode")}</span>
-					</button>
-
-					<button
-						onClick={() => setTheme(THEMES.dark)}
-						className={`flex-1 flex items-center justify-center gap-2 h-14 rounded-xl border-2 transition-all ${
-							theme === THEMES.dark
-								? "border-[#00a651] text-[#00a651] bg-white dark:bg-gray-900"
-								: "border-gray-200 dark:border-gray-800 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-950"
-						}`}
-					>
-						<Moon className={`h-5 w-5 ${theme === THEMES.dark ? "text-[#00a651]" : "text-gray-400 dark:text-gray-500"}`} />
-						<span className="font-semibold text-sm">{t("settingsPage.darkMode")}</span>
-					</button>
-					</div>
-				</div>
-
 				{/* Help & Support Section */}
 				<div>
 					<h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">

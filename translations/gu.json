@@ -50,9 +50,6 @@
   },
   "settingsPage": {
     "title": "સેટિંગ્સ",
-    "appearance": "દેખાવ",
-    "lightMode": "લાઇટ મોડ",
-    "darkMode": "ડાર્ક મોડ",
     "helpAndSupport": "મદદ અને આધાર",
     "faq": "વારંવાર પૂછાતા પ્રશ્નો"
   },
