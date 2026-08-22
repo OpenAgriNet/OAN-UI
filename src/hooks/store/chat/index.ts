@@ -120,8 +120,22 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		? pinned.filter((q): q is string => typeof q === "string")
 		: [];
 	const pinnedLimited = pinnedQuestions.slice(0, PINNED_ACTION_COUNT);
+	// AMUL-62: one question is pinned directly below the FAQ card so it always
+	// lands in slot 4. `t` returns the key itself when neither the active
+	// language nor the English fallback defines it, so reject that rather than
+	// titling a card "fixedQuestion".
+	const fixedRaw = t("fixedQuestion");
+	const fixedQuestion =
+		typeof fixedRaw === "string" && fixedRaw.trim() && fixedRaw !== "fixedQuestion"
+			? fixedRaw.trim()
+			: null;
 	const pinnedSet = new Set(pinnedLimited);
-	const randomCount = Math.max(0, QUICK_ACTION_COUNT - pinnedLimited.length - 1);
+	// Keep it out of the random pool so slot 5 can never duplicate slot 4.
+	if (fixedQuestion) pinnedSet.add(fixedQuestion);
+	const randomCount = Math.max(
+		0,
+		QUICK_ACTION_COUNT - pinnedLimited.length - 1 - (fixedQuestion ? 1 : 0)
+	);
 	const faqAction: QuickAction = {
 		id: String(pinnedLimited.length + 1),
 		title: String(t("moreUsefulQuestions")),
@@ -131,13 +145,22 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		kind: "open_faq_panel"
 	};
 	const pinnedActions = pinnedLimited.map(toQuickAction);
+	// Rendered after faqAction, so its id continues from the FAQ card's.
+	const fixedActions = fixedQuestion
+		? [toQuickAction(fixedQuestion, pinnedLimited.length + 1)]
+		: [];
 
 	const staticQuestions = t("questions");
 	if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
 		const pool = staticQuestions.filter((q) => typeof q === "string" && !pinnedSet.has(q));
 		const randomQuestions = shuffle(pool).slice(0, randomCount)
-			.map((question, index) => toQuickAction(question, pinnedActions.length + 1 + index));
-		return [...pinnedActions, faqAction, ...randomQuestions].slice(0, QUICK_ACTION_COUNT);
+			.map((question, index) =>
+				toQuickAction(question, pinnedActions.length + 1 + fixedActions.length + index)
+			);
+		return [...pinnedActions, faqAction, ...fixedActions, ...randomQuestions].slice(
+			0,
+			QUICK_ACTION_COUNT
+		);
 	}
 
 	const VARS = {
@@ -187,9 +210,12 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 
 	const normalizedTemplateActions = templateActions.map((action, index) => ({
 		...action,
-		id: String(pinnedActions.length + 2 + index)
+		id: String(pinnedActions.length + 2 + fixedActions.length + index)
 	}));
-	return [...pinnedActions, faqAction, ...normalizedTemplateActions].slice(0, QUICK_ACTION_COUNT);
+	return [...pinnedActions, faqAction, ...fixedActions, ...normalizedTemplateActions].slice(
+		0,
+		QUICK_ACTION_COUNT
+	);
 }
 
 
