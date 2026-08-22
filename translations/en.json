@@ -1,5 +1,5 @@
 {
-  "welcome": "I am Sarlaben. You can ask me any question about animal husbandry. \n Call or WhatsApp me right now at 08035453545.",
+  "welcome": "I am Sarlaben. You can ask me any question about animal husbandry and farming. \n Call or WhatsApp me right now at 08035453545.",
   "inputPlaceholder": "Ask your question...",
   "chatMicHint": "Tap the microphone button to ask your question",
   "startRecording": "Start recording",
@@ -13,6 +13,7 @@
     "What should be done to increase milk production?"
   ],
   "moreUsefulQuestions": "More Useful Questions",
+  "fixedQuestion": "Tell me the price of tomatoes at my nearest APMC yard.",
   "questions": [
     "How much milk did I pour today & yesterday in Rs. and Ltrs?",
     "What is my total earning and deductions in previous & current month?",
