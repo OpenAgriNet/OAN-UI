@@ -10,6 +10,7 @@ import { randomPick, shuffle, filterVariableValues } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
+import { parseChatWire, type ChatArtifact } from "@/lib/chat-artifacts";
 
 import enData from "../../../../translations/en.json";
 import guData from "../../../../translations/gu.json";
@@ -411,7 +412,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		}
 
 		try {
+			let wireText = "";
 			let streamingText = "";
+			let streamedArtifacts: ChatArtifact[] = [];
 			let inlineSuggestions: string[] | null = null;
 			const _response = await apiService.sendUserQuery(
 				trimmed,
@@ -420,28 +423,11 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 				language, // target
 				(chunk) => {
 					if (isTurnStale()) return;
-					// Check for inline suggestions tag from backend
-					const combined = streamingText + chunk;
-					const sugStart = combined.indexOf("__SUGGESTIONS__");
-					if (sugStart !== -1) {
-						const sugEnd = combined.indexOf("__END_SUGGESTIONS__");
-						if (sugEnd !== -1) {
-							// Extract suggestions JSON, strip tag from display text
-							const jsonStr = combined.slice(sugStart + "__SUGGESTIONS__".length, sugEnd);
-							try {
-								inlineSuggestions = JSON.parse(jsonStr);
-							} catch (e) {
-								console.warn("Failed to parse inline suggestions", e);
-							}
-							streamingText = combined.slice(0, sugStart);
-						} else {
-							// Tag started but not ended yet — buffer without updating UI
-							streamingText = combined;
-							return;
-						}
-					} else {
-						streamingText += chunk;
-					}
+					wireText += chunk;
+					const parsed = parseChatWire(wireText);
+					streamingText = parsed.text;
+					streamedArtifacts = parsed.artifacts;
+					if (parsed.suggestions.length > 0) inlineSuggestions = parsed.suggestions;
 
 					set((state) => {
 						const displayBody = normalizeAssistantBodyForDisplay(streamingText);
@@ -450,12 +436,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 							return {
 								messages: [
 									...state.messages.slice(0, -1),
-									{ ...lastMsg, body: displayBody }
+									{ ...lastMsg, body: displayBody, artifacts: streamedArtifacts }
 								]
 							};
 						} else {
 							return {
-								messages: [...state.messages, { ...makeAssistantMessage(displayBody), questionId, questionText: trimmed }]
+								messages: [...state.messages, { ...makeAssistantMessage(displayBody), artifacts: streamedArtifacts, questionId, questionText: trimmed }]
 							};
 						}
 					});
