@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import DOMPurify from "dompurify";
-import { Download, Expand, FileText, X } from "lucide-react";
+import { Download, Expand, FileText, LoaderCircle, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,16 +11,26 @@ import {
 	DialogTitle
 } from "@/components/ui/dialog";
 import type { SoilHealthCardArtifact } from "@/lib/chat-artifacts";
+import {
+	isAllowedShcImageSource,
+	rewriteShcAssetUrlsForPdf,
+	SHC_FRAME_CSP
+} from "@/lib/shc-document";
 
-const FRAME_CSP = [
-	"default-src 'none'",
-	"img-src data: blob:",
-	"style-src 'unsafe-inline'",
-	"font-src data:",
-	"base-uri 'none'",
-	"form-action 'none'",
-	"frame-ancestors 'none'"
-].join("; ");
+const PDF_OPTIONS = {
+	margin: [8, 8, 8, 8] as [number, number, number, number],
+	enableLinks: false,
+	image: { type: "jpeg" as const, quality: 0.98 },
+	html2canvas: {
+		allowTaint: false,
+		backgroundColor: "#ffffff",
+		imageTimeout: 15_000,
+		logging: false,
+		scale: 2,
+		useCORS: true
+	},
+	jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const }
+};
 
 export function buildSafeHtmlDocument(source: string): string {
 	const clean = DOMPurify.sanitize(source, {
@@ -34,17 +44,40 @@ export function buildSafeHtmlDocument(source: string): string {
 			"button",
 			"textarea",
 			"select",
+			"svg",
+			"image",
+			"video",
+			"audio",
+			"source",
 			"link",
 			"meta",
 			"base"
 		],
 		FORBID_ATTR: ["srcset", "formaction"]
 	});
+	const template = window.document.createElement("template");
+	template.innerHTML = clean;
+	for (const image of template.content.querySelectorAll("img[src]")) {
+		if (!isAllowedShcImageSource(image.getAttribute("src") ?? "")) {
+			image.remove();
+		}
+	}
+	// CSS resource URLs and imports would bypass the img[src] allow-list during
+	// local PDF rendering. SHC's required presentation CSS has neither.
+	for (const style of template.content.querySelectorAll("style")) {
+		if (/@import|url\s*\(|\\/i.test(style.textContent ?? "")) style.remove();
+	}
+	for (const element of template.content.querySelectorAll<HTMLElement>("[style]")) {
+		if (/url\s*\(|\\/i.test(element.getAttribute("style") ?? "")) {
+			element.removeAttribute("style");
+		}
+	}
+	const safeContent = template.innerHTML;
 	return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="${FRAME_CSP}">
+<meta http-equiv="Content-Security-Policy" content="${SHC_FRAME_CSP}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 html{color:#17211b;background:#fff;font-family:Arial,"Noto Sans Gujarati",sans-serif;font-size:14px}
@@ -53,8 +86,32 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid #d7ded9;padding
 th{background:#f2f8f4}h1,h2,h3{color:#126333;line-height:1.25}a{color:#126333}
 </style>
 </head>
-<body>${clean}</body>
+<body>${safeContent}</body>
 </html>`;
+}
+
+export async function renderHtmlDocumentToPdf(document: string): Promise<Blob> {
+	// Keep the sizeable renderer out of the initial chat bundle. The sanitized
+	// report is rendered locally; private SHC HTML is never sent to a converter.
+	const { default: html2pdf } = await import("html2pdf.js");
+	// The government asset server returns a non-standard CORS header. Route its
+	// fixed report artwork through the same-origin UI proxy so canvas can include
+	// it in the PDF. The in-app iframe still loads it directly inside its sandbox.
+	const pdfDocument = rewriteShcAssetUrlsForPdf(document);
+	const result = await html2pdf().set(PDF_OPTIONS).from(pdfDocument).outputPdf("blob");
+	if (!(result instanceof Blob)) {
+		throw new Error("PDF renderer did not return a file");
+	}
+	return result;
+}
+
+function saveBlob(blob: Blob, filename: string) {
+	const url = URL.createObjectURL(blob);
+	const anchor = window.document.createElement("a");
+	anchor.href = url;
+	anchor.download = filename;
+	anchor.click();
+	window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function ReportFrame({
@@ -84,16 +141,23 @@ function ReportFrame({
 export function HtmlDocumentArtifact({ artifact }: { artifact: SoilHealthCardArtifact }) {
 	const [expanded, setExpanded] = useState(false);
 	const [visible, setVisible] = useState(true);
+	const [exporting, setExporting] = useState(false);
+	const [exportError, setExportError] = useState<string | null>(null);
 	const safeDocument = useMemo(() => buildSafeHtmlDocument(artifact.content), [artifact.content]);
 
-	const download = () => {
-		const blob = new Blob([safeDocument], { type: "text/html;charset=utf-8" });
-		const url = URL.createObjectURL(blob);
-		const anchor = window.document.createElement("a");
-		anchor.href = url;
-		anchor.download = `soil-health-card-${artifact.cycle}.html`;
-		anchor.click();
-		URL.revokeObjectURL(url);
+	const exportPdf = async () => {
+		if (exporting) return;
+		setExporting(true);
+		setExportError(null);
+		try {
+			const pdf = await renderHtmlDocumentToPdf(safeDocument);
+			saveBlob(pdf, `soil-health-card-${artifact.cycle}.pdf`);
+		} catch (error) {
+			console.error("Failed to export Soil Health Card PDF", error);
+			setExportError("PDF export failed. Please try again.");
+		} finally {
+			setExporting(false);
+		}
 	};
 
 	if (!visible) {
@@ -151,10 +215,15 @@ export function HtmlDocumentArtifact({ artifact }: { artifact: SoilHealthCardArt
 						variant="ghost"
 						size="sm"
 						className="h-8 gap-1.5 text-green-700"
-						onClick={download}
+						onClick={exportPdf}
+						disabled={exporting}
 					>
-						<Download className="h-3.5 w-3.5" />
-						Download
+						{exporting ? (
+							<LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+						) : (
+							<Download className="h-3.5 w-3.5" />
+						)}
+						{exporting ? "Creating PDF" : "Export PDF"}
 					</Button>
 					<Button
 						type="button"
@@ -175,6 +244,11 @@ export function HtmlDocumentArtifact({ artifact }: { artifact: SoilHealthCardArt
 			<div className="p-2">
 				<ReportFrame document={safeDocument} title={`${artifact.title}, cycle ${artifact.cycle}`} />
 			</div>
+			{exportError ? (
+				<p className="px-3 pb-2 text-xs text-red-700" role="alert">
+					{exportError}
+				</p>
+			) : null}
 
 			<Dialog open={expanded} onOpenChange={setExpanded}>
 				<DialogContent className="h-[94vh] max-w-[96vw] grid-rows-[auto_1fr] p-4 sm:max-w-6xl">

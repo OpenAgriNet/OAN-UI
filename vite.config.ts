@@ -23,6 +23,33 @@ const virtualRouteFileChangeReloadPlugin: PluginOption = {
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
 	const devProxyTarget = env.VITE_DEV_PROXY_TARGET;
+	const proxy = {
+		"/shc-assets": {
+			target: "https://soilhealth.dac.gov.in",
+			changeOrigin: true,
+			secure: true,
+			rewrite: (requestPath: string) => {
+				const match = requestPath.match(
+					/^\/shc-assets\/(SHCLogo|green|yellow|orange|red|grey)\.png$/
+				);
+				return match ? `/files/report/${match[1]}.png` : "/__not_allowed__";
+			}
+		},
+		...(devProxyTarget
+			? {
+					"/api": {
+						target: devProxyTarget,
+						changeOrigin: true,
+						secure: true
+					},
+					"/observability-service": {
+						target: devProxyTarget,
+						changeOrigin: true,
+						secure: true
+					}
+				}
+			: {})
+	};
 
 	return {
 		resolve: {
@@ -54,20 +81,7 @@ export default defineConfig(({ mode }) => {
 			port: 3000,
 			// In dev, proxy /api to the real API so you avoid CORS without hardcoding domains.
 			// Set VITE_API_BASE_URL=/api and VITE_DEV_PROXY_TARGET=https://api.prod.amulai.in in .env
-			proxy: devProxyTarget
-				? {
-						"/api": {
-							target: devProxyTarget,
-							changeOrigin: true,
-							secure: true
-						},
-						"/observability-service": {
-							target: devProxyTarget,
-							changeOrigin: true,
-							secure: true
-						}
-					}
-				: undefined
+			proxy
 		}
 	};
 });
