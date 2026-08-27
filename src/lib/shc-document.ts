@@ -14,16 +14,31 @@ const RECOMMENDATION_TABLE_RE =
 	/<table\b(?=[^>]*\bclass\s*=\s*(?:"[^"]*\brecommendations\b[^"]*"|'[^']*\brecommendations\b[^']*'))[^>]*>[\s\S]*?<\/table>/gi;
 const RECOMMENDATION_NOTE_RE = /<span\b[^>]*>\s*(Note:[\s\S]*?)<\/span>/i;
 const FOSTERED_RECOMMENDATION_NOTE_RE =
-	/<span\b[^>]*>\s*(Note:[\s\S]*?)<\/span>(?=\s*<table\b(?=[^>]*\bclass\s*=\s*(?:"[^"]*\brecommendations\b[^"]*"|'[^']*\brecommendations\b[^']*')))/gi;
+	/<span\b[^>]*>\s*(Note:[\s\S]*?)<\/span>\s*(<table\b(?=[^>]*\bclass\s*=\s*(?:"[^"]*\brecommendations\b[^"]*"|'[^']*\brecommendations\b[^']*'))[^>]*>[\s\S]*?<\/table>)/gi;
 const EMPTY_TABLE_BODY_RE = /(<tbody\b[^>]*>)\s*(<\/tbody>)/i;
+const TABLE_HEAD_OPEN_RE = /<thead\b[^>]*>/i;
 
 const SHC_PDF_LAYOUT_STYLE = `<style data-shc-pdf-layout>
 .recommendation-section{display:flow-root!important;text-transform:none!important}
 .recommendation-section>h2{line-height:1.3!important;margin:8px 0 5px!important;text-transform:uppercase!important}
-.shc-pdf-recommendation-note{display:block!important;font:normal normal normal 8px/1.4 Arial,"Noto Sans Gujarati",sans-serif!important;margin:0 0 6px!important;position:static!important;text-transform:none!important}
 table.recommendations{break-inside:avoid!important;margin:0!important;page-break-inside:avoid!important}
 table.recommendations th,table.recommendations td{height:auto!important;line-height:1.3!important;overflow-wrap:break-word!important;position:static!important;white-space:normal!important}
+table.recommendations tr[data-shc-pdf-recommendation-note] th{background:#f2f8f4!important;color:#17211b!important;font:normal normal normal 9px/14px Arial,"Noto Sans Gujarati",sans-serif!important;padding:8px!important;text-align:left!important;text-transform:none!important;white-space:normal!important}
 </style>`;
+
+function recommendationNoteRow(noteContent: string): string {
+	return `<tr data-shc-pdf-recommendation-note>
+<th colspan="4" style="background:#f2f8f4!important;color:#17211b!important;font:normal normal normal 9px/14px Arial,'Noto Sans Gujarati',sans-serif!important;padding:10px 8px!important;text-align:left!important;text-transform:none!important;white-space:normal!important;">${noteContent.trim()}</th>
+</tr>`;
+}
+
+function insertRecommendationNoteRow(table: string, noteContent: string): string {
+	if (table.includes("data-shc-pdf-recommendation-note")) return table;
+	return table.replace(
+		TABLE_HEAD_OPEN_RE,
+		(thead) => `${thead}${recommendationNoteRow(noteContent)}`
+	);
+}
 
 const EMPTY_RECOMMENDATION_ROW = `<tr data-shc-pdf-empty-recommendation>
 <td colspan="4" style="background:#fff;color:#17211b;font-size:8px;line-height:1.4;padding:6px;text-align:left;text-transform:none;">
@@ -67,32 +82,34 @@ export function rewriteShcAssetUrlsForPdf(document: string): string {
  * The current provider report puts its recommendation note directly inside a
  * table between `thead` and `tbody`. That is invalid HTML: browsers repair it
  * using table foster-parenting, while html2canvas can paint the note on top of
- * the header. Move the note into normal flow and make an empty recommendation
- * table explicit instead of leaving a misleading blank body.
+ * the header. Put the note in a real, full-width table row so the renderer must
+ * reserve its height, and make an empty recommendation table explicit instead
+ * of leaving a misleading blank body.
  */
 export function prepareShcDocumentForPdf(document: string): string {
 	const withLocalAssets = rewriteShcAssetUrlsForPdf(document);
-	const withNormalizedRecommendations = withLocalAssets
-		.replace(RECOMMENDATION_TABLE_RE, (table) => {
+	const withFosteredNotesRepaired = withLocalAssets.replace(
+		FOSTERED_RECOMMENDATION_NOTE_RE,
+		(_match, noteContent: string, table: string) => insertRecommendationNoteRow(table, noteContent)
+	);
+	const withNormalizedRecommendations = withFosteredNotesRepaired.replace(
+		RECOMMENDATION_TABLE_RE,
+		(table) => {
 			const note = table.match(RECOMMENDATION_NOTE_RE);
 			const noteContent = note?.[1]?.trim();
 			let normalizedTable = note ? table.replace(note[0], "") : table;
+			if (noteContent) {
+				normalizedTable = insertRecommendationNoteRow(normalizedTable, noteContent);
+			}
 			if (EMPTY_TABLE_BODY_RE.test(normalizedTable)) {
 				normalizedTable = normalizedTable.replace(
 					EMPTY_TABLE_BODY_RE,
 					`$1${EMPTY_RECOMMENDATION_ROW}$2`
 				);
 			}
-			if (!noteContent) return normalizedTable;
-			return `<p class="shc-pdf-recommendation-note">${noteContent}</p>${normalizedTable}`;
-		})
-		// DOMPurify/browser parsing may have already foster-parented the invalid
-		// table child. Normalize that repaired form too.
-		.replace(
-			FOSTERED_RECOMMENDATION_NOTE_RE,
-			(_match, noteContent: string) =>
-				`<p class="shc-pdf-recommendation-note">${noteContent.trim()}</p>`
-		);
+			return normalizedTable;
+		}
+	);
 
 	return withNormalizedRecommendations.replace(/<\/head>/i, `${SHC_PDF_LAYOUT_STYLE}</head>`);
 }

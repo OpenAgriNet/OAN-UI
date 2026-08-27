@@ -38,7 +38,7 @@ describe("Soil Health Card document policy", () => {
 		expect(rewritten).toContain('src="https://example.com/unrelated.png"');
 	});
 
-	it("moves the provider recommendation note outside its table for PDF layout", () => {
+	it("moves the provider recommendation note into a full-width table row", () => {
 		const html = `<!doctype html><html><head></head><body>
 			<div class="recommendation-section">
 				<h2>Recommendation</h2>
@@ -52,8 +52,12 @@ describe("Soil Health Card document policy", () => {
 
 		const prepared = prepareShcDocumentForPdf(html);
 
-		expect(prepared.indexOf("shc-pdf-recommendation-note")).toBeLessThan(
-			prepared.indexOf('<table class="recommendations">')
+		expect(prepared).toContain("<tr data-shc-pdf-recommendation-note>");
+		expect(prepared).toMatch(
+			/<th colspan="4" style="[^"]*padding:10px 8px!important[^"]*">Note: Choose one fertilizer option.<\/th>/
+		);
+		expect(prepared.indexOf("data-shc-pdf-recommendation-note")).toBeLessThan(
+			prepared.indexOf("<th>Crop</th>")
 		);
 		expect(prepared).toContain("No crop-specific fertilizer recommendation is listed");
 		expect(prepared).toContain("data-shc-pdf-layout");
@@ -81,9 +85,7 @@ describe("Soil Health Card document policy", () => {
 
 		const prepared = prepareShcDocumentForPdf(html);
 
-		expect(prepared).toContain(
-			'<p class="shc-pdf-recommendation-note">Note: Choose one option.</p>'
-		);
+		expect(prepared).toMatch(/<th colspan="4" style="[^"]*">Note: Choose one option.<\/th>/);
 		expect(prepared).not.toContain('<span style="text-transform: none">Note:');
 	});
 });
