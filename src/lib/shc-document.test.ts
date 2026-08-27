@@ -53,6 +53,10 @@ describe("Soil Health Card document policy", () => {
 		const prepared = prepareShcDocumentForPdf(html);
 
 		expect(prepared).toContain("<tr data-shc-pdf-recommendation-note>");
+		expect(prepared).toContain("<tr data-shc-pdf-recommendation-heading>");
+		expect(prepared.indexOf("data-shc-pdf-recommendation-heading")).toBeLessThan(
+			prepared.indexOf("data-shc-pdf-recommendation-note")
+		);
 		expect(prepared).toMatch(
 			/<th colspan="4" style="[^"]*padding:10px 8px!important[^"]*">Note: Choose one fertilizer option.<\/th>/
 		);
@@ -61,6 +65,8 @@ describe("Soil Health Card document policy", () => {
 		);
 		expect(prepared).toContain("No crop-specific fertilizer recommendation is listed");
 		expect(prepared).toContain("data-shc-pdf-layout");
+		expect(prepared).toContain(".recommendation-section>h2{display:none!important}");
+		expect(prepared).not.toContain('<h2>Recommendation</h2>');
 		expect(prepared).not.toMatch(/<\/thead>\s*<span[\s\S]*?<tbody>/i);
 	});
 
