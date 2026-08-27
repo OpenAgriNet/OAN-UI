@@ -13,7 +13,7 @@ import {
 import type { SoilHealthCardArtifact } from "@/lib/chat-artifacts";
 import {
 	isAllowedShcImageSource,
-	rewriteShcAssetUrlsForPdf,
+	prepareShcDocumentForPdf,
 	SHC_FRAME_CSP
 } from "@/lib/shc-document";
 
@@ -97,7 +97,7 @@ export async function renderHtmlDocumentToPdf(document: string): Promise<Blob> {
 	// The government asset server returns a non-standard CORS header. Route its
 	// fixed report artwork through the same-origin UI proxy so canvas can include
 	// it in the PDF. The in-app iframe still loads it directly inside its sandbox.
-	const pdfDocument = rewriteShcAssetUrlsForPdf(document);
+	const pdfDocument = prepareShcDocumentForPdf(document);
 	const result = await html2pdf().set(PDF_OPTIONS).from(pdfDocument).outputPdf("blob");
 	if (!(result instanceof Blob)) {
 		throw new Error("PDF renderer did not return a file");
