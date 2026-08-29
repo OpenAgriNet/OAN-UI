@@ -25,6 +25,7 @@ export type CardMessage = MessageBase & {
 	actions?: { id: string; label: string }[];
 	showListenRow?: boolean;
 	isError?: boolean;
+	artifacts?: import("@/lib/chat-artifacts").ChatArtifact[];
 };
 
 export type QuickRepliesMessage = MessageBase & {

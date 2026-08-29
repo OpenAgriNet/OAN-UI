@@ -9,6 +9,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
+import { HtmlDocumentArtifact } from "./html-document-artifact";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
 	const { language } = useLanguage();
@@ -156,6 +157,10 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 								{message.body}
 							</ReactMarkdown>
 						</div>
+
+						{message.artifacts?.map((artifact) => (
+							<HtmlDocumentArtifact key={artifact.id} artifact={artifact} />
+						))}
 
 						{/* Action Chips */}
 						{message.actions?.length ? (
