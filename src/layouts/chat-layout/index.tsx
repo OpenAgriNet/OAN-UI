@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
-import { CHAT_ASSISTANT, CHAT_USER } from "@/components/screens-component/chat-screen/config";
+import { CHAT_ASSISTANT, CHAT_USER, type FAQCategoryId } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -37,6 +37,7 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [faqExpandCategory, setFaqExpandCategory] = useState<FAQCategoryId | undefined>();
 	const [profileOpen, setProfileOpen] = useState(false);
 
 	const { user } = useAuth();
@@ -58,10 +59,20 @@ function ChatLayout() {
 	}, [fetchLocation, t]);
 
 	useEffect(() => {
-		const openFaqPanel = () => setSettingsOpen(true);
+		const openFaqPanel = (event: Event) => {
+			const expandCategory = (event as CustomEvent<{ expandCategory?: FAQCategoryId }>).detail
+				?.expandCategory;
+			setFaqExpandCategory(expandCategory);
+			setSettingsOpen(true);
+		};
 		window.addEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
 		return () => window.removeEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
 	}, []);
+
+	const handleSettingsOpenChange = (open: boolean) => {
+		setSettingsOpen(open);
+		if (!open) setFaqExpandCategory(undefined);
+	};
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
@@ -84,7 +95,10 @@ function ChatLayout() {
 				rightLabel={displayName}
 				onClearChat={clearChat}
 				onOpenProfile={() => setProfileOpen(true)}
-				onOpenSettings={() => setSettingsOpen(true)}
+				onOpenSettings={() => {
+					setFaqExpandCategory(undefined);
+					setSettingsOpen(true);
+				}}
 				onBack={() => window.history.back()}
 				showPersonaSelector={environment.doctorPersonaSelectorEnabled}
 				persona={persona}
@@ -138,7 +152,8 @@ function ChatLayout() {
 
 			<SettingsDrawer
 				open={settingsOpen}
-				onOpenChange={setSettingsOpen}
+				onOpenChange={handleSettingsOpenChange}
+				faqExpandCategory={faqExpandCategory}
 			/>
 
 			<ProfileDialog

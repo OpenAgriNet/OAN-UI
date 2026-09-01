@@ -24,7 +24,9 @@ export function ChatShell() {
 	const showWelcome = messages.length === 0;
 	const handleWelcomeAction = (action: QuickAction) => {
 		if (action.kind === "open_faq_panel") {
-			window.dispatchEvent(new CustomEvent("open-faq-panel"));
+			window.dispatchEvent(new CustomEvent("open-faq-panel", {
+				detail: { expandCategory: action.faqExpandCategory },
+			}));
 			return;
 		}
 		sendQuickAction(action.id, language);
