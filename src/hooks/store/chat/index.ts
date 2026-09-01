@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { parseChatWire, type ChatArtifact } from "@/lib/chat-artifacts";
-import type { FAQCategoryId, FAQPanelFilter, FAQPanelScope } from "@/components/screens-component/chat-screen/config";
+import type { FAQCategoryId } from "@/components/screens-component/chat-screen/config";
 
 import enData from "../../../../translations/en.json";
 import guData from "../../../../translations/gu.json";
@@ -44,8 +44,7 @@ export type QuickAction = {
 	icon: "tractor" | "wheat" | "cow" | "cloud";
 	prompt: string;
 	kind: "ask" | "open_faq_panel";
-	faqScope?: FAQPanelScope;
-	faqCategory?: FAQCategoryId;
+	faqExpandCategory?: FAQCategoryId;
 };
 
 type ChatStore = {
@@ -145,7 +144,7 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 			icon: "cow",
 			prompt: "",
 			kind: "open_faq_panel",
-			faqCategory: "breeding",
+			faqExpandCategory: "breeding",
 		},
 		{
 			id: String(pinnedLimited.length + 2),
@@ -154,7 +153,7 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 			icon: "cloud",
 			prompt: "",
 			kind: "open_faq_panel",
-			faqScope: "farming",
+			faqExpandCategory: "agri",
 		},
 	];
 	const randomCount = Math.max(

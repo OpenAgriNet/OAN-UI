@@ -1,6 +1,6 @@
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
-import { CHAT_ASSISTANT, CHAT_USER, type FAQPanelFilter } from "@/components/screens-component/chat-screen/config";
+import { CHAT_ASSISTANT, CHAT_USER, type FAQCategoryId } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -37,7 +37,7 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
-	const [faqFilter, setFaqFilter] = useState<FAQPanelFilter | undefined>();
+	const [faqExpandCategory, setFaqExpandCategory] = useState<FAQCategoryId | undefined>();
 	const [profileOpen, setProfileOpen] = useState(false);
 
 	const { user } = useAuth();
@@ -60,8 +60,9 @@ function ChatLayout() {
 
 	useEffect(() => {
 		const openFaqPanel = (event: Event) => {
-			const detail = (event as CustomEvent<FAQPanelFilter>).detail;
-			setFaqFilter(detail?.category || detail?.scope ? detail : undefined);
+			const expandCategory = (event as CustomEvent<{ expandCategory?: FAQCategoryId }>).detail
+				?.expandCategory;
+			setFaqExpandCategory(expandCategory);
 			setSettingsOpen(true);
 		};
 		window.addEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
@@ -70,7 +71,7 @@ function ChatLayout() {
 
 	const handleSettingsOpenChange = (open: boolean) => {
 		setSettingsOpen(open);
-		if (!open) setFaqFilter(undefined);
+		if (!open) setFaqExpandCategory(undefined);
 	};
 
 	const handleCloseToast = useCallback(() => {
@@ -95,7 +96,7 @@ function ChatLayout() {
 				onClearChat={clearChat}
 				onOpenProfile={() => setProfileOpen(true)}
 				onOpenSettings={() => {
-					setFaqFilter(undefined);
+					setFaqExpandCategory(undefined);
 					setSettingsOpen(true);
 				}}
 				onBack={() => window.history.back()}
@@ -152,7 +153,7 @@ function ChatLayout() {
 			<SettingsDrawer
 				open={settingsOpen}
 				onOpenChange={handleSettingsOpenChange}
-				faqFilter={faqFilter}
+				faqExpandCategory={faqExpandCategory}
 			/>
 
 			<ProfileDialog
