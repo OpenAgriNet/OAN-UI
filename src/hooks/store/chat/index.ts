@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useAuthStore } from "@/hooks/store/auth";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { parseChatWire, type ChatArtifact } from "@/lib/chat-artifacts";
+import type { FAQCategoryId, FAQPanelFilter, FAQPanelScope } from "@/components/screens-component/chat-screen/config";
 
 import enData from "../../../../translations/en.json";
 import guData from "../../../../translations/gu.json";
@@ -43,6 +44,8 @@ export type QuickAction = {
 	icon: "tractor" | "wheat" | "cow" | "cloud" | "schemes";
 	prompt: string;
 	kind: "ask" | "open_faq_panel";
+	faqScope?: FAQPanelScope;
+	faqCategory?: FAQCategoryId;
 };
 
 type ChatStore = {
@@ -84,7 +87,7 @@ type ChatStore = {
 };
 /* eslint-enable no-unused-vars */
 
-// AMUL-72: nine questions plus the "more useful questions" card.
+// AMUL-72: keep ten landing questions while splitting the FAQ launcher in two.
 const QUICK_ACTION_COUNT = 10;
 const PINNED_ACTION_COUNT = 2;
 
@@ -133,7 +136,7 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		? pinned.filter((q): q is string => typeof q === "string")
 		: [];
 	const pinnedLimited = pinnedQuestions.slice(0, PINNED_ACTION_COUNT);
-	// AMUL-62/AMUL-72: these questions are pinned directly below the FAQ card so
+	// AMUL-62/AMUL-72: these questions are pinned directly below the FAQ cards so
 	// they always land in the same slots. `t` returns the key itself when neither
 	// the active language nor the English fallback defines it, so the array check
 	// also rejects a missing key.
@@ -146,22 +149,34 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 	const pinnedSet = new Set(pinnedLimited);
 	// Keep them out of the random pool so the tail slots can never duplicate them.
 	fixedQuestions.forEach((q) => pinnedSet.add(q));
+	const faqActions: QuickAction[] = [
+		{
+			id: String(pinnedLimited.length + 1),
+			title: String(t("moreUsefulQuestionsLivestock")),
+			description: "",
+			icon: "cow",
+			prompt: "",
+			kind: "open_faq_panel",
+			faqCategory: "breeding",
+		},
+		{
+			id: String(pinnedLimited.length + 2),
+			title: String(t("moreUsefulQuestionsFarming")),
+			description: "",
+			icon: "cloud",
+			prompt: "",
+			kind: "open_faq_panel",
+			faqScope: "farming",
+		},
+	];
 	const randomCount = Math.max(
 		0,
-		QUICK_ACTION_COUNT - pinnedLimited.length - 1 - fixedQuestions.length
+		QUICK_ACTION_COUNT - pinnedLimited.length - faqActions.length - fixedQuestions.length
 	);
-	const faqAction: QuickAction = {
-		id: String(pinnedLimited.length + 1),
-		title: String(t("moreUsefulQuestions")),
-		description: "",
-		icon: "cloud",
-		prompt: "",
-		kind: "open_faq_panel"
-	};
 	const pinnedActions = pinnedLimited.map(toQuickAction);
-	// Rendered after faqAction, so their ids continue from the FAQ card's.
+	// Rendered after the two FAQ cards, so their ids continue from farming's.
 	const fixedActions = fixedQuestions.map((question, index) =>
-		toQuickAction(question, pinnedLimited.length + 1 + index)
+		toQuickAction(question, pinnedLimited.length + faqActions.length + index)
 	);
 
 	const staticQuestions = t("questions");
@@ -169,9 +184,9 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		const pool = staticQuestions.filter((q) => typeof q === "string" && !pinnedSet.has(q));
 		const randomQuestions = shuffle(pool).slice(0, randomCount)
 			.map((question, index) =>
-				toQuickAction(question, pinnedActions.length + 1 + fixedActions.length + index)
+				toQuickAction(question, pinnedActions.length + faqActions.length + fixedActions.length + index)
 			);
-		return [...pinnedActions, faqAction, ...fixedActions, ...randomQuestions].slice(
+		return [...pinnedActions, ...faqActions, ...fixedActions, ...randomQuestions].slice(
 			0,
 			QUICK_ACTION_COUNT
 		);
@@ -224,9 +239,9 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 
 	const normalizedTemplateActions = templateActions.map((action, index) => ({
 		...action,
-		id: String(pinnedActions.length + 2 + fixedActions.length + index)
+		id: String(pinnedActions.length + faqActions.length + fixedActions.length + index + 1)
 	}));
-	return [...pinnedActions, faqAction, ...fixedActions, ...normalizedTemplateActions].slice(
+	return [...pinnedActions, ...faqActions, ...fixedActions, ...normalizedTemplateActions].slice(
 		0,
 		QUICK_ACTION_COUNT
 	);

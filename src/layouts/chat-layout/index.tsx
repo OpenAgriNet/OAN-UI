@@ -2,7 +2,7 @@ import { List, MessagesSquare } from "lucide-react";
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
 import { Button } from "@/components/ui/button";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
-import { CHAT_ASSISTANT, CHAT_USER } from "@/components/screens-component/chat-screen/config";
+import { CHAT_ASSISTANT, CHAT_USER, type FAQPanelFilter } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -42,6 +42,7 @@ function ChatLayout() {
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
+	const [faqFilter, setFaqFilter] = useState<FAQPanelFilter | undefined>();
 	const [profileOpen, setProfileOpen] = useState(false);
 
 	const { user } = useAuth();
@@ -83,10 +84,19 @@ function ChatLayout() {
 	}, [fetchLocation, t]);
 
 	useEffect(() => {
-		const openFaqPanel = () => setSettingsOpen(true);
+		const openFaqPanel = (event: Event) => {
+			const detail = (event as CustomEvent<FAQPanelFilter>).detail;
+			setFaqFilter(detail?.category || detail?.scope ? detail : undefined);
+			setSettingsOpen(true);
+		};
 		window.addEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
 		return () => window.removeEventListener(OPEN_FAQ_PANEL_EVENT, openFaqPanel);
 	}, []);
+
+	const handleSettingsOpenChange = (open: boolean) => {
+		setSettingsOpen(open);
+		if (!open) setFaqFilter(undefined);
+	};
 
 	const handleCloseToast = useCallback(() => {
 		setToast(null);
@@ -109,7 +119,10 @@ function ChatLayout() {
 				rightLabel={displayName}
 				onClearChat={clearChat}
 				onOpenProfile={() => setProfileOpen(true)}
-				onOpenSettings={() => setSettingsOpen(true)}
+				onOpenSettings={() => {
+					setFaqFilter(undefined);
+					setSettingsOpen(true);
+				}}
 				onBack={hasConversation && !showQuestionList ? openQuestionList : undefined}
 				backDisabled={isAssistantTyping}
 				showPersonaSelector={environment.doctorPersonaSelectorEnabled}
@@ -165,7 +178,8 @@ function ChatLayout() {
 
 			<SettingsDrawer
 				open={settingsOpen}
-				onOpenChange={setSettingsOpen}
+				onOpenChange={handleSettingsOpenChange}
+				faqFilter={faqFilter}
 			/>
 
 			<ProfileDialog

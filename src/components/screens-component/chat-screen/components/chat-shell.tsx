@@ -33,7 +33,12 @@ export function ChatShell() {
 	const showWelcome = messages.length === 0 || showQuestionList;
 	const handleWelcomeAction = (action: QuickAction) => {
 		if (action.kind === "open_faq_panel") {
-			window.dispatchEvent(new CustomEvent("open-faq-panel"));
+			window.dispatchEvent(new CustomEvent("open-faq-panel", {
+				detail: {
+					scope: action.faqScope,
+					category: action.faqCategory,
+				},
+			}));
 			return;
 		}
 		sendQuickAction(action.id, language);
