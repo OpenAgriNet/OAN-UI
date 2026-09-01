@@ -75,16 +75,6 @@ export const FAQ_CATEGORY_ORDER: FAQCategoryId[] = [
 	"agri",
 ];
 
-// Landing-page FAQ cards open the drawer filtered to one of these scopes.
-// Livestock is every category except farming/crops (agri). Header/settings
-// still show the full list by omitting the scope.
-export type FAQPanelScope = "livestock" | "farming";
-
-export const FAQ_SCOPE_CATEGORIES: Record<FAQPanelScope, FAQCategoryId[]> = {
-	livestock: ["myData", "breeding", "health", "feed", "calf", "management"],
-	farming: ["agri"],
-};
-
 export const FAQ_CATEGORY_LABELS: Record<FAQCategoryId, Record<LanguageCode, string>> = {
 	myData: {
 		en: "My Milk & Records",
@@ -168,24 +158,10 @@ export type FAQGroup = {
 // Groups the language's FAQ list into the categories above, preserving the
 // original order within each. Categories with no items are dropped, and any
 // item whose id is missing from the map falls back to "management" so a newly
-// added question is still reachable. Pass `scope` for livestock/farming groups,
-// or `category` for a single section (e.g. breeding from landing card 3).
-export type FAQPanelFilter = {
-	scope?: FAQPanelScope;
-	category?: FAQCategoryId;
-};
-
-export const getFAQGroups = (
-	language: LanguageCode,
-	filter?: FAQPanelFilter
-): FAQGroup[] => {
+// added question is still reachable.
+export const getFAQGroups = (language: LanguageCode): FAQGroup[] => {
 	const items = FAQ_DATA[language] || FAQ_DATA[DEFAULT_LANGUAGE];
-	const categoryIds = filter?.category
-		? [filter.category]
-		: filter?.scope
-			? FAQ_SCOPE_CATEGORIES[filter.scope]
-			: FAQ_CATEGORY_ORDER;
-	return categoryIds.map((id) => ({
+	return FAQ_CATEGORY_ORDER.map((id) => ({
 		id,
 		label: FAQ_CATEGORY_LABELS[id][language] || FAQ_CATEGORY_LABELS[id].en,
 		items: items.filter((item) => (FAQ_CATEGORY_BY_ID[item.id] ?? "management") === id),

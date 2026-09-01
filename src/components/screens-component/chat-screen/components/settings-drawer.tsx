@@ -4,11 +4,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/hooks/store/chat";
 import { FAQGroups } from "@/components/screens-component/chat-screen/components/faq-groups";
-import {
-	FAQ_CATEGORY_LABELS,
-	type FAQPanelFilter,
-	type LanguageCode,
-} from "@/components/screens-component/chat-screen/config";
+import type { FAQCategoryId } from "@/components/screens-component/chat-screen/config";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -22,23 +18,10 @@ import {
 interface SettingsDrawerProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	faqFilter?: FAQPanelFilter;
+	faqExpandCategory?: FAQCategoryId;
 }
 
-function getFaqSectionTitle(
-	t: (key: string) => string | string[],
-	language: LanguageCode,
-	filter?: FAQPanelFilter
-): string {
-	if (filter?.category) {
-		const labels = FAQ_CATEGORY_LABELS[filter.category];
-		return labels[language] || labels.en;
-	}
-	if (filter?.scope === "farming") return String(t("moreUsefulQuestionsFarming"));
-	return String(t("settingsPage.faq"));
-}
-
-export function SettingsDrawer({ open, onOpenChange, faqFilter }: SettingsDrawerProps) {
+export function SettingsDrawer({ open, onOpenChange, faqExpandCategory }: SettingsDrawerProps) {
 	const { t, language } = useLanguage();
 	const sendText = useChatStore((s) => s.sendText);
 	const [faqOpen, setFaqOpen] = useState(true);
@@ -86,7 +69,7 @@ useEffect(() => {
 							<CollapsibleTrigger asChild>
 								<button className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
 									<span className="font-bold text-base text-gray-900 dark:text-gray-100">
-										{getFaqSectionTitle(t, language, faqFilter)}
+										{t("settingsPage.faq")}
 									</span>
 									{faqOpen ? (
 										<ChevronUp className="h-5 w-5 text-gray-500" />
@@ -98,9 +81,9 @@ useEffect(() => {
 							<CollapsibleContent className="px-5 pb-5">
 								<div className="border-t border-gray-100 dark:border-gray-900 pt-5">
 									<FAQGroups
-										key={`${faqFilter?.category ?? ""}-${faqFilter?.scope ?? "all"}`}
+										key={faqExpandCategory ?? "all"}
 										variant="drawer"
-										filter={faqFilter}
+										initialOpenCategory={faqExpandCategory}
 										onAsk={askQuestion}
 									/>
 								</div>
