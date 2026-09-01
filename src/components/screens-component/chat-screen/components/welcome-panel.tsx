@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CHAT_ASSISTANT } from "../config";
 import { ContactIcon } from "./contact-icon";
@@ -98,9 +99,14 @@ export function WelcomePanel({ onAction, actions, persona = "farmer" }: WelcomeP
 							<div className="text-xl shrink-0">
 								{icon}
 							</div>
-							<span className="text-base font-medium text-gray-900 leading-snug">
+							<span className="flex-1 text-base font-medium text-gray-900 leading-snug">
 								{action.title}
 							</span>
+							{action.kind === "open_faq_panel" && (
+								<span className="shrink-0">
+									<Send className="h-4 w-4 text-[#F65151]" />
+								</span>
+							)}
 						</Button>
 					);
 				})}
