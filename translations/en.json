@@ -13,6 +13,8 @@
     "What should be done to increase milk production?"
   ],
   "moreUsefulQuestions": "More Useful Questions",
+  "moreUsefulQuestionsLivestock": "More useful questions for animal husbandry",
+  "moreUsefulQuestionsFarming": "More useful questions for farming",
   "fixedQuestion": "Tell me the price of tomatoes at my nearest APMC yard.",
   "questions": [
     "How much milk did I pour today & yesterday in Rs. and Ltrs?",

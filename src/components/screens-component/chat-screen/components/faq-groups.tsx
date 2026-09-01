@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Send } from "lucide-react";
 import { useLanguage } from "@/components/LanguageProvider";
-import { getFAQGroups } from "@/components/screens-component/chat-screen/config";
+import { getFAQGroups, type FAQPanelFilter } from "@/components/screens-component/chat-screen/config";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -15,14 +15,18 @@ interface FAQGroupsProps {
 	// The drawer and the standalone settings page carry slightly different type
 	// weights and border shades; keep both rather than restyle either surface.
 	variant?: "drawer" | "page";
+	// Landing cards pass a scope or category; header/settings omit both.
+	filter?: FAQPanelFilter;
 }
 
 // The 48 FAQ prompts split into six themed boxes, each collapsed by default so
 // the list is scannable. Only one category is open at a time.
-export function FAQGroups({ onAsk, variant = "page" }: FAQGroupsProps) {
+export function FAQGroups({ onAsk, variant = "page", filter }: FAQGroupsProps) {
 	const { language } = useLanguage();
-	const groups = getFAQGroups(language);
-	const [openId, setOpenId] = useState<string | null>(null);
+	const groups = getFAQGroups(language, filter);
+	const [openId, setOpenId] = useState<string | null>(
+		groups.length === 1 ? (groups[0]?.id ?? null) : null
+	);
 
 	const isDrawer = variant === "drawer";
 
