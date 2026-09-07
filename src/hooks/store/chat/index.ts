@@ -40,7 +40,7 @@ export type QuickAction = {
 	id: string;
 	title: string;
 	description: string;
-	icon: "tractor" | "wheat" | "cow" | "cloud";
+	icon: "tractor" | "wheat" | "cow" | "cloud" | "schemes";
 	prompt: string;
 	kind: "ask" | "open_faq_panel";
 };
@@ -80,17 +80,25 @@ type ChatStore = {
 };
 /* eslint-enable no-unused-vars */
 
-const QUICK_ACTION_COUNT = 5;
+// AMUL-72: nine questions plus the "more useful questions" card.
+const QUICK_ACTION_COUNT = 10;
 const PINNED_ACTION_COUNT = 2;
 
+// Ordered: the first entry with a keyword in the question wins, so the money
+// and scheme rows are matched before the broad "પશુ"/"દૂધ" cow keywords that
+// the AMUL-72 questions also contain.
 const KEYWORD_ICON_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
 	{
-		icon: "cow",
-		keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves", "production", "ઉત્પાદન"]
+		icon: "schemes",
+		keywords: ["યોજન", "સહાય", "योजना", "सहाय", "scheme", "subsidy", "yojana"]
 	},
 	{
 		icon: "wheat",
-		keywords: ["પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
+		keywords: ["કમાણી", "આવક", "બોનસ", "ભાવ", "એપીએમસી", "कमाई", "आय", "बोनस", "भाव", "apmc", "earning", "income", "bonus", "price", "rate", "પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
+	},
+	{
+		icon: "cow",
+		keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves", "production", "ઉત્પાદન"]
 	},
 	{
 		icon: "cloud",
@@ -121,21 +129,22 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		? pinned.filter((q): q is string => typeof q === "string")
 		: [];
 	const pinnedLimited = pinnedQuestions.slice(0, PINNED_ACTION_COUNT);
-	// AMUL-62: one question is pinned directly below the FAQ card so it always
-	// lands in slot 4. `t` returns the key itself when neither the active
-	// language nor the English fallback defines it, so reject that rather than
-	// titling a card "fixedQuestion".
-	const fixedRaw = t("fixedQuestion");
-	const fixedQuestion =
-		typeof fixedRaw === "string" && fixedRaw.trim() && fixedRaw !== "fixedQuestion"
-			? fixedRaw.trim()
-			: null;
+	// AMUL-62/AMUL-72: these questions are pinned directly below the FAQ card so
+	// they always land in the same slots. `t` returns the key itself when neither
+	// the active language nor the English fallback defines it, so the array check
+	// also rejects a missing key.
+	const fixedRaw = t("fixedQuestions");
+	const fixedQuestions = Array.isArray(fixedRaw)
+		? fixedRaw
+			.filter((q): q is string => typeof q === "string" && q.trim().length > 0)
+			.map((q) => q.trim())
+		: [];
 	const pinnedSet = new Set(pinnedLimited);
-	// Keep it out of the random pool so slot 5 can never duplicate slot 4.
-	if (fixedQuestion) pinnedSet.add(fixedQuestion);
+	// Keep them out of the random pool so the tail slots can never duplicate them.
+	fixedQuestions.forEach((q) => pinnedSet.add(q));
 	const randomCount = Math.max(
 		0,
-		QUICK_ACTION_COUNT - pinnedLimited.length - 1 - (fixedQuestion ? 1 : 0)
+		QUICK_ACTION_COUNT - pinnedLimited.length - 1 - fixedQuestions.length
 	);
 	const faqAction: QuickAction = {
 		id: String(pinnedLimited.length + 1),
@@ -146,10 +155,10 @@ function buildQuickActions(t: (key: string, params?: Record<string, string>) => 
 		kind: "open_faq_panel"
 	};
 	const pinnedActions = pinnedLimited.map(toQuickAction);
-	// Rendered after faqAction, so its id continues from the FAQ card's.
-	const fixedActions = fixedQuestion
-		? [toQuickAction(fixedQuestion, pinnedLimited.length + 1)]
-		: [];
+	// Rendered after faqAction, so their ids continue from the FAQ card's.
+	const fixedActions = fixedQuestions.map((question, index) =>
+		toQuickAction(question, pinnedLimited.length + 1 + index)
+	);
 
 	const staticQuestions = t("questions");
 	if (Array.isArray(staticQuestions) && staticQuestions.length >= 3) {
