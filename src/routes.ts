@@ -6,6 +6,9 @@ export const routes = rootRoute("root.tsx", [
 	// Landing/redirect logic
 	index("index.tsx"),
 
+	// Compact public surface for approved partner embeds.
+	route("/embed/$hostId", "public/widget/routes.ts"),
+
 	// Public auth-only pages guarded by redirect middleware
 	middleware("restrict-login-signup.tsx", [
 		route("/login", "auth/login/routes.ts"),
