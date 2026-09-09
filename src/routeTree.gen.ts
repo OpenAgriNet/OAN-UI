@@ -17,6 +17,7 @@ import { Route as error500RoutesRouteImport } from './pages/error/500/routes'
 import { Route as error404RoutesRouteImport } from './pages/error/404/routes'
 import { Route as error403RoutesRouteImport } from './pages/error/403/routes'
 import { Route as indexRouteImport } from './pages/index'
+import { Route as publicWidgetRoutesRouteImport } from './pages/public/widget/routes'
 import { Route as publicPrivacyPolicyRoutesRouteImport } from './pages/public/privacy-policy/routes'
 import { Route as authLoginRoutesRouteImport } from './pages/auth/login/routes'
 import { Route as authForgotPasswordRoutesRouteImport } from './pages/auth/forgot-password/routes'
@@ -62,6 +63,11 @@ const error403RoutesRoute = error403RoutesRouteImport.update({
 const indexRoute = indexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicWidgetRoutesRoute = publicWidgetRoutesRouteImport.update({
+  id: '/embed/$hostId',
+  path: '/embed/$hostId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const publicPrivacyPolicyRoutesRoute =
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof authForgotPasswordRoutesRoute
   '/login': typeof authLoginRoutesRoute
   '/privacy-policy': typeof publicPrivacyPolicyRoutesRoute
+  '/embed/$hostId': typeof publicWidgetRoutesRoute
   '/profile': typeof app_authenticatedProfileRoutesRoute
   '/chat': typeof app_chatChatScreenRoutesRoute
   '/settings': typeof app_chatSettingsRoutesRoute
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof authForgotPasswordRoutesRoute
   '/login': typeof authLoginRoutesRoute
   '/privacy-policy': typeof publicPrivacyPolicyRoutesRoute
+  '/embed/$hostId': typeof publicWidgetRoutesRoute
   '/profile': typeof app_authenticatedProfileRoutesRoute
   '/chat': typeof app_chatChatScreenRoutesRoute
   '/settings': typeof app_chatSettingsRoutesRoute
@@ -148,6 +156,7 @@ export interface FileRoutesById {
   '/_restrict-login-signup/forgot-password': typeof authForgotPasswordRoutesRoute
   '/_restrict-login-signup/login': typeof authLoginRoutesRoute
   '/_restrict-login-signup/privacy-policy': typeof publicPrivacyPolicyRoutesRoute
+  '/embed/$hostId': typeof publicWidgetRoutesRoute
   '/_authenticate/_app-layout/profile': typeof app_authenticatedProfileRoutesRoute
   '/_public-chat/_chat-layout/chat': typeof app_chatChatScreenRoutesRoute
   '/_public-chat/_chat-layout/settings': typeof app_chatSettingsRoutesRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/privacy-policy'
+    | '/embed/$hostId'
     | '/profile'
     | '/chat'
     | '/settings'
@@ -176,6 +186,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/privacy-policy'
+    | '/embed/$hostId'
     | '/profile'
     | '/chat'
     | '/settings'
@@ -194,6 +205,7 @@ export interface FileRouteTypes {
     | '/_restrict-login-signup/forgot-password'
     | '/_restrict-login-signup/login'
     | '/_restrict-login-signup/privacy-policy'
+    | '/embed/$hostId'
     | '/_authenticate/_app-layout/profile'
     | '/_public-chat/_chat-layout/chat'
     | '/_public-chat/_chat-layout/settings'
@@ -208,6 +220,7 @@ export interface RootRouteChildren {
   middlewaresPublicChatRoute: typeof middlewaresPublicChatRouteWithChildren
   middlewaresRestrictLoginSignupRoute: typeof middlewaresRestrictLoginSignupRouteWithChildren
   errorDefaultErrorRoutesRoute: typeof errorDefaultErrorRoutesRoute
+  publicWidgetRoutesRoute: typeof publicWidgetRoutesRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof indexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/embed/$hostId': {
+      id: '/embed/$hostId'
+      path: '/embed/$hostId'
+      fullPath: '/embed/$hostId'
+      preLoaderRoute: typeof publicWidgetRoutesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_restrict-login-signup/privacy-policy': {
@@ -410,6 +430,7 @@ const rootRouteChildren: RootRouteChildren = {
   middlewaresRestrictLoginSignupRoute:
     middlewaresRestrictLoginSignupRouteWithChildren,
   errorDefaultErrorRoutesRoute: errorDefaultErrorRoutesRoute,
+  publicWidgetRoutesRoute: publicWidgetRoutesRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
