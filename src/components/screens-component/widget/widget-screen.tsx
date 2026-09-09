@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useMemo } from "react";
 
+import langIcon from "@/assets/langIcon.svg";
 import { useLanguage } from "@/components/LanguageProvider";
 import {
 	ChatInput,
 	type ChatInputPayload
 } from "@/components/screens-component/chat-screen/components/chat-input";
+import { LanguageSelectionDropdown } from "@/components/screens-component/chat-screen/components/language-selection-dialog";
 import { MessageList } from "@/components/screens-component/chat-screen/components/message-list";
 import { Toast } from "@/components/screens-component/chat-screen/components/toast";
 import { CHAT_ASSISTANT } from "@/components/screens-component/chat-screen/config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { Loader } from "@/components";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatStore } from "@/hooks/store/chat";
@@ -17,6 +20,8 @@ import { getWidgetHost } from "@/lib/widget-hosts";
 type WidgetScreenProps = {
 	hostId: string;
 };
+
+const WIDGET_LANGUAGE_CODES = ["en", "hi", "gu"] as const;
 
 function WidgetWelcome() {
 	const { t } = useLanguage();
@@ -84,7 +89,7 @@ export function WidgetScreen({ hostId }: WidgetScreenProps) {
 
 	if (!host) {
 		return (
-			<main className="flex h-svh items-center justify-center bg-background p-6 text-center">
+			<main className="layout-gradient flex h-svh items-center justify-center p-6 text-center">
 				<div className="flex max-w-xs flex-col gap-2">
 					<h1 className="text-base font-semibold text-foreground">Widget unavailable</h1>
 					<p className="text-sm text-muted-foreground">This Amul AI host ID is not registered.</p>
@@ -95,7 +100,7 @@ export function WidgetScreen({ hostId }: WidgetScreenProps) {
 
 	if (isAuthLoading) {
 		return (
-			<div className="flex h-svh items-center justify-center bg-background">
+			<div className="layout-gradient flex h-svh items-center justify-center">
 				<Loader />
 			</div>
 		);
@@ -111,12 +116,25 @@ export function WidgetScreen({ hostId }: WidgetScreenProps) {
 
 	return (
 		<div
-			className="flex h-svh w-full flex-col overflow-hidden bg-background text-foreground"
+			className="layout-gradient relative flex h-svh w-full flex-col overflow-hidden text-foreground"
 			data-widget-host-id={host.hostId}
 		>
 			{toastData ? (
 				<Toast message={toastData.message} type={toastData.type} onClose={closeToast} />
 			) : null}
+
+			<div className="absolute top-3 left-3">
+				<LanguageSelectionDropdown align="start" languageCodes={[...WIDGET_LANGUAGE_CODES]}>
+					<Button
+						variant="outline"
+						size="icon-sm"
+						aria-label={t("selectLanguage") as string}
+						title={t("selectLanguage") as string}
+					>
+						<img src={langIcon} alt="" aria-hidden="true" width={18} height={18} />
+					</Button>
+				</LanguageSelectionDropdown>
+			</div>
 
 			<main className="min-h-0 flex-1">
 				{messages.length === 0 ? (
