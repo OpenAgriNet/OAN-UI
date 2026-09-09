@@ -1,5 +1,6 @@
 import { ChevronDown, MessageCircleQuestionMark, User } from "lucide-react";
 import langIcon from "@/assets/langIcon.svg";
+import amulText from "@/assets/amulText.svg";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useLanguage } from "@/components/LanguageProvider";
@@ -63,6 +64,10 @@ export function ChatHeader(props: ChatHeaderProps) {
 	const currentLanguage = (LANGUAGES as any)[language] || LANGUAGES.en;
 
 	const showProfile = rightLabel && rightLabel !== "Anonymous User" && rightLabel !== "";
+	// AMUL-72: the pulsating logo and the "Amul AI" wordmark used to sit above
+	// the welcome text; they live here now so the welcome screen can lead with
+	// the question list. The doctor persona keeps its own plain-text title.
+	const isDoctor = persona === "doctor";
 
 	return (
 		<header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-950 border-b border-[#E3E3E3] dark:border-gray-800 transition-colors duration-300">
@@ -70,11 +75,19 @@ export function ChatHeader(props: ChatHeaderProps) {
 			<div className="flex h-16 items-center justify-between px-4">
 				{/* Left: Logo & Title */}
 				<div className="flex items-center gap-2 min-w-0">
-					<Avatar className="h-9 w-9 shrink-0 shadow-none">
-						<AvatarImage src={leftAvatarUrl} alt={title} />
-						<AvatarFallback>{title.slice(0, 2).toUpperCase()}</AvatarFallback>
-					</Avatar>
-					<span className="text-xl sm:text-lg font-bold text-foreground truncate">{title}</span>
+					<div className="relative shrink-0 animate-smart-pulsate">
+						<Avatar className="h-9 w-9 shrink-0 shadow-none">
+							<AvatarImage src={leftAvatarUrl} alt={title} className="object-contain" />
+							<AvatarFallback className="bg-transparent font-bold text-[#F65151]">
+								{title.slice(0, 1).toUpperCase()}
+							</AvatarFallback>
+						</Avatar>
+					</div>
+					{isDoctor ? (
+						<span className="text-xl sm:text-lg font-bold text-foreground truncate">{title}</span>
+					) : (
+						<img src={amulText} alt={title} className="h-6 w-auto shrink-0 object-contain sm:h-7" />
+					)}
 				</div>
 
 				{/* Right: User Profile + Language + Settings */}
