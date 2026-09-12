@@ -36,6 +36,8 @@ export type ChatInputProps = {
 	isAssistantTyping?: boolean;
 	suggestions?: Suggestion[];
 	onSuggestionClick?: (text: string) => void;
+	// Rendered above the suggestion chips (AMUL-78: the question-list pill).
+	topAction?: React.ReactNode;
 };
 
 export function ChatInput({
@@ -53,7 +55,8 @@ export function ChatInput({
 	isTranscribing,
 	isAssistantTyping,
 	suggestions = [],
-	onSuggestionClick
+	onSuggestionClick,
+	topAction
 }: ChatInputProps) {
 	const [files, setFiles] = useState<File[]>([]);
 	const [voice, setVoice] = useState<Blob | null>(null);
@@ -228,6 +231,7 @@ export function ChatInput({
 	return (
 		<div className="bg-transparent backdrop-blur supports-[backdrop-filter]:bg-transparent border-t border-[#E3E3E3]">
 			<div className="mx-auto w-full max-w-3xl px-2 pt-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] sm:px-4">
+				{topAction}
 				<Suggestions
 					suggestions={suggestions}
 					onSuggestionClick={(text) => onSuggestionClick?.(text)}
