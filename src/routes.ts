@@ -29,6 +29,8 @@ export const routes = rootRoute("root.tsx", [
 	]),
 
 	// Error surfaces
+	route("/callback", "public/callback/routes.ts"),
+	route("/callback/$callbackPath", "public/callback-wildcard/routes.ts"),
 	route("/403", "error/403/routes.ts"),
 	route("/404", "error/404/routes.ts"),
 	route("/500", "error/500/routes.ts"),
