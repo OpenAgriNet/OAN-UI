@@ -35,6 +35,9 @@ function AgriStackCallbackWildcardPage() {
     const encodedPath = encodeURIComponent(callbackPath);
     const backendUrl = `/api/callback/${encodedPath}${queryString ? `?${queryString}` : ""}`;
 
+    console.info("[callback-wildcard] received", payload);
+    console.info("[callback-wildcard] forwarding", { backendUrl });
+
     const run = async () => {
       setForwardStatus("sending");
       setForwardError("");
@@ -55,10 +58,14 @@ function AgriStackCallbackWildcardPage() {
           throw new Error(`Backend callback failed with status ${response.status}`);
         }
 
+        const responseData = await response.json();
+        console.info("[callback-wildcard] backend forward success", responseData);
+
         setForwardStatus("success");
       } catch (error) {
         setForwardStatus("error");
         setForwardError(error instanceof Error ? error.message : "Unknown forwarding error");
+        console.error("[callback-wildcard] backend forward error", error);
       } finally {
         const redirectSearch = url.search || "";
         sessionStorage.setItem("oan:callback-no-back", "1");

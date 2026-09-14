@@ -31,6 +31,9 @@ function AgriStackCallbackPage() {
     const queryString = url.searchParams.toString();
     const backendUrl = `/api/callback${queryString ? `?${queryString}` : ""}`;
 
+    console.info("[callback] received", payload);
+    console.info("[callback] forwarding", { backendUrl });
+
     const run = async () => {
       setForwardStatus("sending");
       setForwardError("");
@@ -51,10 +54,14 @@ function AgriStackCallbackPage() {
           throw new Error(`Backend callback failed with status ${response.status}`);
         }
 
+        const responseData = await response.json();
+        console.info("[callback] backend forward success", responseData);
+
         setForwardStatus("success");
       } catch (error) {
         setForwardStatus("error");
         setForwardError(error instanceof Error ? error.message : "Unknown forwarding error");
+        console.error("[callback] backend forward error", error);
       } finally {
         const redirectSearch = url.search || "";
         sessionStorage.setItem("oan:callback-no-back", "1");
