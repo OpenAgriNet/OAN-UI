@@ -16,6 +16,8 @@ import { Route as middlewaresAuthenticateRouteImport } from './pages/middlewares
 import { Route as error500RoutesRouteImport } from './pages/error/500/routes'
 import { Route as error404RoutesRouteImport } from './pages/error/404/routes'
 import { Route as error403RoutesRouteImport } from './pages/error/403/routes'
+import { Route as publicCallbackRoutesRouteImport } from './pages/public/callback/routes'
+import { Route as publicCallbackWildcardRoutesRouteImport } from './pages/public/callback-wildcard/routes'
 import { Route as indexRouteImport } from './pages/index'
 import { Route as publicPrivacyPolicyRoutesRouteImport } from './pages/public/privacy-policy/routes'
 import { Route as authLoginRoutesRouteImport } from './pages/auth/login/routes'
@@ -59,6 +61,17 @@ const error403RoutesRoute = error403RoutesRouteImport.update({
   path: '/403',
   getParentRoute: () => rootRouteImport,
 } as any)
+const publicCallbackRoutesRoute = publicCallbackRoutesRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicCallbackWildcardRoutesRoute =
+  publicCallbackWildcardRoutesRouteImport.update({
+    id: '/callback/$callbackPath',
+    path: '/callback/$callbackPath',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const indexRoute = indexRouteImport.update({
   id: '/',
   path: '/',
@@ -109,6 +122,8 @@ const app_authenticatedProfileRoutesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof indexRoute
+  '/callback': typeof publicCallbackRoutesRoute
+  '/callback/$callbackPath': typeof publicCallbackWildcardRoutesRoute
   '/403': typeof error403RoutesRoute
   '/404': typeof error404RoutesRoute
   '/500': typeof error500RoutesRoute
@@ -122,6 +137,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof indexRoute
+  '/callback': typeof publicCallbackRoutesRoute
+  '/callback/$callbackPath': typeof publicCallbackWildcardRoutesRoute
   '/403': typeof error403RoutesRoute
   '/404': typeof error404RoutesRoute
   '/500': typeof error500RoutesRoute
@@ -136,6 +153,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof indexRoute
+  '/callback': typeof publicCallbackRoutesRoute
+  '/callback/$callbackPath': typeof publicCallbackWildcardRoutesRoute
   '/403': typeof error403RoutesRoute
   '/404': typeof error404RoutesRoute
   '/500': typeof error500RoutesRoute
@@ -156,6 +175,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/callback'
+    | '/callback/$callbackPath'
     | '/403'
     | '/404'
     | '/500'
@@ -169,6 +190,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/callback'
+    | '/callback/$callbackPath'
     | '/403'
     | '/404'
     | '/500'
@@ -182,6 +205,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/callback'
+    | '/callback/$callbackPath'
     | '/403'
     | '/404'
     | '/500'
@@ -201,6 +226,8 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   indexRoute: typeof indexRoute
+  publicCallbackRoutesRoute: typeof publicCallbackRoutesRoute
+  publicCallbackWildcardRoutesRoute: typeof publicCallbackWildcardRoutesRoute
   error403RoutesRoute: typeof error403RoutesRoute
   error404RoutesRoute: typeof error404RoutesRoute
   error500RoutesRoute: typeof error500RoutesRoute
@@ -259,6 +286,20 @@ declare module '@tanstack/react-router' {
       path: '/403'
       fullPath: '/403'
       preLoaderRoute: typeof error403RoutesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callback': {
+      id: '/callback'
+      path: '/callback'
+      fullPath: '/callback'
+      preLoaderRoute: typeof publicCallbackRoutesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callback/$callbackPath': {
+      id: '/callback/$callbackPath'
+      path: '/callback/$callbackPath'
+      fullPath: '/callback/$callbackPath'
+      preLoaderRoute: typeof publicCallbackWildcardRoutesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -402,6 +443,8 @@ const middlewaresRestrictLoginSignupRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   indexRoute: indexRoute,
+  publicCallbackRoutesRoute: publicCallbackRoutesRoute,
+  publicCallbackWildcardRoutesRoute: publicCallbackWildcardRoutesRoute,
   error403RoutesRoute: error403RoutesRoute,
   error404RoutesRoute: error404RoutesRoute,
   error500RoutesRoute: error500RoutesRoute,
