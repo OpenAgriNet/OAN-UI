@@ -1,3 +1,4 @@
+import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ContactIcon } from "./contact-icon";
 import { QuickAction } from "@/hooks/store/chat";
@@ -93,6 +94,11 @@ export function WelcomePanel({ onAction, actions, persona = "farmer" }: WelcomeP
 							<span className="flex-1 text-sm font-medium text-gray-900 leading-tight sm:text-base sm:leading-snug">
 								{action.title}
 							</span>
+							{action.kind === "open_faq_panel" && (
+								<span className="shrink-0">
+									<Send className="h-4 w-4 text-[#F65151]" />
+								</span>
+							)}
 						</Button>
 					);
 				})}

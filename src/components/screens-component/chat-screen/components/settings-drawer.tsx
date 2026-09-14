@@ -4,6 +4,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { useChatStore } from "@/hooks/store/chat";
 import { FAQGroups } from "@/components/screens-component/chat-screen/components/faq-groups";
+import type { FAQCategoryId } from "@/components/screens-component/chat-screen/config";
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -17,9 +18,10 @@ import {
 interface SettingsDrawerProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	faqExpandCategory?: FAQCategoryId;
 }
 
-export function SettingsDrawer({ open, onOpenChange }: SettingsDrawerProps) {
+export function SettingsDrawer({ open, onOpenChange, faqExpandCategory }: SettingsDrawerProps) {
 	const { t, language } = useLanguage();
 	const sendText = useChatStore((s) => s.sendText);
 	const [faqOpen, setFaqOpen] = useState(true);
@@ -78,7 +80,12 @@ useEffect(() => {
 							</CollapsibleTrigger>
 							<CollapsibleContent className="px-5 pb-5">
 								<div className="border-t border-gray-100 dark:border-gray-900 pt-5">
-									<FAQGroups variant="drawer" onAsk={askQuestion} />
+									<FAQGroups
+										key={faqExpandCategory ?? "all"}
+										variant="drawer"
+										initialOpenCategory={faqExpandCategory}
+										onAsk={askQuestion}
+									/>
 								</div>
 							</CollapsibleContent>
 						</Collapsible>
