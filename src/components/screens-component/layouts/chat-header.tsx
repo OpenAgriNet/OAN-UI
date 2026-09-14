@@ -1,4 +1,4 @@
-import { ChevronDown, MessageCircleQuestionMark, User } from "lucide-react";
+import { ChevronDown, ChevronLeft, MessageCircleQuestionMark, User } from "lucide-react";
 import langIcon from "@/assets/langIcon.svg";
 import amulText from "@/assets/amulText.svg";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ export type ChatHeaderProps = {
 	rightAvatarUrl?: string;
 	rightLabel?: string;
 	onBack?: () => void;
+	backDisabled?: boolean;
 	onOpenProfile?: () => void;
 	onClearChat?: () => void;
 	onOpenSettings?: () => void;
@@ -58,9 +59,11 @@ export function ChatHeader(props: ChatHeaderProps) {
 		showPersonaSelector = false,
 		persona = "farmer",
 		onPersonaChange,
+		onBack,
+		backDisabled = false,
 	} = props;
 
-	const { language } = useLanguage();
+	const { language, t } = useLanguage();
 	const currentLanguage = (LANGUAGES as any)[language] || LANGUAGES.en;
 
 	const showProfile = rightLabel && rightLabel !== "Anonymous User" && rightLabel !== "";
@@ -73,8 +76,24 @@ export function ChatHeader(props: ChatHeaderProps) {
 		<header className="sticky top-0 z-50 w-full bg-white dark:bg-gray-950 border-b border-[#E3E3E3] dark:border-gray-800 transition-colors duration-300">
 			<div className="mx-auto max-w-3xl">
 			<div className="flex h-16 items-center justify-between px-4">
-				{/* Left: Logo & Title */}
+				{/* Left: Back (AMUL-78) + Logo & Title */}
 				<div className="flex items-center gap-2 min-w-0">
+					{/* AMUL-78: only passed while a conversation is on screen; returns to
+					    the welcome question list without clearing the chat. size-[44px]
+					    rather than size-11 because the root font size is 90%. */}
+					{onBack && (
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							aria-label={t("backToQuestions") as string}
+							disabled={backDisabled}
+							onClick={onBack}
+							className="size-[44px] shrink-0 rounded-full border border-[#F65151]/50 bg-[#FFE2E2]/60 text-[#F65151] cursor-pointer hover:bg-[#FFE2E2] hover:text-[#D93B3B]"
+						>
+							<ChevronLeft className="size-6" strokeWidth={2.25} />
+						</Button>
+					)}
 					<div className="relative shrink-0 animate-smart-pulsate">
 						<Avatar className="h-9 w-9 shrink-0 shadow-none">
 							<AvatarImage src={leftAvatarUrl} alt={title} className="object-contain" />
