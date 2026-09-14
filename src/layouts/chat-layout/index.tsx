@@ -1,4 +1,6 @@
+import { List, MessagesSquare } from "lucide-react";
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
+import { Button } from "@/components/ui/button";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
 import { CHAT_ASSISTANT, CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
@@ -34,6 +36,9 @@ function ChatLayout() {
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
 	const persona = useChatStore((s) => s.persona);
 	const setPersona = useChatStore((s) => s.setPersona);
+	const showQuestionList = useChatStore((s) => s.showQuestionList);
+	const openQuestionList = useChatStore((s) => s.openQuestionList);
+	const closeQuestionList = useChatStore((s) => s.closeQuestionList);
 
 	const { language, t } = useLanguage();
 	const [settingsOpen, setSettingsOpen] = useState(false);
@@ -45,6 +50,26 @@ function ChatLayout() {
 	const isAnonymous = !user || user.is_guest_user || !user.mobile;
 	const farmerName = profileData?.farmer?.farmers?.[0]?.farmerName;
 	const displayName = isAnonymous ? "" : farmerName || user?.username || "Profile";
+
+	// AMUL-78: once a farmer has a conversation, the header back button and the
+	// pill above the input switch between it and the welcome question list
+	// without clearing it. The doctor persona has no question list.
+	const hasConversation = messages.length > 0 && persona !== "doctor";
+	const isOnQuestionList = hasConversation && showQuestionList;
+	const questionListToggle = hasConversation ? (
+		<div className="mb-2 flex justify-center">
+			<Button
+				type="button"
+				variant="outline"
+				disabled={isAssistantTyping}
+				onClick={isOnQuestionList ? closeQuestionList : openQuestionList}
+				className="min-h-[44px] gap-2 rounded-full border-[#F65151] bg-white px-5 text-sm font-semibold text-[#F65151] cursor-pointer hover:bg-[#FFE2E2] hover:text-[#D93B3B]"
+			>
+				{isOnQuestionList ? <MessagesSquare className="size-5" /> : <List className="size-5" />}
+				{(isOnQuestionList ? t("backToConversation") : t("seeMoreQuestions")) as string}
+			</Button>
+		</div>
+	) : null;
 
 	// Determine alert state
 	const showWarningAlert =
@@ -85,7 +110,8 @@ function ChatLayout() {
 				onClearChat={clearChat}
 				onOpenProfile={() => setProfileOpen(true)}
 				onOpenSettings={() => setSettingsOpen(true)}
-				onBack={() => window.history.back()}
+				onBack={hasConversation && !showQuestionList ? openQuestionList : undefined}
+				backDisabled={isAssistantTyping}
 				showPersonaSelector={environment.doctorPersonaSelectorEnabled}
 				persona={persona}
 				onPersonaChange={setPersona}
@@ -129,8 +155,9 @@ function ChatLayout() {
 					isListening={isListening}
 					isTranscribing={isTranscribing}
 					isAssistantTyping={isAssistantTyping}
-					suggestions={suggestions}
+					suggestions={isOnQuestionList ? [] : suggestions}
 					onSuggestionClick={(text: string) => sendText(text, language)}
+					topAction={questionListToggle}
 					micHint={messages.length > 0 ? undefined : (t("chatMicHint") as string)}
 					footerNote={t("disclaimerText") as string}
 				/>

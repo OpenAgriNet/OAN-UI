@@ -60,8 +60,13 @@ export function WelcomePanel({ onAction, actions, persona = "farmer" }: WelcomeP
 				</div>
 			</div>
 
-			{/* Cards List (Full width as per image 1) */}
-			{!isDoctor && <div className="flex w-full flex-col gap-1 max-w-2xl sm:gap-2">
+			{/* Cards List (Full width as per image 1). AMUL-78: on phones the cards sit
+			    12px apart and are at least 44px tall so each one is an easy tap target,
+			    even though the list may now scroll; the sm: classes keep desktop unchanged.
+			    Pixel values on purpose: the root font size is 90% (config.json
+			    theme.fontSizes.base = 0.9rem), so rem steps such as gap-3 / min-h-11
+			    render at 10.8px / 39.6px and fall short of the spec. */}
+			{!isDoctor && <div className="flex w-full flex-col gap-[12px] max-w-2xl sm:gap-2">
 				{actions.map((action) => {
 					// Map icons from store to emojis for the UI match
 					const iconMap: Record<string, string> = {
@@ -79,7 +84,7 @@ export function WelcomePanel({ onAction, actions, persona = "farmer" }: WelcomeP
 						<Button
 							key={action.id}
 							variant="ghost"
-							className="h-auto w-full cursor-pointer justify-start gap-2.5 rounded-xl border border-gray-100 bg-white px-3 py-1 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left sm:gap-4 sm:rounded-2xl sm:px-6 sm:py-2"
+							className="h-auto min-h-[44px] w-full cursor-pointer justify-start gap-2.5 rounded-xl border border-gray-100 bg-white px-3 py-2.5 shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-200 whitespace-normal text-left sm:min-h-0 sm:gap-4 sm:rounded-2xl sm:px-6 sm:py-2"
 							onClick={() => onAction(action)}
 						>
 							<div className="text-base leading-none shrink-0 sm:text-xl">

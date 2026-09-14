@@ -66,6 +66,10 @@ type ChatStore = {
 	startListening: () => void;
 	stopListening: () => void;
 	clearChat: () => void;
+	// AMUL-78: welcome question list shown over an existing conversation.
+	showQuestionList: boolean;
+	openQuestionList: () => void;
+	closeQuestionList: () => void;
 	setIsTranscribing: (value: boolean) => void;
 	setSuggestions: (suggestions: Suggestion[]) => void;
 	clearSuggestions: () => void;
@@ -292,6 +296,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isFetchingSuggestions: false,
 	sessionId: null,
 	persona: "farmer",
+	showQuestionList: false,
 	toast: null,
 
 	setToast: (toast) => set({ toast }),
@@ -346,6 +351,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isListening: false,
 			isTranscribing: false,
 			isFetchingSuggestions: false,
+			showQuestionList: false,
 		});
 		apiService.setSessionId(sid);
 	},
@@ -383,8 +389,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isAssistantTyping: false,
 			isListening: false,
 			isTranscribing: false,
-			isFetchingSuggestions: false
+			isFetchingSuggestions: false,
+			showQuestionList: false
 		})),
+
+	// AMUL-78: brings the welcome question list back without clearing the
+	// conversation; sendText closes it again, so a picked question continues the
+	// same chat. Not while an answer is streaming: sendText does not guard against
+	// a second turn starting mid-stream.
+	openQuestionList: () => {
+		if (get().isAssistantTyping) return;
+		set({ showQuestionList: true });
+	},
+	closeQuestionList: () => set({ showQuestionList: false }),
 
 	sendText: async (text, language) => {
 		const trimmed = text.trim();
@@ -398,7 +415,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			messages: [...state.messages, userMessage],
 			draft: "",
 			suggestions: [],
-			isAssistantTyping: true
+			isAssistantTyping: true,
+			showQuestionList: false
 		}));
 
 		const { sessionId, persona } = get();
