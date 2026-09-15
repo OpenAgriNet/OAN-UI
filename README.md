@@ -79,7 +79,10 @@ Use these routes for browser redirects from AgriStack:
 - Base callback route: `/callback?from=agristack`
 - Callback route with suffix segment: `/callback/<segment>?from=agristack`
 
-The callback page displays all incoming query params so integration payloads can be validated quickly.
+The callback page reads incoming query params and checks backend callback status using:
+- `GET /api/callback/status?from=agristack&callbackSessionId=<id>`
+
+Then it redirects the user to `/chat`.
 
 ---
 

@@ -31,41 +31,44 @@ function AgriStackCallbackWildcardPage() {
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    const queryString = url.searchParams.toString();
-    const encodedPath = encodeURIComponent(callbackPath);
-    const backendUrl = `/api/callback/${encodedPath}${queryString ? `?${queryString}` : ""}`;
+    const callbackSessionId = url.searchParams.get("callbackSessionId");
+    const statusParams = new URLSearchParams();
+    if (url.searchParams.get("from")) {
+      statusParams.set("from", url.searchParams.get("from") as string);
+    }
+    if (callbackSessionId) {
+      statusParams.set("callbackSessionId", callbackSessionId);
+    }
+    const backendStatusUrl = `/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
 
     console.info("[callback-wildcard] received", payload);
-    console.info("[callback-wildcard] forwarding", { backendUrl });
+    console.info("[callback-wildcard] checking backend status", { backendStatusUrl });
 
     const run = async () => {
       setForwardStatus("sending");
       setForwardError("");
 
       try {
-        const response = await fetch(backendUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            source: "frontend_callback_wildcard",
-            payload,
-          }),
-        });
+        if (!callbackSessionId) {
+          console.warn("[callback-wildcard] callbackSessionId missing, skipping backend status check");
+          setForwardStatus("success");
+          return;
+        }
+
+        const response = await fetch(backendStatusUrl, { method: "GET" });
 
         if (!response.ok) {
-          throw new Error(`Backend callback failed with status ${response.status}`);
+          throw new Error(`Backend status check failed with status ${response.status}`);
         }
 
         const responseData = await response.json();
-        console.info("[callback-wildcard] backend forward success", responseData);
+        console.info("[callback-wildcard] backend status success", responseData);
 
         setForwardStatus("success");
       } catch (error) {
         setForwardStatus("error");
-        setForwardError(error instanceof Error ? error.message : "Unknown forwarding error");
-        console.error("[callback-wildcard] backend forward error", error);
+        setForwardError(error instanceof Error ? error.message : "Unknown status check error");
+        console.error("[callback-wildcard] backend status error", error);
       } finally {
         const redirectSearch = url.search || "";
         sessionStorage.setItem("oan:callback-no-back", "1");
@@ -89,7 +92,7 @@ function AgriStackCallbackWildcardPage() {
           <li><span className="font-medium">from:</span> {payload.from ?? "(not provided)"}</li>
           <li><span className="font-medium">callbackPath:</span> {payload.callbackPath}</li>
           <li><span className="font-medium">path:</span> {payload.fullPath}</li>
-          <li><span className="font-medium">backend forward:</span> {forwardStatus}</li>
+          <li><span className="font-medium">backend status check:</span> {forwardStatus}</li>
           {forwardStatus === "error" && <li><span className="font-medium">error:</span> {forwardError}</li>}
         </ul>
       </section>
