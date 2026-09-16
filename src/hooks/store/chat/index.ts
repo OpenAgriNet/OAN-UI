@@ -15,11 +15,13 @@ import { parseChatWire, type ChatArtifact } from "@/lib/chat-artifacts";
 import enData from "../../../../translations/en.json";
 import guData from "../../../../translations/gu.json";
 import hiData from "../../../../translations/hi.json";
+import bnData from "../../../../translations/bn.json";
 
 const translations: Record<string, any> = {
 	en: enData,
 	gu: guData,
 	hi: hiData,
+	bn: bnData,
 	mr: enData
 };
 
@@ -94,19 +96,19 @@ const PINNED_ACTION_COUNT = 2;
 const KEYWORD_ICON_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }> = [
 	{
 		icon: "schemes",
-		keywords: ["યોજન", "સહાય", "योजना", "सहाय", "scheme", "subsidy", "yojana"]
+		keywords: ["યોજન", "સહાય", "योजना", "सहाय", "প্রকল্প", "যোজনা", "ভর্তুকি", "scheme", "subsidy", "yojana"]
 	},
 	{
 		icon: "wheat",
-		keywords: ["કમાણી", "આવક", "બોનસ", "ભાવ", "એપીએમસી", "कमाई", "आय", "बोनस", "भाव", "apmc", "earning", "income", "bonus", "price", "rate", "પાક", "સજીવ", "crop", "cultivation", "organic", "soil"]
+		keywords: ["કમાણી", "આવક", "બોનસ", "ભાવ", "એપીએમસી", "कमाई", "आय", "बोनस", "भाव", "আয়", "উপার্জন", "বোনাস", "দাম", "apmc", "earning", "income", "bonus", "price", "rate", "પાક", "સજીવ", "ফসল", "জৈব", "crop", "cultivation", "organic", "soil"]
 	},
 	{
 		icon: "cow",
-		keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves", "production", "ઉત્પાદન"]
+		keywords: ["ગાય", "ભેંસ", "પશુ", "દૂધ", "গরু", "মহিষ", "পশু", "দুধ", "বাছুর", "cow", "buffalo", "animal", "milk", "mastitis", "calving", "bred", "pregnant", "yield", "calf", "calves", "production", "ઉત્પાદન"]
 	},
 	{
 		icon: "cloud",
-		keywords: ["હવામાન", "weather", "rain", "forecast"]
+		keywords: ["હવામાન", "আবহাওয়া", "বৃষ্টি", "weather", "rain", "forecast"]
 	}
 ];
 
