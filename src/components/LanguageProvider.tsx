@@ -4,6 +4,7 @@ import hi from '../../translations/hi.json';
 import mr from '../../translations/mr.json';
 import gu from '../../translations/gu.json';
 import bn from '../../translations/bn.json';
+import pa from '../../translations/pa.json';
 import { DEFAULT_LANGUAGE, type LanguageCode } from '@/components/screens-component/chat-screen/config';
 
 interface LanguageContextType {
@@ -16,7 +17,7 @@ interface TranslationObject {
 	[key: string]: string | string[] | TranslationObject;
 }
 
-const translations: Record<LanguageCode, TranslationObject> = { en, hi, mr, gu, bn };
+const translations: Record<LanguageCode, TranslationObject> = { en, hi, mr, gu, bn, pa };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
