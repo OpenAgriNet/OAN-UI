@@ -42,6 +42,7 @@
     { "code": "gu", "name": "ગુજરાતી", "nativeName": "ગુજરાતી", "icon": "अ" },
     { "code": "hi", "name": "हिंदी", "nativeName": "हिन्दी", "icon": "अ" },
     { "code": "bn", "name": "বাংলা", "nativeName": "বাংলা", "icon": "अ" },
+    { "code": "mr", "name": "मराठी", "nativeName": "मराठी", "icon": "अ" },
     { "code": "pa", "name": "ਪੰਜਾਬੀ", "nativeName": "ਪੰਜਾਬੀ", "icon": "अ" }
   ],
   "defaultLanguage": "gu",
