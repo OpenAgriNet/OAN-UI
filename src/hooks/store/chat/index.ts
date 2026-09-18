@@ -111,7 +111,7 @@ const KEYWORD_ICON_MAP: Array<{ icon: QuickAction["icon"]; keywords: string[] }>
 	},
 	{
 		icon: "cloud",
-		keywords: ["હવામાન", "আবহাওয়া", "বৃষ্টি", "हवामान", "पाऊस", "weather", "rain", "forecast"]
+		keywords: ["હવામાન", "मौसम", "আবহাওয়া", "বৃষ্টি", "हवामान", "पाऊस", "weather", "rain", "forecast"]
 	}
 ];
 
