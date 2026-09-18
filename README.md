@@ -74,10 +74,9 @@ bun run build
 
 ## AgriStack frontend callback routes
 
-Use these routes for browser redirects from AgriStack:
+Use this route for browser redirects from AgriStack:
 
-- Base callback route: `/callback?from=agristack`
-- Callback route with suffix segment: `/callback/<segment>?from=agristack`
+- Callback route: `/callback?from=agristack`
 
 The callback page displays all incoming query params so integration payloads can be validated quickly.
 
