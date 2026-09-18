@@ -21,7 +21,7 @@ type WidgetScreenProps = {
 	hostId: string;
 };
 
-const WIDGET_LANGUAGE_CODES = ["en", "hi", "gu", "bn"] as const;
+const WIDGET_LANGUAGE_CODES = ["en", "hi", "gu", "bn", "pa"] as const;
 
 function WidgetWelcome() {
 	const { t } = useLanguage();
