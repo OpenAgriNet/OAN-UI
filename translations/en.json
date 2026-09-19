@@ -20,7 +20,8 @@
   "disclaimerText": "AI-generated content. Please verify locally if required.",
   "pinnedQuestions": [
     "Give me my milk collection details for the last 7 days.",
-    "What should be done to increase milk production?"
+    "What should be done to increase milk production?",
+    "Tell me the weather in my village for the next 5 days."
   ],
   "moreUsefulQuestions": "More Useful Questions",
   "seeMoreQuestions": "See more questions",
@@ -31,7 +32,6 @@
   "fixedQuestions": [
     "How much have I earned in total this month and last month?",
     "Give me detailed information about all the animal husbandry and farming support schemes of the milk union, the Government of Gujarat and the Government of India.",
-    "Tell me the weather in my village for the next 5 days.",
     "Tell me today's or the latest APMC prices for tomato, onion, potato, green chilli and lemon.",
     "How is the bonus calculated in the society?"
   ],
