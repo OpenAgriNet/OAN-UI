@@ -88,7 +88,9 @@ type ChatStore = {
 
 // AMUL-72: nine questions plus the "more useful questions" card.
 const QUICK_ACTION_COUNT = 10;
-const PINNED_ACTION_COUNT = 2;
+// AMUL-87: the third pinned slot is the weather question, which has to sit
+// above the FAQ card rather than with the fixed questions below it.
+const PINNED_ACTION_COUNT = 3;
 
 // Ordered: the first entry with a keyword in the question wins, so the money
 // and scheme rows are matched before the broad "પશુ"/"દૂધ" cow keywords that
@@ -129,7 +131,7 @@ function toQuickAction(question: string, index: number): QuickAction {
 	};
 }
 
-function buildQuickActions(t: (key: string, params?: Record<string, string>) => string | string[]): QuickAction[] {
+export function buildQuickActions(t: (key: string, params?: Record<string, string>) => string | string[]): QuickAction[] {
 	const pinned = t("pinnedQuestions");
 	const pinnedQuestions = Array.isArray(pinned)
 		? pinned.filter((q): q is string => typeof q === "string")
