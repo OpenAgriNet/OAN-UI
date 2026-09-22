@@ -20,7 +20,8 @@
   "disclaimerText": "AI-generated content. Please verify locally if required.",
   "pinnedQuestions": [
     "Give me my milk collection details for the last 7 days.",
-    "What should be done to increase milk production?"
+    "What should be done to increase milk production?",
+    "Tell me the weather in my village for the next 5 days."
   ],
   "moreUsefulQuestions": "More Useful Questions",
   "seeMoreQuestions": "See more questions",
