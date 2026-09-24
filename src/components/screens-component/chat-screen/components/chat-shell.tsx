@@ -64,7 +64,15 @@ export function ChatShell() {
 		const sid = ensureSessionId();
 		const loginUrl = new URL(AGRISTACK_LOGIN_URL);
 		loginUrl.searchParams.set("session_id", sid);
-		window.location.href = loginUrl.toString();
+		// Navigate the top-level tab without a Referer: AgriStack login only loads when opened directly
+		// (like typing the URL), and refuses to render inside an iframe.
+		const link = document.createElement("a");
+		link.href = loginUrl.toString();
+		link.rel = "noreferrer";
+		link.target = "_top";
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
 	};
 
 	if (isAuthLoading) {
