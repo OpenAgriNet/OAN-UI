@@ -87,9 +87,10 @@ function AgriStackCallbackPage() {
         setForwardError(error instanceof Error ? error.message : "Unknown status check error");
         console.error("[callback] backend status error", error);
       } finally {
-        const redirectSearch = url.search || "";
+        // Session id and farmer data are already stored; keep them out of the /chat URL so a
+        // reload does not re-apply this login.
         sessionStorage.setItem("oan:callback-no-back", "1");
-        window.location.replace(`/chat${redirectSearch}`);
+        window.location.replace("/chat");
       }
     };
 

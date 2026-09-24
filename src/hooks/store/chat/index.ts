@@ -1094,8 +1094,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		// Use questions from translations
 		if (t("questions") && Array.isArray(t("questions")) && t("questions").length > 0) {
 			const questions = t("questions") as Array<{ key: string; text: string; vars?: string[] }>;
-			// Shuffle and select 3 random questions
-			const selectedQuestions = shuffle([...questions]).slice(0, 3);
+			// Shuffle and select 4 random questions
+			const selectedQuestions = shuffle([...questions]).slice(0, 4);
 
 			// Substitute variable placeholders with random values from translations
 			const resolveVars = (q: { key: string; text: string; vars?: string[] }): string => {

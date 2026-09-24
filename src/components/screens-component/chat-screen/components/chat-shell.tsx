@@ -7,7 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components";
 
 const lockImg = "/assets/lockImg.svg";
-const AGRISTACK_LOGIN_URL = "https://betafr.agristack.gov.in/farmer-registry-api-cg-qa-bh-21/bharat/v1/api/service/login";
+const AGRISTACK_LOGIN_URL =
+	"https://betafr.agristack.gov.in/farmer-registry-api-cg-qa-bh-21/bharat/v1/api/service/login";
 
 export function ChatShell() {
 	const { language, t } = useLanguage();
@@ -38,20 +39,37 @@ export function ChatShell() {
 		const params = new URLSearchParams(window.location.search);
 		const callbackSessionId = params.get("callbackSessionId") || params.get("session_id");
 
-		const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+		const nav = performance.getEntriesByType("navigation")[0] as
+			PerformanceNavigationTiming | undefined;
 		const isHardReload = nav?.type === "reload";
-		if (isHardReload && !callbackSessionId) {
+		if (isHardReload) {
+			// A reload always starts fresh: drop the chat session and any AgriStack login data.
 			clearSessionIdValue();
 			setAgriStackLoggedIn(false);
 			setLoggedInFarmerId(null);
 			setAgriStackProfile(null);
-		}
-
-		// Login state itself is decided by the /callback page from the backend status check.
-		if (callbackSessionId) {
+		} else if (callbackSessionId) {
+			// Login state itself is decided by the /callback page from the backend status check.
 			setSessionIdValue(callbackSessionId);
 		}
-	}, [clearSessionIdValue, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId, setAgriStackProfile]);
+
+		// Remove callback params so they are never re-applied (other params, e.g. token, are kept).
+		if (params.has("callbackSessionId") || params.has("session_id") || params.has("from")) {
+			["callbackSessionId", "session_id", "from"].forEach((key) => params.delete(key));
+			const query = params.toString();
+			window.history.replaceState(
+				window.history.state,
+				"",
+				`${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`
+			);
+		}
+	}, [
+		clearSessionIdValue,
+		setSessionIdValue,
+		setAgriStackLoggedIn,
+		setLoggedInFarmerId,
+		setAgriStackProfile
+	]);
 
 	useEffect(() => {
 		if (!sessionId && user) {
@@ -119,8 +137,10 @@ export function ChatShell() {
 									<img src={lockImg} alt="Locked" className="h-16 w-16" />
 
 									<div className="space-y-2">
-										<h1 className="text-2xl font-bold text-foreground">{t("auth.loginRequired")}</h1>
-										<p className="text-sm font-normal leading-relaxed text-muted-foreground px-2">
+										<h1 className="text-2xl font-bold text-foreground">
+											{t("auth.loginRequired")}
+										</h1>
+										<p className="px-2 text-sm leading-relaxed font-normal text-muted-foreground">
 											{t("auth.loginPrompt")}
 										</p>
 									</div>
@@ -138,7 +158,6 @@ export function ChatShell() {
 								<WelcomePanel
 									actions={quickActions}
 									onAction={(id) => sendQuickAction(id, language, t)}
-									onAsk={(prompt) => sendQuickReply(prompt, language, t)}
 									isAgriStackConnected={isAgriStackLoggedIn}
 									onConnectAgriStack={loginWithAgriStack}
 									agriStackProfile={isAgriStackLoggedIn ? (agriStackProfile ?? {}) : undefined}
