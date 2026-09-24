@@ -351,5 +351,35 @@
       "4_title": "Soil Health Card support added — get crop recommendations instantly",
       "5_title": "Bharati can now converse in Telugu, Bengali, Gujarati, and 7 other languages"
     }
+<<<<<<< Updated upstream
+=======
+  },
+  "agristack": {
+    "title": "CONNECT WITH AGRISTACK",
+    "subtitle": "Get personalised answers based on your farmer information",
+    "cta": "Connect with AgriStack",
+    "questions": {
+      "schemes": {
+        "title": "What schemes am I eligible for?",
+        "description": "Get schemes relevant to your profile",
+        "prompt": "What schemes am I eligible for?"
+      },
+      "crops": {
+        "title": "What crops are suitable for my land?",
+        "description": "Based on your location and soil type",
+        "prompt": "What crops are suitable for my land?"
+      }
+    },
+    "connected": {
+      "title": "Successfully connected with",
+      "titleHighlight": "AgriStack!",
+      "subtitle": "Your farmer profile is now linked. I can now provide more personalised and relevant answers based on your information.",
+      "profileHeading": "Your AgriStack Profile",
+      "farmerId": "Farmer ID",
+      "farmerName": "Farmer Name",
+      "village": "Village",
+      "consentNote": "This information is fetched from AgriStack with your consent and is used only to provide better assistance."
+    }
+>>>>>>> Stashed changes
   }
 }
