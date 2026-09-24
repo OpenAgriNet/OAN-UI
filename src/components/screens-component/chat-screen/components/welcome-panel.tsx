@@ -35,19 +35,19 @@ export function WelcomePanel({ onAction, actions, onLoginWithAgriStack, farmerId
 					<div className="text-2xl font-semibold text-[var(--primary)]">{t("appTitle")}</div>
 					<div className="text-xl font-medium text-black dark:text-[#F6F6F6]">{t("welcome")}</div>
 				</div>
+
+				<div className="w-full max-w-2xl">
+					{farmerId ? (
+						<p className="mb-2 text-xs text-muted-foreground">Farmer ID: {farmerId}</p>
+					) : null}
+					<Button onClick={onLoginWithAgriStack} className="w-full rounded-xl">
+						Login with AgriStack
+					</Button>
+				</div>
 			</div>
 
 			{/* Ticker banners 2-4 live inside the welcome panel; variants 1 and 5 live in the layout. */}
 			{env.uiTicker >= 2 && env.uiTicker <= 4 && <TickerBanner />}
-
-			<div className="mb-5 w-full max-w-2xl">
-				{farmerId ? (
-					<p className="mb-2 text-xs text-muted-foreground">Farmer ID: {farmerId}</p>
-				) : null}
-				<Button onClick={onLoginWithAgriStack} className="w-full rounded-xl">
-					Login with AgriStack
-				</Button>
-			</div>
 
 			{/* Cards List (Full width as per image 1) */}
 			<div className="flex w-full max-w-2xl flex-col gap-3">
