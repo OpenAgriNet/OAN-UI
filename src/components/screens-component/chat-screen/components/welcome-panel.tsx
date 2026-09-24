@@ -59,10 +59,6 @@ export function WelcomePanel({
 					<div className="text-2xl font-semibold text-[var(--primary)]">{t("appTitle")}</div>
 					<div className="text-xl font-medium text-black dark:text-[#F6F6F6]">{t("welcome")}</div>
 				</div>
-
-				{farmerId ? (
-					<p className="text-xs text-muted-foreground">Farmer ID: {farmerId}</p>
-				) : null}
 			</div>
 
 			{/* Ticker banners 2-4 live inside the welcome panel; variants 1 and 5 live in the layout. */}
@@ -100,6 +96,7 @@ export function WelcomePanel({
 			) : agriStackProfile ? (
 				/* Linked: confirm the link and show what we hold. */
 				<AgriStackProfileCard
+					farmerId={farmerId}
 					farmerName={agriStackProfile.farmerName}
 					village={agriStackProfile.village}
 				/>

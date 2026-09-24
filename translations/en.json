@@ -373,6 +373,7 @@
       "titleHighlight": "AgriStack!",
       "subtitle": "Your farmer profile is now linked. I can now provide more personalised and relevant answers based on your information.",
       "profileHeading": "Your AgriStack Profile",
+      "farmerId": "Farmer ID",
       "farmerName": "Farmer Name",
       "village": "Village",
       "consentNote": "This information is fetched from AgriStack with your consent and is used only to provide better assistance."

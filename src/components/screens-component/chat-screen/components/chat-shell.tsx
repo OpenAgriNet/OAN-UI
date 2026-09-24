@@ -30,8 +30,8 @@ export function ChatShell() {
 	const showWelcome = messages.length === 0;
 
 	const isAgriStackLoggedIn = useChatStore((s) => s.isAgriStackLoggedIn);
-	// TODO(agristack): replace this mock with the farmer profile from the backend.
-	const agriStackProfile = { farmerName: "Ramesh Kumar", village: "Rampur Mathura" };
+	const agriStackProfile = useChatStore((s) => s.agriStackProfile);
+	const setAgriStackProfile = useChatStore((s) => s.setAgriStackProfile);
 	const isUnauthenticated = !user;
 
 	useEffect(() => {
@@ -44,13 +44,14 @@ export function ChatShell() {
 			clearSessionIdValue();
 			setAgriStackLoggedIn(false);
 			setLoggedInFarmerId(null);
+			setAgriStackProfile(null);
 		}
 
+		// Login state itself is decided by the /callback page from the backend status check.
 		if (callbackSessionId) {
 			setSessionIdValue(callbackSessionId);
-			setAgriStackLoggedIn(true);
 		}
-	}, [clearSessionIdValue, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId]);
+	}, [clearSessionIdValue, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId, setAgriStackProfile]);
 
 	useEffect(() => {
 		if (!sessionId && user) {
@@ -65,6 +66,7 @@ export function ChatShell() {
 	const loginWithAgriStack = () => {
 		setAgriStackLoggedIn(false);
 		setLoggedInFarmerId(null);
+		setAgriStackProfile(null);
 		const sid = ensureSessionId();
 		const loginUrl = new URL(AGRISTACK_LOGIN_URL);
 		loginUrl.searchParams.set("session_id", sid);
@@ -139,7 +141,7 @@ export function ChatShell() {
 									onAsk={(prompt) => sendQuickReply(prompt, language, t)}
 									isAgriStackConnected={isAgriStackLoggedIn}
 									onConnectAgriStack={loginWithAgriStack}
-									agriStackProfile={agriStackProfile}
+									agriStackProfile={isAgriStackLoggedIn ? (agriStackProfile ?? {}) : undefined}
 									farmerId={loggedInFarmerId}
 								/>
 							) : null

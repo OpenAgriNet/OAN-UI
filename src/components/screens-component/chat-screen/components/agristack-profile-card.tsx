@@ -1,10 +1,11 @@
-import { Info, MapPin, Users } from "lucide-react";
+import { IdCard, Info, MapPin, Users } from "lucide-react";
 
 import { useLanguage } from "@/components/LanguageProvider";
 
 const connectedIllustration = "/assets/agristack-connected.webp";
 
 type AgriStackProfileCardProps = {
+	farmerId?: string | null;
 	farmerName?: string;
 	village?: string;
 };
@@ -13,10 +14,11 @@ type AgriStackProfileCardProps = {
  * Shown on the welcome screen once the farmer's AgriStack profile is linked:
  * confirmation, the details we hold, and why we hold them.
  */
-export function AgriStackProfileCard({ farmerName, village }: AgriStackProfileCardProps) {
+export function AgriStackProfileCard({ farmerId, farmerName, village }: AgriStackProfileCardProps) {
 	const { t } = useLanguage();
 
 	const rows = [
+		{ key: "farmerId", icon: IdCard, label: t("agristack.connected.farmerId"), value: farmerId },
 		{ key: "farmerName", icon: Users, label: t("agristack.connected.farmerName"), value: farmerName },
 		{ key: "village", icon: MapPin, label: t("agristack.connected.village"), value: village }
 	].filter((row) => Boolean(row.value));

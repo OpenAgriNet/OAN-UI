@@ -15,10 +15,12 @@ import { shuffle, randomPick } from "@/lib/qa-utils";
 import { v4 as uuidv4 } from "uuid";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
+import type { AgriStackProfile } from "@/lib/agristack-callback";
 
 const CHAT_SESSION_STORAGE_KEY = "oan:chat-session-id";
 const AGRISTACK_LOGIN_STORAGE_KEY = "oan:agristack-login";
 const AGRISTACK_FARMER_ID_STORAGE_KEY = "oan:agristack-farmer-id";
+const AGRISTACK_PROFILE_STORAGE_KEY = "oan:agristack-profile";
 
 function loadPersistedSessionId(): string | null {
 	if (typeof window === "undefined") return null;
@@ -64,6 +66,25 @@ function persistFarmerId(farmerId: string | null): void {
 		return;
 	}
 	localStorage.setItem(AGRISTACK_FARMER_ID_STORAGE_KEY, farmerId);
+}
+
+function loadPersistedAgriStackProfile(): AgriStackProfile | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const value = localStorage.getItem(AGRISTACK_PROFILE_STORAGE_KEY);
+		return value ? (JSON.parse(value) as AgriStackProfile) : null;
+	} catch {
+		return null;
+	}
+}
+
+function persistAgriStackProfile(profile: AgriStackProfile | null): void {
+	if (typeof window === "undefined") return;
+	if (!profile) {
+		localStorage.removeItem(AGRISTACK_PROFILE_STORAGE_KEY);
+		return;
+	}
+	localStorage.setItem(AGRISTACK_PROFILE_STORAGE_KEY, JSON.stringify(profile));
 }
 
 export type ApiNotification = {
@@ -152,10 +173,12 @@ type ChatStore = {
 	sessionId: string | null;
 	isAgriStackLoggedIn: boolean;
 	loggedInFarmerId: string | null;
+	agriStackProfile: AgriStackProfile | null;
 	setSessionIdValue: (sessionId: string) => void;
 	clearSessionIdValue: () => void;
 	setAgriStackLoggedIn: (value: boolean) => void;
 	setLoggedInFarmerId: (farmerId: string | null) => void;
+	setAgriStackProfile: (profile: AgriStackProfile | null) => void;
 	ensureSessionId: () => string;
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
@@ -374,6 +397,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	sessionId: loadPersistedSessionId(),
 	isAgriStackLoggedIn: loadPersistedAgriStackLogin(),
 	loggedInFarmerId: loadPersistedFarmerId(),
+	agriStackProfile: loadPersistedAgriStackProfile(),
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
@@ -403,6 +427,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		const value = trimmed || null;
 		set({ loggedInFarmerId: value });
 		persistFarmerId(value);
+	},
+	setAgriStackProfile: (profile) => {
+		set({ agriStackProfile: profile });
+		persistAgriStackProfile(profile);
 	},
 	ensureSessionId: () => {
 		const existing = get().sessionId || loadPersistedSessionId();

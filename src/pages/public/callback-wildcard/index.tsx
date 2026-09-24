@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { environment } from "@/lib/config/environment";
 import { useChatStore } from "@/hooks/store/chat";
+import { extractAgriStackProfile, extractFarmerId } from "@/lib/agristack-callback";
 
 function AgriStackCallbackWildcardPage() {
   const [forwardStatus, setForwardStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
@@ -7,28 +9,7 @@ function AgriStackCallbackWildcardPage() {
   const setSessionIdValue = useChatStore((s) => s.setSessionIdValue);
   const setAgriStackLoggedIn = useChatStore((s) => s.setAgriStackLoggedIn);
   const setLoggedInFarmerId = useChatStore((s) => s.setLoggedInFarmerId);
-
-  const extractFarmerId = (responseData: any): string | null => {
-    const direct = responseData?.farmerId;
-    if (typeof direct === "string" && direct.trim()) return direct.trim();
-
-    const body = responseData?.body;
-    if (!body || typeof body !== "object") return null;
-
-    const candidates = [
-      body?.farmerId,
-      body?.farmer_id,
-      body?.data?.farmerId,
-      body?.data?.farmer_id,
-      body?.message?.farmerId,
-    ];
-
-    for (const value of candidates) {
-      if (typeof value === "string" && value.trim()) return value.trim();
-    }
-
-    return null;
-  };
+  const setAgriStackProfile = useChatStore((s) => s.setAgriStackProfile);
 
   const payload = useMemo(() => {
     const url = new URL(window.location.href);
@@ -66,7 +47,7 @@ function AgriStackCallbackWildcardPage() {
     if (callbackSessionId) {
       statusParams.set("callbackSessionId", callbackSessionId);
     }
-    const backendStatusUrl = `/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
+    const backendStatusUrl = `${environment.apiUrl}/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
 
     console.info("[callback-wildcard] received", payload);
     console.info("[callback-wildcard] checking backend status", { backendStatusUrl });
@@ -80,6 +61,7 @@ function AgriStackCallbackWildcardPage() {
           console.warn("[callback-wildcard] callbackSessionId missing, skipping backend status check");
           setAgriStackLoggedIn(false);
           setLoggedInFarmerId(null);
+          setAgriStackProfile(null);
           setForwardStatus("success");
           return;
         }
@@ -95,11 +77,13 @@ function AgriStackCallbackWildcardPage() {
         const isReceived = responseData?.status === "received";
         setAgriStackLoggedIn(isReceived);
         setLoggedInFarmerId(isReceived ? extractFarmerId(responseData) : null);
+        setAgriStackProfile(isReceived ? extractAgriStackProfile(responseData) : null);
 
         setForwardStatus("success");
       } catch (error) {
         setAgriStackLoggedIn(false);
         setLoggedInFarmerId(null);
+        setAgriStackProfile(null);
         setForwardStatus("error");
         setForwardError(error instanceof Error ? error.message : "Unknown status check error");
         console.error("[callback-wildcard] backend status error", error);
@@ -111,7 +95,7 @@ function AgriStackCallbackWildcardPage() {
     };
 
     void run();
-  }, [payload, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId]);
+  }, [payload, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId, setAgriStackProfile]);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-4 p-6 sm:p-10">
