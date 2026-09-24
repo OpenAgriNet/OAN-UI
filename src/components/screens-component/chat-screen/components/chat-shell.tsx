@@ -28,6 +28,10 @@ export function ChatShell() {
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const showWelcome = messages.length === 0;
+
+	const isAgriStackLoggedIn = useChatStore((s) => s.isAgriStackLoggedIn);
+	// TODO(agristack): replace this mock with the farmer profile from the backend.
+	const agriStackProfile = { farmerName: "Ramesh Kumar", village: "Rampur Mathura" };
 	const isUnauthenticated = !user;
 
 	useEffect(() => {
@@ -132,7 +136,10 @@ export function ChatShell() {
 								<WelcomePanel
 									actions={quickActions}
 									onAction={(id) => sendQuickAction(id, language, t)}
-									onLoginWithAgriStack={loginWithAgriStack}
+									onAsk={(prompt) => sendQuickReply(prompt, language, t)}
+									isAgriStackConnected={isAgriStackLoggedIn}
+									onConnectAgriStack={loginWithAgriStack}
+									agriStackProfile={agriStackProfile}
 									farmerId={loggedInFarmerId}
 								/>
 							) : null
