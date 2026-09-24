@@ -5,7 +5,6 @@ import { WelcomePanel } from "./welcome-panel";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components";
-import { Button } from "@/components/ui/button";
 
 const lockImg = "/assets/lockImg.svg";
 const AGRISTACK_LOGIN_URL = "https://betafr.agristack.gov.in/farmer-registry-api-cg-qa-bh-21/bharat/v1/api/service/login";
@@ -110,12 +109,6 @@ export function ChatShell() {
 										<p className="text-sm font-normal leading-relaxed text-muted-foreground px-2">
 											{t("auth.loginPrompt")}
 										</p>
-										{loggedInFarmerId ? (
-											<p className="text-xs text-muted-foreground">Farmer ID: {loggedInFarmerId}</p>
-										) : null}
-										<Button onClick={loginWithAgriStack} className="mt-3">
-											Login with AgriStack
-										</Button>
 									</div>
 								</div>
 							</div>
