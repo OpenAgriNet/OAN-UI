@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { environment } from "@/lib/config/environment";
 import { useChatStore } from "@/hooks/store/chat";
 
 function AgriStackCallbackPage() {
@@ -65,7 +66,7 @@ function AgriStackCallbackPage() {
     if (callbackSessionId) {
       statusParams.set("callbackSessionId", callbackSessionId);
     }
-    const backendStatusUrl = `/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
+    const backendStatusUrl = `${environment.apiUrl}/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
 
     console.info("[callback] received", payload);
     console.info("[callback] checking backend status", { backendStatusUrl });
