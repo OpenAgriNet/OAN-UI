@@ -16,6 +16,56 @@ import { v4 as uuidv4 } from "uuid";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 
+const CHAT_SESSION_STORAGE_KEY = "oan:chat-session-id";
+const AGRISTACK_LOGIN_STORAGE_KEY = "oan:agristack-login";
+const AGRISTACK_FARMER_ID_STORAGE_KEY = "oan:agristack-farmer-id";
+
+function loadPersistedSessionId(): string | null {
+	if (typeof window === "undefined") return null;
+	const value = localStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+	if (!value) return null;
+	const sessionId = value.trim();
+	return sessionId || null;
+}
+
+function persistSessionId(sessionId: string): void {
+	if (typeof window === "undefined") return;
+	localStorage.setItem(CHAT_SESSION_STORAGE_KEY, sessionId);
+}
+
+function clearPersistedSessionId(): void {
+	if (typeof window === "undefined") return;
+	localStorage.removeItem(CHAT_SESSION_STORAGE_KEY);
+}
+
+function loadPersistedAgriStackLogin(): boolean {
+	if (typeof window === "undefined") return false;
+	const value = localStorage.getItem(AGRISTACK_LOGIN_STORAGE_KEY);
+	return value === "1";
+}
+
+function persistAgriStackLoginState(isLoggedIn: boolean): void {
+	if (typeof window === "undefined") return;
+	localStorage.setItem(AGRISTACK_LOGIN_STORAGE_KEY, isLoggedIn ? "1" : "0");
+}
+
+function loadPersistedFarmerId(): string | null {
+	if (typeof window === "undefined") return null;
+	const value = localStorage.getItem(AGRISTACK_FARMER_ID_STORAGE_KEY);
+	if (!value) return null;
+	const trimmed = value.trim();
+	return trimmed || null;
+}
+
+function persistFarmerId(farmerId: string | null): void {
+	if (typeof window === "undefined") return;
+	if (!farmerId) {
+		localStorage.removeItem(AGRISTACK_FARMER_ID_STORAGE_KEY);
+		return;
+	}
+	localStorage.setItem(AGRISTACK_FARMER_ID_STORAGE_KEY, farmerId);
+}
+
 export type ApiNotification = {
 	notification_id: string;
 	type: string;
@@ -70,18 +120,18 @@ export type QuickAction = {
 	title: string;
 	description: string;
 	icon:
-		| "tractor"
-		| "wheat"
-		| "cow"
-		| "cloud"
-		| "money"
-		| "document"
-		| "insurance"
-		| "alert"
-		| "bank"
-		| "search"
-		| "soil"
-		| "card";
+	| "tractor"
+	| "wheat"
+	| "cow"
+	| "cloud"
+	| "money"
+	| "document"
+	| "insurance"
+	| "alert"
+	| "bank"
+	| "search"
+	| "soil"
+	| "card";
 	prompt: string;
 };
 
@@ -100,6 +150,13 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	isAgriStackLoggedIn: boolean;
+	loggedInFarmerId: string | null;
+	setSessionIdValue: (sessionId: string) => void;
+	clearSessionIdValue: () => void;
+	setAgriStackLoggedIn: (value: boolean) => void;
+	setLoggedInFarmerId: (farmerId: string | null) => void;
+	ensureSessionId: () => string;
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -314,7 +371,9 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isListening: false,
 	isTranscribing: false,
 	isFetchingSuggestions: false,
-	sessionId: null,
+	sessionId: loadPersistedSessionId(),
+	isAgriStackLoggedIn: loadPersistedAgriStackLogin(),
+	loggedInFarmerId: loadPersistedFarmerId(),
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
@@ -323,10 +382,45 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
-	initializeSession: async (_user) => {
+	setSessionIdValue: (sessionId) => {
+		const trimmed = (sessionId || "").trim();
+		if (!trimmed) return;
+		set({ sessionId: trimmed });
+		persistSessionId(trimmed);
+		apiService.setSessionId(trimmed);
+	},
+	clearSessionIdValue: () => {
+		set({ sessionId: null });
+		clearPersistedSessionId();
+		apiService.setSessionId("");
+	},
+	setAgriStackLoggedIn: (value) => {
+		set({ isAgriStackLoggedIn: value });
+		persistAgriStackLoginState(value);
+	},
+	setLoggedInFarmerId: (farmerId) => {
+		const trimmed = (farmerId || "").trim();
+		const value = trimmed || null;
+		set({ loggedInFarmerId: value });
+		persistFarmerId(value);
+	},
+	ensureSessionId: () => {
+		const existing = get().sessionId || loadPersistedSessionId();
+		if (existing) {
+			set({ sessionId: existing });
+			persistSessionId(existing);
+			apiService.setSessionId(existing);
+			return existing;
+		}
+
 		const sid = uuidv4();
 		set({ sessionId: sid });
+		persistSessionId(sid);
 		apiService.setSessionId(sid);
+		return sid;
+	},
+	initializeSession: async (_user) => {
+		get().ensureSessionId();
 	},
 
 	setDraft: (value) => set(() => ({ draft: value })),
@@ -543,12 +637,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isInputLocked: true
 		}));
 
-		const { sessionId } = get();
-		const currentSession = sessionId || uuidv4();
-		if (!sessionId) {
-			set({ sessionId: currentSession });
-			apiService.setSessionId(currentSession);
-		}
+		const currentSession = get().ensureSessionId();
 
 		const questionId = uuidv4();
 
@@ -729,12 +818,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isInputLocked: true
 		}));
 
-		const { sessionId } = get();
-		const currentSession = sessionId || uuidv4();
-		if (!sessionId) {
-			set({ sessionId: currentSession });
-			apiService.setSessionId(currentSession);
-		}
+		const currentSession = get().ensureSessionId();
 
 		const questionId = uuidv4();
 
@@ -844,6 +928,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendAudio: async (blob, sessionId, language) => {
 		if (!blob) return;
+		const currentSession = (sessionId || "").trim() || get().ensureSessionId();
 
 		set({ isTranscribing: true });
 
@@ -912,7 +997,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const transcription = await apiService.transcribeAudio(
 				base64Audio,
 				"bhashini",
-				sessionId,
+				currentSession,
 				language
 			);
 
