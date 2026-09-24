@@ -5,8 +5,10 @@ import { WelcomePanel } from "./welcome-panel";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader } from "@/components";
+import { Button } from "@/components/ui/button";
 
 const lockImg = "/assets/lockImg.svg";
+const AGRISTACK_LOGIN_URL = "https://betafr.agristack.gov.in/farmer-registry-api-cg-qa-bh-21/bharat/v1/api/service/login";
 
 export function ChatShell() {
 	const { language, t } = useLanguage();
@@ -17,11 +19,35 @@ export function ChatShell() {
 	const sendQuickAction = useChatStore((s) => s.sendQuickAction);
 	const sendQuickReply = useChatStore((s) => s.sendQuickReply);
 	const initializeSession = useChatStore((s) => s.initializeSession);
+	const ensureSessionId = useChatStore((s) => s.ensureSessionId);
+	const setSessionIdValue = useChatStore((s) => s.setSessionIdValue);
+	const clearSessionIdValue = useChatStore((s) => s.clearSessionIdValue);
+	const setAgriStackLoggedIn = useChatStore((s) => s.setAgriStackLoggedIn);
+	const setLoggedInFarmerId = useChatStore((s) => s.setLoggedInFarmerId);
+	const loggedInFarmerId = useChatStore((s) => s.loggedInFarmerId);
 	const generateQuickActions = useChatStore((s) => s.generateQuickActions);
 	const sessionId = useChatStore((s) => s.sessionId);
 
 	const showWelcome = messages.length === 0;
 	const isUnauthenticated = !user;
+
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const callbackSessionId = params.get("callbackSessionId") || params.get("session_id");
+
+		const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+		const isHardReload = nav?.type === "reload";
+		if (isHardReload && !callbackSessionId) {
+			clearSessionIdValue();
+			setAgriStackLoggedIn(false);
+			setLoggedInFarmerId(null);
+		}
+
+		if (callbackSessionId) {
+			setSessionIdValue(callbackSessionId);
+			setAgriStackLoggedIn(true);
+		}
+	}, [clearSessionIdValue, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId]);
 
 	useEffect(() => {
 		if (!sessionId && user) {
@@ -32,6 +58,15 @@ export function ChatShell() {
 	useEffect(() => {
 		generateQuickActions(t);
 	}, [t, generateQuickActions]);
+
+	const loginWithAgriStack = () => {
+		setAgriStackLoggedIn(false);
+		setLoggedInFarmerId(null);
+		const sid = ensureSessionId();
+		const loginUrl = new URL(AGRISTACK_LOGIN_URL);
+		loginUrl.searchParams.set("session_id", sid);
+		window.location.href = loginUrl.toString();
+	};
 
 	if (isAuthLoading) {
 		return (
@@ -75,6 +110,12 @@ export function ChatShell() {
 										<p className="text-sm font-normal leading-relaxed text-muted-foreground px-2">
 											{t("auth.loginPrompt")}
 										</p>
+										{loggedInFarmerId ? (
+											<p className="text-xs text-muted-foreground">Farmer ID: {loggedInFarmerId}</p>
+										) : null}
+										<Button onClick={loginWithAgriStack} className="mt-3">
+											Login with AgriStack
+										</Button>
 									</div>
 								</div>
 							</div>
@@ -87,7 +128,12 @@ export function ChatShell() {
 						onQuickReply={(payload) => sendQuickReply(payload, language, t)}
 						welcome={
 							showWelcome ? (
-								<WelcomePanel actions={quickActions} onAction={(id) => sendQuickAction(id, language, t)} />
+								<WelcomePanel
+									actions={quickActions}
+									onAction={(id) => sendQuickAction(id, language, t)}
+									onLoginWithAgriStack={loginWithAgriStack}
+									farmerId={loggedInFarmerId}
+								/>
 							) : null
 						}
 					/>
