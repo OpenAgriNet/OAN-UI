@@ -9,9 +9,10 @@ import gu from '../../translations/gu.json';
 import kn from '../../translations/kn.json';
 import ml from '../../translations/ml.json';
 import as_ from '../../translations/as.json';
+import mai from '../../translations/mai.json';
 import { DEFAULT_LANGUAGE } from './screens-component/chat-screen/config';
 
-type LanguageCode = 'hi' | 'en' | 'bn' | 'te' | 'mr' | 'ta' | 'gu' | 'kn' | 'ml' | 'as';
+type LanguageCode = 'hi' | 'en' | 'bn' | 'te' | 'mr' | 'ta' | 'gu' | 'kn' | 'ml' | 'as' | 'mai';
 
 interface LanguageContextType {
   language: LanguageCode;
@@ -23,7 +24,7 @@ interface TranslationObject {
   [key: string]: string | string[] | TranslationObject | Array<Record<string, unknown>>;
 }
 
-const translations: Record<LanguageCode, TranslationObject> = { hi, en, bn, te, mr, ta, gu, kn, ml, as: as_ };
+const translations: Record<LanguageCode, TranslationObject> = { hi, en, bn, te, mr, ta, gu, kn, ml, as: as_, mai };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
