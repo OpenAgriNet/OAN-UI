@@ -5,7 +5,7 @@ const rootConfig = rootConfigData as any;
 // LANGUAGE CONFIGURATION
 // ============================================================================
 
-export type LanguageCode = "hi" | "en" | "bn" | "te" | "mr" | "ta" | "gu" | "kn" | "ml" | "as";
+export type LanguageCode = "hi" | "en" | "bn" | "te" | "mr" | "ta" | "gu" | "kn" | "ml" | "as" | "mai";
 
 export type Language = {
 	code: LanguageCode;
