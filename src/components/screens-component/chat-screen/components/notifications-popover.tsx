@@ -75,8 +75,9 @@ function buildNegativeFeedbackMetadata(
 export function NotificationsPopover() {
 	const notifications = useChatStore((s) => s.notifications);
 	const markNotificationRead = useChatStore((s) => s.markNotificationRead);
+	const sendQuickReply = useChatStore((s) => s.sendQuickReply);
 
-	const { t } = useLanguage();
+	const { t, language } = useLanguage();
 
 	const [popoverOpen, setPopoverOpen] = useState(false);
 	const [detailOpen, setDetailOpen] = useState(false);
@@ -407,6 +408,31 @@ export function NotificationsPopover() {
 									);
 								})()}
 							</div>
+
+							{/* ── IMD follow-up ── */}
+							{selected.type === "AGROMET_ADVISORY" && (
+								<div className="shrink-0 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+									<p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+										Would you like the advisory for your crop or other advisories?
+									</p>
+									<Button
+										type="button"
+										className="w-full"
+										onClick={() => {
+											const meta = (selected.metadata ?? {}) as Record<string, unknown>;
+											const prompt = String(
+												meta.follow_up_prompt ??
+													"Tell me the IMD agro advisory for my crop and other advisories for my district."
+											);
+											setDetailOpen(false);
+											setPopoverOpen(false);
+											sendQuickReply(prompt, language, t);
+										}}
+									>
+										Yes, show me
+									</Button>
+								</div>
+							)}
 
 							{/* ── Feedback footer ── */}
 							<div className="shrink-0 border-t border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/30 px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
