@@ -413,7 +413,7 @@ export function NotificationsPopover() {
 							{selected.type === "AGROMET_ADVISORY" && (
 								<div className="shrink-0 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
 									<p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">
-										Would you like the advisory for your crop or other advisories?
+										Would you like the advisory for your crop?
 									</p>
 									<Button
 										type="button"
@@ -422,7 +422,7 @@ export function NotificationsPopover() {
 											const meta = (selected.metadata ?? {}) as Record<string, unknown>;
 											const prompt = String(
 												meta.follow_up_prompt ??
-													"Tell me the IMD agro advisory for my crop and other advisories for my district."
+													"Tell me the IMD agro advisory for my crop."
 											);
 											setDetailOpen(false);
 											setPopoverOpen(false);
