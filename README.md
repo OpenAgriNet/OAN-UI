@@ -6,6 +6,13 @@ Opinionated React starter using **Vite**, **TanStack Router (File Routes)**, **T
 This project is designed for **large, scalable admin dashboards** with strict structure, routing discipline, and reusable screen patterns.
 ---
 
+## Pull Request Governance
+
+Code-owner approval is not required. Peer approval, approval on the latest commit,
+branch naming, and resolved review threads remain enforced. See
+[governance enforcement](docs/repo-governance-enforcement.md) for branch-protection
+setup and the dependency-free governance test command.
+
 ## Prerequisites
 
 ### Bun (required)
