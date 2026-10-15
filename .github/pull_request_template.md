@@ -16,7 +16,6 @@
 - [ ] The PR is focused and does not mix unrelated changes.
 - [ ] I will not approve my own PR.
 - [ ] At least 1 peer approval is present before merge.
-- [ ] At least 1 CODEOWNERS approval is present before merge.
 - [ ] All review comments/threads are resolved before merge.
 - [ ] I understand approvals must be refreshed after new commits are pushed.
 

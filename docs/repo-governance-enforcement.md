@@ -2,19 +2,16 @@
 
 This repository enforces the policy in `Openagrinet-repo-ownership-and-pr-governance.pdf` with:
 
-1. `CODEOWNERS` ownership mapping.
-2. Pull request template checklist.
-3. Automated PR governance checks in GitHub Actions.
-4. Scripted branch protection for protected branches.
+1. Pull request template checklist.
+2. Automated PR governance checks in GitHub Actions.
+3. Scripted branch protection for protected branches.
 
 ## What Is Enforced In-Repo
 
-- Owners are defined in `.github/CODEOWNERS`.
 - PRs into protected branches are validated by `.github/workflows/pr-governance.yml` for:
   - branch name pattern (`feature/`, `bugfix/`, `hotfix/`, `chore/`)
   - no self-approval
   - at least one peer approval
-  - at least one CODEOWNERS approval
   - re-approval on latest commit
   - all review threads resolved
 
@@ -43,7 +40,7 @@ bash scripts/apply_repo_governance.sh <org>/<repo>
 For branches that exist among `main`, `master`, `mh-main`, `bh-main`:
 
 - pull-request reviews required (minimum 1 approval)
-- CODEOWNERS review required
+- code-owner review not required (one peer approval is still required)
 - stale approvals dismissed on new commits
 - last push requires approval from someone else
 - all conversations must be resolved
@@ -51,3 +48,14 @@ For branches that exist among `main`, `master`, `mh-main`, `bh-main`:
 - branch deletions disabled
 - admin enforcement enabled
 - required status check: `PR Governance Gate / governance`
+
+Repository changes do not modify existing GitHub settings automatically. An
+administrator must rerun the script to disable code-owner review in existing
+branch protections. If a repository or organization ruleset separately requires
+code-owner review, an administrator must update that ruleset as well.
+
+## Validate Governance Checks
+
+```bash
+node --test scripts/pr-governance.test.mjs
+```
