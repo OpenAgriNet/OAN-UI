@@ -8,6 +8,11 @@ This project is designed for **large, scalable admin dashboards** with strict st
 
 ## Prerequisites
 
+### Node.js (Docker and CI)
+
+Docker builds and GitHub Actions use **Node.js 26**. Use the same major version
+for local npm builds; the Bun workflow below remains available.
+
 ### Bun (required)
 
 This project uses **Bun** as both the package manager and runtime.
