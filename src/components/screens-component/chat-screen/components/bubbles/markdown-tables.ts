@@ -1,3 +1,5 @@
+import type { Element, ElementContent, Root, RootContent } from "hast";
+
 /**
  * Repairs GFM pipe tables whose rows were split by a stray `|`.
  *
@@ -86,3 +88,56 @@ export function repairMarkdownTables(markdown: string): string {
 
 	return lines.join("\n");
 }
+
+// A cell is numeric when it is a number or a range, optionally with a currency sign or percent:
+// "850", "₹ 1,200", "500 - 1000", "4.8%". Gujarati and Devanagari digits count.
+const DIGITS = "\\d\\u0AE6-\\u0AEF\\u0966-\\u096F";
+const NUMBER = `[-+]?[₹$]?\\s*[${DIGITS}][${DIGITS}.,]*`;
+const NUMERIC_CELL = new RegExp(`^${NUMBER}(\\s*[-–—]\\s*${NUMBER})?\\s*%?$`);
+
+const isElement = (node: ElementContent | RootContent): node is Element => node.type === "element";
+
+function textOf(node: ElementContent): string {
+	if (node.type === "text") return node.value;
+	return isElement(node) ? node.children.map(textOf).join("") : "";
+}
+
+function rowsOf(table: Element): Element[] {
+	return table.children
+		.filter(isElement)
+		.flatMap((section) => (section.tagName === "tr" ? [section] : section.children.filter(isElement)))
+		.filter((row) => row.tagName === "tr");
+}
+
+/**
+ * Annotates GFM tables so the bubble can lay them out: `data-columns` on the table, and
+ * `data-numeric` on every cell of a column whose body cells are all numbers or ranges.
+ */
+function annotateTable(table: Element) {
+	const rows = rowsOf(table).map((row) => row.children.filter(isElement));
+	const columns = Math.max(0, ...rows.map((cells) => cells.length));
+	table.properties.dataColumns = columns;
+
+	for (let col = 0; col < columns; col++) {
+		const body = rows.flatMap((cells) => cells.filter((cell, i) => i === col && cell.tagName === "td"));
+		const values = body.map((cell) => textOf(cell).trim()).filter(Boolean);
+		if (!values.length || !values.every((value) => NUMERIC_CELL.test(value))) continue;
+		for (const cells of rows) {
+			const cell = cells[col];
+			if (!cell) continue;
+			cell.properties.dataNumeric = true;
+			// Models write `:---` on every column by reflex; numbers still read best right-aligned.
+			if (cell.properties.align === "left") delete cell.properties.align;
+		}
+	}
+}
+
+function visitTables(node: Root | Element) {
+	for (const child of node.children) {
+		if (!isElement(child)) continue;
+		if (child.tagName === "table") annotateTable(child);
+		else visitTables(child);
+	}
+}
+
+export const rehypeChatTables = () => (tree: Root) => visitTables(tree);
