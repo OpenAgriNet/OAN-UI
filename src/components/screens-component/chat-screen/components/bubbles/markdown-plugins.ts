@@ -2,6 +2,7 @@ import type { Options } from "react-markdown";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import { rehypeChatTables } from "./markdown-tables";
 
 type RemarkPlugins = NonNullable<Options["remarkPlugins"]>;
 type RehypePlugins = NonNullable<Options["rehypePlugins"]>;
@@ -19,6 +20,8 @@ type RehypePlugins = NonNullable<Options["rehypePlugins"]>;
 export const chatRemarkPlugins: RemarkPlugins = [remarkGfm, remarkMath];
 
 export const chatRehypePlugins: RehypePlugins = [
+	// before KaTeX, so numeric-column detection reads the source text of maths cells
+	rehypeChatTables,
 	// maxSize caps user-visible dimensions: without it a response containing
 	// \rule{500em}{500em} paints a screen-filling block on the farmer's phone.
 	[rehypeKatex, { maxSize: 20 }]

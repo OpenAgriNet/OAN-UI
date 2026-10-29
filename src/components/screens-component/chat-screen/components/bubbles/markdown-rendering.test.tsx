@@ -103,7 +103,7 @@ describe("assistant markdown rendering", () => {
 		it("keeps a table intact when a cell contains maths", () => {
 			const html = render("| A | B |\n|---|---|\n| Area | $\\pi r^2$ |\n| Milk | 5 L |");
 
-			expect(html).toContain("<table>");
+			expect(html).toContain("<table ");
 			expect((html.match(/<tr>/g) ?? []).length).toBe(3);
 			expect(html).toContain("5 L");
 			expect(isMath(html)).toBe(true);
@@ -130,7 +130,7 @@ describe("assistant markdown rendering", () => {
 		it("renders the production Gujarati APMC table", () => {
 			const html = render(APMC_GU);
 
-			expect(html).toContain("<table>");
+			expect(html).toContain("<table ");
 			expect((html.match(/<tr>/g) ?? []).length).toBe(3);
 			expect((html.match(/<th[ >]/g) ?? []).length).toBe(5);
 			expect(html).toContain("મોડલ ભાવ (રૂ. /ક્યુટીએલ)");
@@ -146,8 +146,8 @@ describe("assistant markdown rendering", () => {
 		it("widens the delimiter row when the extra header cell is not a split", () => {
 			const html = render("| A | B | C |\n|---|---|\n| 1 | 2 | 3 |");
 
-			expect(html).toContain("<table>");
-			expect(html).toContain("<td>3</td>");
+			expect(html).toContain("<table ");
+			expect(html).toMatch(/<td[^>]*>3<\/td>/);
 		});
 
 		it("leaves well-formed tables and fenced code byte-for-byte", () => {
@@ -156,6 +156,39 @@ describe("assistant markdown rendering", () => {
 
 			expect(repairMarkdownTables(table)).toBe(table);
 			expect(repairMarkdownTables(fenced)).toBe(fenced);
+		});
+	});
+
+	describe("table layout annotations", () => {
+		const cellAttrs = (html: string, text: string) => html.match(new RegExp(`<t[dh]([^>]*)>${text}<`))?.[1] ?? "";
+
+		it("counts columns and marks number and range columns numeric", () => {
+			const html = render(
+				"| Crop | Market | Price | Range |\n| :--- | :--- | :--- | :--- |\n| Tomato | Himatnagar APMC | 850 | 500 - 1000 |\n| Onion | Deesa | ₹ 4,300 | 4000–4500 |"
+			);
+
+			expect(html).toContain('data-columns="4"');
+			expect(cellAttrs(html, "850")).toContain("data-numeric");
+			expect(cellAttrs(html, "500 - 1000")).toContain("data-numeric");
+			expect(cellAttrs(html, "Price")).toContain("data-numeric");
+			expect(cellAttrs(html, "Himatnagar APMC")).not.toContain("data-numeric");
+			// the reflexive `:---` left alignment is dropped for numbers, kept for text
+			expect(cellAttrs(html, "850")).not.toContain("text-align");
+			expect(cellAttrs(html, "Tomato")).toContain("text-align:left");
+		});
+
+		it("treats Gujarati digits and percentages as numbers", () => {
+			const html = render("| પશુ | દૂધ | ફેટ |\n|---|---|---|\n| ગાય | ૧૨ | 4.5% |");
+
+			expect(cellAttrs(html, "૧૨")).toContain("data-numeric");
+			expect(cellAttrs(html, "4.5%")).toContain("data-numeric");
+		});
+
+		it("keeps a column with any text out of numeric layout", () => {
+			const html = render("| A | B |\n|---|---|\n| x | 12 |\n| y | not known |");
+
+			expect(html).toContain('data-columns="2"');
+			expect(cellAttrs(html, "12")).not.toContain("data-numeric");
 		});
 	});
 
