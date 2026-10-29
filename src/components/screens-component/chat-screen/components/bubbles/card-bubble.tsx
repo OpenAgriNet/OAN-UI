@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
 import { repairMarkdownTables } from "./markdown-tables";
+import { ChatTable, ChatTableCell, ChatTableHeaderCell } from "./chat-table";
 import { HtmlDocumentArtifact } from "./html-document-artifact";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
@@ -112,26 +113,12 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									strong: ({ node, ...props }) => (
 										<span className="font-semibold text-foreground/90" {...props} />
 									),
-									table: ({ node, ...props }) => (
-										<div className="my-2 w-full overflow-x-auto rounded-md border border-[#E5E7EB]">
-											<table className="w-full border-collapse text-sm" {...props} />
-										</div>
-									),
-									thead: ({ node, ...props }) => (
-										<thead className="bg-[#F9FAFB]" {...props} />
-									),
-									tbody: ({ node, ...props }) => (
-										<tbody className="bg-white" {...props} />
-									),
+									table: ChatTable,
 									tr: ({ node, ...props }) => (
 										<tr className="border-b border-[#E5E7EB] last:border-b-0" {...props} />
 									),
-									th: ({ node, ...props }) => (
-										<th className="px-3 py-2 text-left text-xs font-semibold tracking-wide text-[#111827]" {...props} />
-									),
-									td: ({ node, ...props }) => (
-										<td className="px-3 py-2 align-top text-sm text-[#111827]" {...props} />
-									),
+									th: ChatTableHeaderCell,
+									td: ChatTableCell,
 									h1: ({ node, ...props }) => (
 										<p className="mb-1.5 mt-2 text-lg font-bold leading-snug first:mt-0" {...props} />
 									),
