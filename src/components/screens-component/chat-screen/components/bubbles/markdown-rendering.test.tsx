@@ -4,18 +4,19 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ReactMarkdown from "react-markdown";
 
 import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
+import { repairMarkdownTables } from "./markdown-tables";
 
 /**
  * Renders through the exact plugin configuration `CardBubble` uses, so these assertions describe
  * what a farmer sees rather than an intermediate string. Inputs marked "production" are taken
- * verbatim from two months of production chat.
+ * verbatim from production chat.
  */
 function render(body: string): string {
 	return renderToStaticMarkup(
 		createElement(ReactMarkdown, {
 			remarkPlugins: chatRemarkPlugins,
 			rehypePlugins: chatRehypePlugins,
-			children: body
+			children: repairMarkdownTables(body)
 		})
 	);
 }
@@ -113,6 +114,48 @@ describe("assistant markdown rendering", () => {
 
 			expect((html.match(/<li>/g) ?? []).length).toBe(2);
 			expect(html).toContain("Next bullet");
+		});
+	});
+
+	// GFM rejects a table whose header and delimiter rows disagree on the column count, and the
+	// whole table then renders as one paragraph of raw pipes.
+	describe("tables with a stray pipe still render", () => {
+		// production 2026-10-29, trace f5b578d9: the translator put a `|` inside "(Rs./Qtl)"
+		const APMC_GU =
+			"અહીં છે:\n\n| ચીજવસ્તુ | બજાર | જિલ્લો | મોડલ ભાવ (રૂ.| /ક્યુટીએલ) | રેન્જ (મિન - મેક્સ) |\n" +
+			"| :--- | :--- | :--- | :--- | :--- |\n" +
+			"| **ટમેટા** | હિંમતનગર (વેજ.માર્કેટ) | સાબરકાંઠા | 850 | 500 - 1000 |\n" +
+			"| **લીંબુ** | હિંમતનગર (વેજ.માર્કેટ) | સાબરકાંઠા | 10300 | 10000 - 10500 |";
+
+		it("renders the production Gujarati APMC table", () => {
+			const html = render(APMC_GU);
+
+			expect(html).toContain("<table>");
+			expect((html.match(/<tr>/g) ?? []).length).toBe(3);
+			expect((html.match(/<th[ >]/g) ?? []).length).toBe(5);
+			expect(html).toContain("મોડલ ભાવ (રૂ. /ક્યુટીએલ)");
+			expect(html).not.toContain("| :---");
+		});
+
+		it("re-joins a body cell split inside parentheses instead of dropping its tail", () => {
+			const html = render("| Item | Price |\n|---|---|\n| Milk | 40 (Rs.| /L) |");
+
+			expect(html).toContain("40 (Rs. /L)");
+		});
+
+		it("widens the delimiter row when the extra header cell is not a split", () => {
+			const html = render("| A | B | C |\n|---|---|\n| 1 | 2 | 3 |");
+
+			expect(html).toContain("<table>");
+			expect(html).toContain("<td>3</td>");
+		});
+
+		it("leaves well-formed tables and fenced code byte-for-byte", () => {
+			const table = "| A | B |\n|:-|-:|\n| x | y (z |";
+			const fenced = "```\n| a | b | c |\n|---|---|\n```";
+
+			expect(repairMarkdownTables(table)).toBe(table);
+			expect(repairMarkdownTables(fenced)).toBe(fenced);
 		});
 	});
 

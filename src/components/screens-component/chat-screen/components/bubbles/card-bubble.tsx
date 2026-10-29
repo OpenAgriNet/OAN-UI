@@ -9,6 +9,7 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { chatRehypePlugins, chatRemarkPlugins } from "./markdown-plugins";
+import { repairMarkdownTables } from "./markdown-tables";
 import { HtmlDocumentArtifact } from "./html-document-artifact";
 
 export function CardBubble({ message }: { readonly message: CardMessage }) {
@@ -154,7 +155,7 @@ export function CardBubble({ message }: { readonly message: CardMessage }) {
 									),
 								}}
 							>
-								{message.body}
+								{repairMarkdownTables(message.body)}
 							</ReactMarkdown>
 						</div>
 
