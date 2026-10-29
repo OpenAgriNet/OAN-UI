@@ -72,7 +72,10 @@ export function MessageList(props: MessageListProps) {
 	}, [props.messages.length, props.isAssistantTyping, props.messages]);
 
 	return (
-		<ScrollArea className="h-full">
+		// Radix wraps the viewport content in an inline `display: table` div, which grows to the
+		// widest child: one wide markdown table pushed every bubble past the screen edge. Block
+		// layout pins the column to the viewport so tables scroll inside their own wrapper.
+		<ScrollArea className="h-full [&_[data-slot=scroll-area-viewport]>div]:block!">
 			<div className="mx-auto flex max-w-3xl flex-col gap-3 px-2 pt-3 pb-14 sm:px-4">
 				{props.welcome}
 				{props.messages.map((m) => (
