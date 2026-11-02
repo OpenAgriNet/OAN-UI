@@ -9,6 +9,7 @@
 		"lint": "eslint .",
 		"preview": "vite preview",
 		"test:coverage": "vitest run --coverage",
+		"test:csp": "node scripts/check-csp.mjs && vitest run src/config/csp.test.ts",
 		"sonar": "node sonar-qube/sonarqube-scanner.js",
 		"prepare": "husky",
 		"typecheck": "tsc -b",

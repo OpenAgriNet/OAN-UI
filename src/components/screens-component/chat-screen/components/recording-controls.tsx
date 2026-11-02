@@ -186,18 +186,6 @@ export function RecordingControls({
 							"h-5 w-5 recording animate-earthquake"
 						)} 
 					/>
-					<style>{`
-						@keyframes earthquake {
-							0%, 50%, 100% { transform: translate(0, 0) rotate(0deg); }
-							10% { transform: translate(-1px, -1px) rotate(-15deg); }
-							20% { transform: translate(1px, 1px) rotate(15deg); }
-							30% { transform: translate(-1px, -1px) rotate(-15deg); }
-							40% { transform: translate(1px, 1px) rotate(15deg); }
-						}
-						.animate-earthquake {
-							animation: earthquake 1.3s ease-in-out infinite;
-						}
-					`}</style>
 				</Button>
 			</div>
 		</div>
