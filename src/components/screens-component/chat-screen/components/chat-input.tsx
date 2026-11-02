@@ -487,22 +487,6 @@ export function ChatInput({
 								{t("chatMicHint")}
 								<div className="absolute -bottom-1.5 left-4 h-3 w-3 rotate-45 bg-[var(--secondary)]"></div>
 							</div>
-							<style>{`
-								@keyframes float {
-									0%, 100% { transform: translateY(0); }
-									50% { transform: translateY(-5px); }
-								}
-								@keyframes earthquake {
-									0%, 50%, 100% { transform: translate(0, 0) rotate(0deg); }
-									10% { transform: translate(-1px, -1px) rotate(-15deg); }
-									20% { transform: translate(1px, 1px) rotate(15deg); }
-									30% { transform: translate(-1px, -1px) rotate(-15deg); }
-									40% { transform: translate(1px, 1px) rotate(15deg); }
-								}
-								.animate-earthquake {
-									animation: earthquake 1.3s ease-in-out infinite;
-								}
-							`}</style>
 						</div>
 					) : null}
 					<Button

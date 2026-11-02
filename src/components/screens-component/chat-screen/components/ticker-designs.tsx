@@ -130,11 +130,6 @@ export function TickerVariant1({ announcements = ANNOUNCEMENTS, inLayout = false
 				>
 					<X className="h-4 w-4" />
 				</button>
-				<style>{`
-					@keyframes ticker-v1-layout-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-					.ticker-v1-layout { animation: ticker-v1-layout-scroll 38s linear infinite; }
-					.ticker-v1-layout:hover { animation-play-state: paused; }
-				`}</style>
 			</div>
 		);
 	}
@@ -154,11 +149,6 @@ export function TickerVariant1({ announcements = ANNOUNCEMENTS, inLayout = false
 				className="shrink-0 rounded-full p-1 text-[var(--primary)]/40 transition hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]">
 				<X className="h-3.5 w-3.5" />
 			</button>
-			<style>{`
-				@keyframes ticker-v1-scroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
-				.ticker-v1 { animation: ticker-v1-scroll 36s linear infinite; }
-				.ticker-v1:hover { animation-play-state: paused; }
-			`}</style>
 		</div>
 	);
 }

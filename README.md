@@ -79,6 +79,76 @@ bun run build
 
 ---
 
+## Production CSP
+
+The UI container and the deployment proxy
+([chat-vistaar-da.gov.in.conf](../chat-vistaar-da.gov.in.conf)) must be deployed
+together. Both policies block inline JavaScript, eval-like execution, and
+unauthorized inline CSS. API policies are independent and unchanged.
+
+- Use the supplied [Nginx configuration](./nginx.conf) to serve production builds.
+  Nginx must have OpenSSL and `http_sub_module` enabled (`nginx -V`).
+  It replaces `__CSP_NONCE__` in the HTML with its per-response, random 128-bit
+  `$request_id`. The CSP header and HTML must contain the same nonce.
+- The proxy uses the **upstream response** `X-CSP-Nonce` to construct its style
+  policy, then hides that header. Never use a client-supplied header or a static
+  nonce. Keep the UI upstream private/trusted.
+- HTML is `Cache-Control: no-store`; conditional HTML requests return a fresh
+  `200`, not `304`. Do not cache HTML at a CDN, service worker, or another proxy.
+  Purge previously cached HTML during deployment. Static asset caching is unchanged.
+- Radix's runtime styles use the nonce. Sonner 2.0.7's fixed stylesheet is allowed
+  by its SHA-256 hash; `test:csp` detects when an upgrade requires updating that
+  hash in both Nginx configurations.
+- Sonner's initially empty style element can emit a CSP warning.
+  Sonner's populated stylesheet must be active via its hash. Do not weaken the
+  policy to suppress this warning; investigate other script/style violations.
+- Static animation and announcement-ticker CSS lives in the external stylesheet.
+  Lottie uses its light
+  (no-expression) player; the dot loader's shared rotation was baked into matching
+  keyframes. Do not introduce animation expressions that need `eval`.
+- React's direct DOM style-property updates still work; injected HTML `style`
+  attributes and unapproved `<style>` elements are blocked.
+- Browsers and WebViews use the same partner `frame-ancestors` allowlist.
+  `X-Frame-Options: SAMEORIGIN` protects older clients without CSP support; those
+  older clients cannot embed the UI cross-origin. Top-level WebViews still work.
+- Development uses `bun dev` without nonce enforcement. `vite preview` alone
+  cannot serve a production build because it does not substitute the nonce.
+  Browser-native `crypto.randomUUID()` requires HTTPS (or localhost).
+
+### Checks and rollout
+
+From this directory, with the deployment proxy configuration present one level up:
+
+```bash
+bun run test:csp
+bun run test:coverage -- src/config/csp.test.ts --coverage.include=src/config/csp.ts
+bun run build
+```
+
+In staging, validate and deploy this as a paired release: **UI first, then proxy**.
+Verify that the UI emits a matching HTML nonce and `X-CSP-Nonce` before updating
+the proxy. Updating the proxy first would block styles in the old UI. Run
+`nginx -t` in the UI container and on the proxy **with the real includes and
+certificates** before reloading either server. Test a new HTML GET (not only HEAD):
+
+```bash
+curl -sS -D - -o /dev/null https://chat-vistaar.da.gov.in/chat
+curl -sS -A 'BharatVistaar-Mobile' -D - -o /dev/null https://chat-vistaar.da.gov.in/chat
+```
+
+Verify a different nonce on each HTML response, matching its HTML meta element,
+one CSP header, `no-store`, and `SAMEORIGIN` for both user agents. A conditional
+HTML request must still return `200` with a fresh matching nonce; static assets
+may return `304`. Check error responses and API headers too: security headers
+must survive Nginx `add_header` inheritance and error redirects in the supplied
+deployment snippets.
+
+In a browser, check chat, recording, image upload, dialogs, language selection,
+scrollbars, notifications, and approved partner embedding for CSP violations.
+Unapproved iframe parents, injected inline scripts/styles, and eval-like code
+must remain blocked. If rollback is necessary, roll back the proxy before the UI
+and track the reopened hardening findings; never silently weaken CSP.
+
 ## Project Structure
 
 ```text
