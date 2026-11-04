@@ -1,7 +1,8 @@
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
-import { TickerVariant1, TickerVariant5 } from "@/components/screens-component/chat-screen/components/ticker-designs";
+import { TickerVariant1 } from "@/components/screens-component/chat-screen/components/ticker-designs";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
 import { env } from "@/config/env";
+import diwaliBannerBg from "@/assets/diwali_banner_with_text.svg";
 import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
@@ -101,8 +102,19 @@ function ChatLayout() {
 					onClose={handleCloseToast}
 				/>
 			)}
-			{/* Variant 5: Branded announcement hero at the top of the chatbot */}
-			{env.uiTicker === 5 && <TickerVariant5 />}
+			{/* Variant 5 language banner temporarily hidden */}
+			{/* {env.uiTicker === 5 && <TickerVariant5 />} */}
+			{env.uiTicker === 5 && (
+				<div className="w-full">
+					<div className="mx-auto w-full max-w-3xl">
+						<img
+							src={diwaliBannerBg}
+							alt="Diwali greetings banner"
+							className="h-auto w-full object-cover"
+						/>
+					</div>
+				</div>
+			)}
 			<ChatHeader
 				title={t("appTitle") as string}
 				subtitle="Government assistance and agriculture insights"
