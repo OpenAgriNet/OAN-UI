@@ -50,6 +50,15 @@ export function WelcomePanel({
 
 	return (
 		<div className="flex w-full flex-col items-center px-4 py-8">
+			{env.uiTicker === 5 && (
+				<div className="mb-6 w-full max-w-2xl">
+					<img
+						src="/assets/diwali_banner.svg"
+						alt="Diwali greetings banner"
+						className="h-auto w-full object-cover"
+					/>
+				</div>
+			)}
 			{/* Logo & Greeting */}
 			<div className="mb-8 flex flex-col items-center gap-4 text-center">
 				<Avatar className="h-30 w-30">
