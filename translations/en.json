@@ -10,7 +10,8 @@
   "disclaimerText": "AI-generated content. Please verify locally if required.",
   "diwaliBanner": {
     "line1": "On this auspicious occasion of Diwali,",
-    "line2": "Heartiest wishes to you all"
+    "line2": "Heartiest wishes to you all",
+    "highlight": "Diwali"
   },
   "questions": [
     {

@@ -1,7 +1,8 @@
 import { ChatHeader } from "@/components/screens-component/layouts/chat-header";
-import { TickerVariant1, TickerVariant5 } from "@/components/screens-component/chat-screen/components/ticker-designs";
+import { TickerVariant1 } from "@/components/screens-component/chat-screen/components/ticker-designs";
 import { ChatInput, type ChatInputPayload } from "@/components/screens-component/chat-screen/components/chat-input";
 import { env } from "@/config/env";
+import diwaliBannerBg from "@/assets/diwali_banner_with_text.svg";
 import { CHAT_USER } from "@/components/screens-component/chat-screen/config";
 import { useChatStore } from "@/hooks/store/chat";
 import { Outlet } from "@tanstack/react-router";
@@ -13,6 +14,7 @@ import { SettingsDrawer } from "@/components/screens-component/chat-screen/compo
 import apiService from "@/lib/api-service";
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
+const DIWALI_HIGHLIGHT_CLASS = "text-sm font-extrabold text-[#FFC90A] sm:text-xl";
 
 function getCachedLocation() {
 	const cached = localStorage.getItem("user_location");
@@ -49,6 +51,9 @@ function ChatLayout() {
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
 
 	const { language, t } = useLanguage();
+	const diwaliLine = t("diwaliBanner.line1") as string;
+	const diwaliWord = t("diwaliBanner.highlight") as string;
+	const diwaliWordIndex = diwaliLine.indexOf(diwaliWord);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	// const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
@@ -101,8 +106,34 @@ function ChatLayout() {
 					onClose={handleCloseToast}
 				/>
 			)}
-			{/* Variant 5: Branded announcement hero at the top of the chatbot */}
-			{env.uiTicker === 5 && <TickerVariant5 />}
+			{/* Variant 5 language banner temporarily hidden */}
+			{/* {env.uiTicker === 5 && <TickerVariant5 />} */}
+			{env.uiTicker === 5 && (
+				<div className="relative h-16 w-full shrink-0 overflow-hidden border-l-4 border-[#F6AA1B] bg-[#3F038F] sm:h-20">
+					{/* Artwork stays anchored right at full height; its left edge fades into the solid fill so the strip can span any width. */}
+					<img
+						src={diwaliBannerBg}
+						alt=""
+						className="absolute inset-y-0 right-0 h-full w-auto max-w-none [mask-image:linear-gradient(to_right,transparent,black_20%)]"
+					/>
+					<div className="relative flex h-full flex-col justify-center px-4 pr-[30%] sm:pr-4">
+						<p className="text-[10px] font-semibold text-white sm:text-sm">
+							{diwaliWordIndex === -1 ? (
+								diwaliLine
+							) : (
+								<>
+									{diwaliLine.slice(0, diwaliWordIndex)}
+									<span className={DIWALI_HIGHLIGHT_CLASS}>{diwaliWord}</span>
+									{diwaliLine.slice(diwaliWordIndex + diwaliWord.length)}
+								</>
+							)}
+						</p>
+						<p className={DIWALI_HIGHLIGHT_CLASS}>
+							{t("diwaliBanner.line2")}
+						</p>
+					</div>
+				</div>
+			)}
 			<ChatHeader
 				title={t("appTitle") as string}
 				subtitle="Government assistance and agriculture insights"
