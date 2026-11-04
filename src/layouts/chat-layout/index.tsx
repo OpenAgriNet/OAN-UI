@@ -14,6 +14,7 @@ import { SettingsDrawer } from "@/components/screens-component/chat-screen/compo
 import apiService from "@/lib/api-service";
 
 const ONE_DAY = 24 * 60 * 60 * 1000;
+const DIWALI_HIGHLIGHT_CLASS = "text-sm font-extrabold text-[#FFC90A] sm:text-xl";
 
 function getCachedLocation() {
 	const cached = localStorage.getItem("user_location");
@@ -50,6 +51,9 @@ function ChatLayout() {
 	const fetchLocation = useChatStore((s) => s.fetchLocation);
 
 	const { language, t } = useLanguage();
+	const diwaliLine = t("diwaliBanner.line1") as string;
+	const diwaliWord = t("diwaliBanner.highlight") as string;
+	const diwaliWordIndex = diwaliLine.indexOf(diwaliWord);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	// const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
@@ -114,9 +118,17 @@ function ChatLayout() {
 					/>
 					<div className="relative flex h-full flex-col justify-center px-4 pr-[30%] sm:pr-4">
 						<p className="text-[10px] font-semibold text-white sm:text-sm">
-							{t("diwaliBanner.line1")}
+							{diwaliWordIndex === -1 ? (
+								diwaliLine
+							) : (
+								<>
+									{diwaliLine.slice(0, diwaliWordIndex)}
+									<span className={DIWALI_HIGHLIGHT_CLASS}>{diwaliWord}</span>
+									{diwaliLine.slice(diwaliWordIndex + diwaliWord.length)}
+								</>
+							)}
 						</p>
-						<p className="text-sm font-extrabold text-[#FFC90A] sm:text-xl">
+						<p className={DIWALI_HIGHLIGHT_CLASS}>
 							{t("diwaliBanner.line2")}
 						</p>
 					</div>
