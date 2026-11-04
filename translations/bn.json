@@ -8,6 +8,10 @@
   "Listen": "শুনুন",
   "selectLanguage": "ভাষা নির্বাচন করুন",
   "disclaimerText": "AI-উৎপন্ন তথ্য। প্রয়োজন হলে স্থানীয়ভাবে যাচাই করুন।",
+  "diwaliBanner": {
+    "line1": "দীপাবলির এই শুভ উপলক্ষে আপনাদের সবাইকে",
+    "line2": "আন্তরিক শুভেচ্ছা"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",

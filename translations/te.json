@@ -8,6 +8,10 @@
   "Listen": "వినండి",
   "selectLanguage": "భాష ఎంచుకోండి",
   "disclaimerText": "AI-ఉత్పత్తి సమాచారం. అవసరమైతే స్థానికంగా ధృవీకరించండి.",
+  "diwaliBanner": {
+    "line1": "దీపావళి ఈ శుభ సందర్భంలో మీ అందరికీ",
+    "line2": "హృదయపూర్వక శుభాకాంక్షలు"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",

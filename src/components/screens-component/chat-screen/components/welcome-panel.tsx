@@ -4,6 +4,7 @@ import { CHAT_ASSISTANT } from "../config";
 import { QuickAction } from "@/hooks/store/chat";
 import { TickerBanner } from "./ticker-designs";
 import { env } from "@/config/env";
+import diwaliBannerBg from "@/assets/diwali_banner_with_text.svg";
 
 type WelcomePanelProps = {
 	onAction: (id: string) => void;
@@ -18,11 +19,23 @@ export function WelcomePanel({ onAction, actions }: WelcomePanelProps) {
 		<div className="flex w-full flex-col items-center px-4 py-8">
 			{env.uiTicker === 5 && (
 				<div className="mb-6 w-full max-w-2xl">
-					<img
-						src="/assets/diwali_banner.svg"
-						alt="Diwali greetings banner"
-						className="h-auto w-full object-cover"
-					/>
+					<div className="relative">
+						<img
+							src={diwaliBannerBg}
+							alt="Diwali greetings banner"
+							className="h-auto w-full object-cover"
+						/>
+						<div className="pointer-events-none absolute inset-0 flex items-center">
+							<div className="w-2/3 px-3 sm:px-4">
+								<p className="text-[10px] font-semibold text-white sm:text-sm">
+									{t("diwaliBanner.line1")}
+								</p>
+								<p className="text-sm font-extrabold text-[#FFC90A] sm:text-xl">
+									{t("diwaliBanner.line2")}
+								</p>
+							</div>
+						</div>
+					</div>
 				</div>
 			)}
 			{/* Logo & Greeting */}
