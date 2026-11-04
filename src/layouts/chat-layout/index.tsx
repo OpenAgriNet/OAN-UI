@@ -105,13 +105,20 @@ function ChatLayout() {
 			{/* Variant 5 language banner temporarily hidden */}
 			{/* {env.uiTicker === 5 && <TickerVariant5 />} */}
 			{env.uiTicker === 5 && (
-				<div className="w-full">
-					<div className="mx-auto w-full max-w-3xl">
-						<img
-							src={diwaliBannerBg}
-							alt="Diwali greetings banner"
-							className="h-auto w-full object-cover"
-						/>
+				<div className="relative h-16 w-full shrink-0 overflow-hidden border-l-4 border-[#F6AA1B] bg-[#3F038F] sm:h-20">
+					{/* Artwork stays anchored right at full height; its left edge fades into the solid fill so the strip can span any width. */}
+					<img
+						src={diwaliBannerBg}
+						alt=""
+						className="absolute inset-y-0 right-0 h-full w-auto max-w-none [mask-image:linear-gradient(to_right,transparent,black_20%)]"
+					/>
+					<div className="relative flex h-full flex-col justify-center px-4 pr-[30%] sm:pr-4">
+						<p className="text-[10px] font-semibold text-white sm:text-sm">
+							{t("diwaliBanner.line1")}
+						</p>
+						<p className="text-sm font-extrabold text-[#FFC90A] sm:text-xl">
+							{t("diwaliBanner.line2")}
+						</p>
 					</div>
 				</div>
 			)}
