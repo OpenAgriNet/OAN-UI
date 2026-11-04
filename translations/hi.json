@@ -12,6 +12,10 @@
   "disclaimerText": "AI-उत्पन्न जानकारी। कृपया स्वतंत्र रूप से सत्यापित करें।",
   "recordingListening": "[botName] सुन रही है, कृपया बोलना शुरू करें।",
   "appTitle": "भारती",
+  "diwaliBanner": {
+    "line1": "दीपावली के इस शुभ अवसर पर आप सभी को",
+    "line2": "हार्दिक शुभकामनाएं"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",

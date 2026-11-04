@@ -11,6 +11,10 @@
   "selectLanguage": "भाषा निवडा",
   "disclaimerText": "AI-निर्मित माहिती. कृपया स्वतंत्रपणे सत्यापित करा।",
   "appTitle": "भारत विस्तार",
+  "diwaliBanner": {
+    "line1": "दिवाळीच्या या शुभ प्रसंगी आपण सर्वांना",
+    "line2": "हार्दिक शुभेच्छा"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",
