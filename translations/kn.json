@@ -8,6 +8,10 @@
   "Listen": "ಕೇಳಿ",
   "selectLanguage": "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ",
   "disclaimerText": "AI-ಉತ್ಪಾದಿತ ಮಾಹಿತಿ. ಅಗತ್ಯವಿದ್ದರೆ ಸ್ಥಳೀಯವಾಗಿ ಪರಿಶೀಲಿಸಿ.",
+  "diwaliBanner": {
+    "line1": "ದೀಪಾವಳಿಯ ಈ ಶುಭ ಸಂದರ್ಭದಲ್ಲಿ ನಿಮಗೆಲ್ಲರಿಗೂ",
+    "line2": "ಹಾರ್ದಿಕ ಶುಭಾಶಯಗಳು"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",

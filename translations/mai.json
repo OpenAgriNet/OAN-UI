@@ -12,6 +12,10 @@
   "disclaimerText": "AI-उत्पन्न जानकारी। कृपया स्वतंत्र रूपसँ सत्यापित करू।",
   "recordingListening": "[botName] सुनि रहल छथि, कृपया बाजब शुरू करू।",
   "appTitle": "भारती",
+  "diwaliBanner": {
+    "line1": "दीपावलीक एहि शुभ अवसर पर अहाँ सभकेँ",
+    "line2": "हार्दिक शुभकामना"
+  },
   "questions": [
     {
       "key": "schemes.info.pm_kisan",
