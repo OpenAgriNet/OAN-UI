@@ -79,6 +79,19 @@ bun run build
 
 ---
 
+## AgriStack frontend callback routes
+
+Use this route for browser redirects from AgriStack:
+
+- Callback route: `/callback?from=agristack`
+
+The callback page reads incoming query params and checks backend callback status using:
+- `GET /api/callback/status?from=agristack&callbackSessionId=<id>`
+
+Then it redirects the user to `/chat`.
+
+---
+
 ## Production CSP
 
 The UI container and the deployment proxy

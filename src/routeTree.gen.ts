@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './pages/root'
 import { Route as errorDefaultErrorRoutesRouteImport } from './pages/error/default-error/routes'
+import { Route as publicCallbackRoutesRouteImport } from './pages/public/callback/routes'
 import { Route as middlewaresRestrictLoginSignupRouteImport } from './pages/middlewares/restrict-login-signup'
 import { Route as middlewaresPublicChatRouteImport } from './pages/middlewares/public-chat'
 import { Route as middlewaresAuthenticateRouteImport } from './pages/middlewares/authenticate'
@@ -29,6 +30,11 @@ import { Route as app_authenticatedProfileRoutesRouteImport } from './pages/app/
 const errorDefaultErrorRoutesRoute = errorDefaultErrorRoutesRouteImport.update({
   id: '/error',
   path: '/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const publicCallbackRoutesRoute = publicCallbackRoutesRouteImport.update({
+  id: '/callback',
+  path: '/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const middlewaresRestrictLoginSignupRoute =
@@ -112,6 +118,7 @@ export interface FileRoutesByFullPath {
   '/403': typeof error403RoutesRoute
   '/404': typeof error404RoutesRoute
   '/500': typeof error500RoutesRoute
+  '/callback': typeof publicCallbackRoutesRoute
   '/error': typeof errorDefaultErrorRoutesRoute
   '/forgot-password': typeof authForgotPasswordRoutesRoute
   '/login': typeof authLoginRoutesRoute
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/403': typeof error403RoutesRoute
   '/404': typeof error404RoutesRoute
   '/500': typeof error500RoutesRoute
+  '/callback': typeof publicCallbackRoutesRoute
   '/error': typeof errorDefaultErrorRoutesRoute
   '/forgot-password': typeof authForgotPasswordRoutesRoute
   '/login': typeof authLoginRoutesRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticate': typeof middlewaresAuthenticateRouteWithChildren
   '/_public-chat': typeof middlewaresPublicChatRouteWithChildren
   '/_restrict-login-signup': typeof middlewaresRestrictLoginSignupRouteWithChildren
+  '/callback': typeof publicCallbackRoutesRoute
   '/error': typeof errorDefaultErrorRoutesRoute
   '/_authenticate/_app-layout': typeof app_authenticatedLayoutRouteWithChildren
   '/_public-chat/_chat-layout': typeof app_chatLayoutRouteWithChildren
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/403'
     | '/404'
     | '/500'
+    | '/callback'
     | '/error'
     | '/forgot-password'
     | '/login'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/403'
     | '/404'
     | '/500'
+    | '/callback'
     | '/error'
     | '/forgot-password'
     | '/login'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/_authenticate'
     | '/_public-chat'
     | '/_restrict-login-signup'
+    | '/callback'
     | '/error'
     | '/_authenticate/_app-layout'
     | '/_public-chat/_chat-layout'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   middlewaresAuthenticateRoute: typeof middlewaresAuthenticateRouteWithChildren
   middlewaresPublicChatRoute: typeof middlewaresPublicChatRouteWithChildren
   middlewaresRestrictLoginSignupRoute: typeof middlewaresRestrictLoginSignupRouteWithChildren
+  publicCallbackRoutesRoute: typeof publicCallbackRoutesRoute
   errorDefaultErrorRoutesRoute: typeof errorDefaultErrorRoutesRoute
 }
 
@@ -217,6 +230,13 @@ declare module '@tanstack/react-router' {
       path: '/error'
       fullPath: '/error'
       preLoaderRoute: typeof errorDefaultErrorRoutesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callback': {
+      id: '/callback'
+      path: '/callback'
+      fullPath: '/callback'
+      preLoaderRoute: typeof publicCallbackRoutesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_restrict-login-signup': {
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   middlewaresPublicChatRoute: middlewaresPublicChatRouteWithChildren,
   middlewaresRestrictLoginSignupRoute:
     middlewaresRestrictLoginSignupRouteWithChildren,
+  publicCallbackRoutesRoute: publicCallbackRoutesRoute,
   errorDefaultErrorRoutesRoute: errorDefaultErrorRoutesRoute,
 }
 export const routeTree = rootRouteImport
