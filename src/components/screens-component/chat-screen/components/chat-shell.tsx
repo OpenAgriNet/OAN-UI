@@ -8,7 +8,7 @@ import { Loader } from "@/components";
 
 const lockImg = "/assets/lockImg.svg";
 const AGRISTACK_LOGIN_URL =
-	"https://betafr.agristack.gov.in/farmer-registry-api-cg-qa-bh-21/bharat/v1/api/service/login";
+	"https://ufsi.agristack.gov.in/central-consent-manager/";
 
 export function ChatShell() {
 	const { language, t } = useLanguage();
@@ -87,7 +87,7 @@ export function ChatShell() {
 		setAgriStackProfile(null);
 		const sid = ensureSessionId();
 		const loginUrl = new URL(AGRISTACK_LOGIN_URL);
-		loginUrl.searchParams.set("session_id", sid);
+		loginUrl.hash = `/?session_id=${encodeURIComponent(sid)}`;
 		// Navigate the top-level tab without a Referer: AgriStack login only loads when opened directly
 		// (like typing the URL), and refuses to render inside an iframe.
 		const link = document.createElement("a");
