@@ -1,0 +1,125 @@
+import { useEffect, useMemo, useState } from "react";
+import { environment } from "@/lib/config/environment";
+import { useChatStore } from "@/hooks/store/chat";
+import { extractAgriStackProfile, extractFarmerId } from "@/lib/agristack-callback";
+
+function AgriStackCallbackPage() {
+  const setSessionIdValue = useChatStore((s) => s.setSessionIdValue);
+  const setAgriStackLoggedIn = useChatStore((s) => s.setAgriStackLoggedIn);
+  const setLoggedInFarmerId = useChatStore((s) => s.setLoggedInFarmerId);
+  const setAgriStackProfile = useChatStore((s) => s.setAgriStackProfile);
+  const [forwardStatus, setForwardStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [forwardError, setForwardError] = useState<string>("");
+
+  const payload = useMemo(() => {
+    const url = new URL(window.location.href);
+    const query: Record<string, string | string[]> = {};
+
+    url.searchParams.forEach((value, key) => {
+      const existing = query[key];
+      if (existing === undefined) {
+        query[key] = value;
+        return;
+      }
+
+      query[key] = Array.isArray(existing) ? [...existing, value] : [existing, value];
+    });
+
+    return {
+      from: url.searchParams.get("from") ?? null,
+      fullPath: `${url.pathname}${url.search}${url.hash}`,
+      query,
+      hash: url.hash || null,
+    };
+  }, []);
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const callbackSessionId = url.searchParams.get("callbackSessionId") || url.searchParams.get("session_id");
+    if (callbackSessionId) {
+      setSessionIdValue(callbackSessionId);
+    }
+    const statusParams = new URLSearchParams();
+    if (url.searchParams.get("from")) {
+      statusParams.set("from", url.searchParams.get("from") as string);
+    }
+    if (callbackSessionId) {
+      statusParams.set("callbackSessionId", callbackSessionId);
+    }
+    const backendStatusUrl = `${environment.apiUrl}/api/callback/status${statusParams.toString() ? `?${statusParams.toString()}` : ""}`;
+
+    console.info("[callback] received", payload);
+    console.info("[callback] checking backend status", { backendStatusUrl });
+
+    const run = async () => {
+      setForwardStatus("sending");
+      setForwardError("");
+
+      try {
+        if (!callbackSessionId) {
+          console.warn("[callback] callbackSessionId missing, skipping backend status check");
+          setAgriStackLoggedIn(false);
+          setLoggedInFarmerId(null);
+          setAgriStackProfile(null);
+          setForwardStatus("success");
+          return;
+        }
+
+        const response = await fetch(backendStatusUrl, { method: "GET" });
+
+        if (!response.ok) {
+          throw new Error(`Backend status check failed with status ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        console.info("[callback] backend status success", responseData);
+        const isReceived = responseData?.status === "received";
+        setAgriStackLoggedIn(isReceived);
+        setLoggedInFarmerId(isReceived ? extractFarmerId(responseData) : null);
+        setAgriStackProfile(isReceived ? extractAgriStackProfile(responseData) : null);
+
+        setForwardStatus("success");
+      } catch (error) {
+        setAgriStackLoggedIn(false);
+        setLoggedInFarmerId(null);
+        setAgriStackProfile(null);
+        setForwardStatus("error");
+        setForwardError(error instanceof Error ? error.message : "Unknown status check error");
+        console.error("[callback] backend status error", error);
+      } finally {
+        // Session id and farmer data are already stored; keep them out of the /chat URL so a
+        // reload does not re-apply this login.
+        sessionStorage.setItem("oan:callback-no-back", "1");
+        window.location.replace("/chat");
+      }
+    };
+
+    void run();
+  }, [payload, setSessionIdValue, setAgriStackLoggedIn, setLoggedInFarmerId, setAgriStackProfile]);
+
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-4xl flex-col gap-4 p-6 sm:p-10">
+      <h1 className="text-2xl font-semibold">Callback Received</h1>
+      <p className="text-sm text-muted-foreground">
+        This page accepts any query parameters. Use this URL as the AgriStack frontend redirect callback.
+      </p>
+
+      <section className="rounded-xl border bg-card p-4">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Summary</h2>
+        <ul className="space-y-2 text-sm">
+          <li><span className="font-medium">from:</span> {payload.from ?? "(not provided)"}</li>
+          <li><span className="font-medium">path:</span> {payload.fullPath}</li>
+          <li><span className="font-medium">backend status check:</span> {forwardStatus}</li>
+          {forwardStatus === "error" && <li><span className="font-medium">error:</span> {forwardError}</li>}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border bg-card p-4">
+        <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Raw Query Payload</h2>
+        <pre className="overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(payload.query, null, 2)}</pre>
+      </section>
+    </main>
+  );
+}
+
+export default AgriStackCallbackPage;

@@ -15,6 +15,77 @@ import { shuffle, randomPick } from "@/lib/qa-utils";
 import type { ToastType } from "@/components/screens-component/chat-screen/components/toast";
 import { environment } from "@/lib/config/environment";
 import { neutralizeHtmlMarkup } from "@/lib/security/html";
+import type { AgriStackProfile } from "@/lib/agristack-callback";
+
+const CHAT_SESSION_STORAGE_KEY = "oan:chat-session-id";
+const AGRISTACK_LOGIN_STORAGE_KEY = "oan:agristack-login";
+const AGRISTACK_FARMER_ID_STORAGE_KEY = "oan:agristack-farmer-id";
+const AGRISTACK_PROFILE_STORAGE_KEY = "oan:agristack-profile";
+
+function loadPersistedSessionId(): string | null {
+	if (typeof window === "undefined") return null;
+	const value = localStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+	if (!value) return null;
+	const sessionId = value.trim();
+	return sessionId || null;
+}
+
+function persistSessionId(sessionId: string): void {
+	if (typeof window === "undefined") return;
+	localStorage.setItem(CHAT_SESSION_STORAGE_KEY, sessionId);
+}
+
+function clearPersistedSessionId(): void {
+	if (typeof window === "undefined") return;
+	localStorage.removeItem(CHAT_SESSION_STORAGE_KEY);
+}
+
+function loadPersistedAgriStackLogin(): boolean {
+	if (typeof window === "undefined") return false;
+	const value = localStorage.getItem(AGRISTACK_LOGIN_STORAGE_KEY);
+	return value === "1";
+}
+
+function persistAgriStackLoginState(isLoggedIn: boolean): void {
+	if (typeof window === "undefined") return;
+	localStorage.setItem(AGRISTACK_LOGIN_STORAGE_KEY, isLoggedIn ? "1" : "0");
+}
+
+function loadPersistedFarmerId(): string | null {
+	if (typeof window === "undefined") return null;
+	const value = localStorage.getItem(AGRISTACK_FARMER_ID_STORAGE_KEY);
+	if (!value) return null;
+	const trimmed = value.trim();
+	return trimmed || null;
+}
+
+function persistFarmerId(farmerId: string | null): void {
+	if (typeof window === "undefined") return;
+	if (!farmerId) {
+		localStorage.removeItem(AGRISTACK_FARMER_ID_STORAGE_KEY);
+		return;
+	}
+	localStorage.setItem(AGRISTACK_FARMER_ID_STORAGE_KEY, farmerId);
+}
+
+function loadPersistedAgriStackProfile(): AgriStackProfile | null {
+	if (typeof window === "undefined") return null;
+	try {
+		const value = localStorage.getItem(AGRISTACK_PROFILE_STORAGE_KEY);
+		return value ? (JSON.parse(value) as AgriStackProfile) : null;
+	} catch {
+		return null;
+	}
+}
+
+function persistAgriStackProfile(profile: AgriStackProfile | null): void {
+	if (typeof window === "undefined") return;
+	if (!profile) {
+		localStorage.removeItem(AGRISTACK_PROFILE_STORAGE_KEY);
+		return;
+	}
+	localStorage.setItem(AGRISTACK_PROFILE_STORAGE_KEY, JSON.stringify(profile));
+}
 
 export type ApiNotification = {
 	notification_id: string;
@@ -97,6 +168,15 @@ type ChatStore = {
 	isTranscribing: boolean;
 	isFetchingSuggestions: boolean;
 	sessionId: string | null;
+	isAgriStackLoggedIn: boolean;
+	loggedInFarmerId: string | null;
+	agriStackProfile: AgriStackProfile | null;
+	setSessionIdValue: (sessionId: string) => void;
+	clearSessionIdValue: () => void;
+	setAgriStackLoggedIn: (value: boolean) => void;
+	setLoggedInFarmerId: (farmerId: string | null) => void;
+	setAgriStackProfile: (profile: AgriStackProfile | null) => void;
+	ensureSessionId: () => string;
 	initializeSession: (user: any) => Promise<void>;
 	sendText: (text: string, language: string, t?: any) => Promise<void>;
 	sendAudio: (blob: Blob, sessionId: string, language: string) => Promise<void>;
@@ -337,7 +417,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isListening: false,
 	isTranscribing: false,
 	isFetchingSuggestions: false,
-	sessionId: null,
+	sessionId: loadPersistedSessionId(),
+	isAgriStackLoggedIn: loadPersistedAgriStackLogin(),
+	loggedInFarmerId: loadPersistedFarmerId(),
+	agriStackProfile: loadPersistedAgriStackProfile(),
 	toast: null,
 	currentlyPlayingId: null,
 	ttsStatus: "stopped",
@@ -346,10 +429,49 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 	isFetchingNotifications: false,
 
 	setToast: (toast) => set({ toast }),
-	initializeSession: async (_user) => {
+	setSessionIdValue: (sessionId) => {
+		const trimmed = (sessionId || "").trim();
+		if (!trimmed) return;
+		set({ sessionId: trimmed });
+		persistSessionId(trimmed);
+		apiService.setSessionId(trimmed);
+	},
+	clearSessionIdValue: () => {
+		set({ sessionId: null });
+		clearPersistedSessionId();
+		apiService.setSessionId("");
+	},
+	setAgriStackLoggedIn: (value) => {
+		set({ isAgriStackLoggedIn: value });
+		persistAgriStackLoginState(value);
+	},
+	setLoggedInFarmerId: (farmerId) => {
+		const trimmed = (farmerId || "").trim();
+		const value = trimmed || null;
+		set({ loggedInFarmerId: value });
+		persistFarmerId(value);
+	},
+	setAgriStackProfile: (profile) => {
+		set({ agriStackProfile: profile });
+		persistAgriStackProfile(profile);
+	},
+	ensureSessionId: () => {
+		const existing = get().sessionId || loadPersistedSessionId();
+		if (existing) {
+			set({ sessionId: existing });
+			persistSessionId(existing);
+			apiService.setSessionId(existing);
+			return existing;
+		}
+
 		const sid = crypto.randomUUID();
 		set({ sessionId: sid });
+		persistSessionId(sid);
 		apiService.setSessionId(sid);
+		return sid;
+	},
+	initializeSession: async (_user) => {
+		get().ensureSessionId();
 	},
 
 	setDraft: (value) => set(() => ({ draft: value })),
@@ -567,12 +689,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isInputLocked: true
 		}));
 
-		const { sessionId } = get();
-		const currentSession = sessionId || crypto.randomUUID();
-		if (!sessionId) {
-			set({ sessionId: currentSession });
-			apiService.setSessionId(currentSession);
-		}
+		const currentSession = get().ensureSessionId();
 
 		try {
 			// In a real app we'd detect language, here we use what's passed
@@ -763,12 +880,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			isInputLocked: true
 		}));
 
-		const { sessionId } = get();
-		const currentSession = sessionId || crypto.randomUUID();
-		if (!sessionId) {
-			set({ sessionId: currentSession });
-			apiService.setSessionId(currentSession);
-		}
+		const currentSession = get().ensureSessionId();
 
 		try {
 			let streamingText = "";
@@ -888,6 +1000,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 
 	sendAudio: async (blob, sessionId, language) => {
 		if (!blob) return;
+		const currentSession = (sessionId || "").trim() || get().ensureSessionId();
 
 		set({ isTranscribing: true });
 
@@ -956,7 +1069,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 			const transcription = await apiService.transcribeAudio(
 				base64Audio,
 				"bhashini",
-				sessionId,
+				currentSession,
 				language
 			);
 
@@ -1025,8 +1138,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
 		// Use questions from translations
 		if (t("questions") && Array.isArray(t("questions")) && t("questions").length > 0) {
 			const questions = t("questions") as Array<{ key: string; text: string; vars?: string[] }>;
-			// Shuffle and select 3 random questions
-			const selectedQuestions = shuffle([...questions]).slice(0, 3);
+			// Shuffle and select 4 random questions
+			const selectedQuestions = shuffle([...questions]).slice(0, 4);
 
 			// Substitute variable placeholders with random values from translations
 			const resolveVars = (q: { key: string; text: string; vars?: string[] }): string => {
